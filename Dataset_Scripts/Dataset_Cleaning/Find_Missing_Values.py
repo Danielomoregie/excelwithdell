@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Load file
-df = pd.read_csv("Dataset(s)/FusionTech Online Reviews.csv")
+df = pd.read_csv("Dataset_Scripts/CSV_Files/FusionTech Online Reviews.csv")
 
 # Missing Value Statistics
 missing_count = df.isnull().sum()

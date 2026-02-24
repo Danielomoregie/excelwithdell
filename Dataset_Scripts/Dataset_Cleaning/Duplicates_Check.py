@@ -1,8 +1,8 @@
 import pandas as pd
 import os
 
-input_path = "Dataset(s)/FusionTech_2014_06_to_2022_06.csv"
-output_path = "Dataset(s)/FusionTech_2014_06_to_2022_06_deduped.csv"
+input_path = "Dataset_Scripts/CSV_Files/FusionTech_2014_06_to_2022_06.csv"
+output_path = "Dataset_Scripts/CSV_Files/FusionTech_2014_06_to_2022_06_deduped.csv"
 
 df = pd.read_csv(input_path)
 

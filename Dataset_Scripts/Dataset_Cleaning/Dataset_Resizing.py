@@ -1,8 +1,8 @@
 import pandas as pd
 import os
 
-input_path = "Dataset(s)/FusionTech Online Reviews.csv"
-output_path = "Dataset(s)/FusionTech_2014_06_to_2022_06.csv"
+input_path = "Dataset_Scripts/CSV_Files/FusionTech Online Reviews.csv"
+output_path = "Dataset_Scripts/CSV_Files/FusionTech_2014_06_to_2022_06.csv"
 
 start_date = "2014-06-01"
 end_date = "2022-06-30"

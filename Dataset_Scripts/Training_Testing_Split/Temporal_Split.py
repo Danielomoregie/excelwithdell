@@ -2,8 +2,8 @@ import pandas as pd
 import os
 
 # Paths
-input_path = "Dataset(s)/FusionTech_2014_06_to_2022_06_final.csv"
-output_folder = "Dataset(s)/Training_Testing_Split"
+input_path = "Dataset_Scripts/CSV_Files/FusionTech_2014_06_to_2022_06_final.csv"
+output_folder = "Dataset_Scripts/Training_Testing_Split"
 
 train_path = os.path.join(output_folder, "cleaned_train_80_percent.csv")
 test_path = os.path.join(output_folder, "cleaned_test_20_percent.csv")
