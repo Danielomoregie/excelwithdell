@@ -1,6 +1,6 @@
-# Excel with Dell
+# Excel with Dell (Team 7)
 ---
-## Team 7
+## Members
 
 **Daniel Omoregie**  
 University of Houston  
@@ -17,7 +17,8 @@ Northeastern University
 **Mayank V Konduri**  
 The University of Texas at Austin  
 
----
+-
+
 ## Dell Advisors
 
 **Mr. Bryan Kemp**  
