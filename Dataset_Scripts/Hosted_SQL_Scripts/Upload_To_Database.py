@@ -83,12 +83,45 @@ df.columns = [
     for col in df.columns
 ]
 
-# CREATE TABLE (use CSV columns only)
-columns = ", ".join([f'"{col}" TEXT' for col in df.columns])
+# ASK USER FOR COLUMN DATATYPES
+allowed_types = [
+    "TEXT",
+    "INTEGER",
+    "BIGINT",
+    "FLOAT",
+    "BOOLEAN",
+    "TIMESTAMP",
+    "DATE"
+]
+
+print("\nAvailable Datatypes:\n")
+for i, dtype in enumerate(allowed_types):
+    print(f"{i + 1}. {dtype}")
+
+print("\nChoose datatype for each column:\n")
+
+column_types = {}
+
+for col in df.columns:
+    while True:
+        try:
+            choice = int(input(f"{col} → Enter datatype number: "))
+            if 1 <= choice <= len(allowed_types):
+                column_types[col] = allowed_types[choice - 1]
+                break
+            else:
+                print("Invalid selection. Try again.")
+        except ValueError:
+            print("Please enter a valid number.")
+
+# CREATE TABLE WITH CHOSEN TYPES
+columns_sql = ", ".join(
+    [f'"{col}" {column_types[col]}' for col in df.columns]
+)
 
 cur.execute(f"""
 CREATE TABLE {table_name} (
-    {columns}
+    {columns_sql}
 );
 """)
 
