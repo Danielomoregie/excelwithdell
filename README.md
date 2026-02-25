@@ -1,4 +1,4 @@
-# Excel with Dell - Team 7
+# Excel with Dell
 ---
 ## Team 7
 
