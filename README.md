@@ -81,7 +81,7 @@ This installs all required packages for the project.
 
 ---
 
-# 5️⃣ Test the Project (No Neon Required)
+## 5️⃣ Test the Project (No Neon Required)
 
 You can run core project files without setting up Neon.
 
