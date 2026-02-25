@@ -22,7 +22,10 @@ The University of Texas at Austin
 ## Dell Advisors
 
 **Mr. Bryan Kemp**  
+Enterprise Technology Principal Engineer at Dell, Inc.
+
 **Mrs. Sarah Edwards**
+Project/Program Manager, Global L&D Strategy and Planning
 
 ---
 
@@ -77,7 +80,7 @@ When VS Code opens:
 With the virtual environment activated:
 
 ```bash
-`python -m pip install -r requirements.txt`
+python -m pip install -r requirements.txt
 ```
 
 This installs all required packages for the project.
