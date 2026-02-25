@@ -25,7 +25,6 @@ The University of Texas at Austin
 Enterprise Technology Principal Engineer at Dell, Inc.
 
 **Mrs. Sarah Edwards**
-
 Project/Program Manager, Global L&D Strategy and Planning
 
 ---
