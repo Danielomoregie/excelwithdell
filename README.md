@@ -67,7 +67,7 @@ Then:
 
 When VS Code opens:
 
-- Keep the 'src' project folder open
+- Keep the `src` project folder open
 - Close all other folders
 
 ---
@@ -76,7 +76,7 @@ When VS Code opens:
 
 With the virtual environment activated:
 
-python -m pip install -r requirements.txt
+`python -m pip install -r requirements.txt`
 
 This installs all required packages for the project.
 
