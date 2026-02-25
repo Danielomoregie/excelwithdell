@@ -1,6 +1,6 @@
 # Excel with Dell (Team 7)
 ---
-## Members
+## Team Members
 
 **Daniel Omoregie**  
 University of Houston  
