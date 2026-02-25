@@ -31,7 +31,7 @@ Follow these steps to get the project running locally.
 
 ---
 
-# 1️⃣ Install VS Code
+## 1️⃣ Install VS Code
 
 Download and install:
 
@@ -48,7 +48,7 @@ Open VS Code → Extensions → Install:
   
 ---
 
-# 2️⃣ Install GitHub Desktop
+## 2️⃣ Install GitHub Desktop
 
 Download:
 
@@ -62,7 +62,7 @@ Then:
 
 ---
 
-# 3️⃣ Open the Project Properly
+## 3️⃣ Open the Project Properly
 
 When VS Code opens:
 
@@ -71,7 +71,7 @@ When VS Code opens:
 
 ---
 
-# 4️⃣ Install Dependencies
+## 4️⃣ Install Dependencies
 
 With the virtual environment activated:
 
@@ -100,7 +100,7 @@ If you see errors, make sure:
 
 ---
 
-# 6️⃣ (Optional) Set Up Neon Database
+## 6️⃣ (Optional) Set Up Neon Database
 
 ⚠ This step is ONLY required if you want to:
 - Visualize the datasets
