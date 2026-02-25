@@ -27,7 +27,7 @@ Enterprise Technology Principal Engineer at Dell, Inc.
 **Mrs. Sarah Edwards**  
 Project/Program Manager, Global L&D Strategy and Planning
 
-<hr style="height:6px;border:none;background-color:black;">
+---
 
 # Project Setup Guide
 
