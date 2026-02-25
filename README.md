@@ -76,7 +76,9 @@ When VS Code opens:
 
 With the virtual environment activated:
 
+```bash
 `python -m pip install -r requirements.txt`
+```
 
 This installs all required packages for the project.
 
