@@ -88,13 +88,15 @@ You can run core project files without setting up Neon.
 
 To test the base setup (click the play button in the file):
 
-Hello_World.py
+`Hello_World.py`
 
 If everything is installed correctly, you should see:
 
+```bash
 Connected to Neon Hosted Server!
 Hello World!
 Thank you for being responsible! :)
+```
 
 If you see errors, make sure:
 - You ran `python -m pip install -r requirements.txt`
