@@ -24,8 +24,7 @@ The University of Texas at Austin
 **Mr. Bryan Kemp**  
 Enterprise Technology Principal Engineer at Dell, Inc.
 
-**Mrs. Sarah Edwards**
-
+**Mrs. Sarah Edwards**<br>
 Project/Program Manager, Global L&D Strategy and Planning
 
 ---
