@@ -5,3 +5,8 @@ numpy
 scikit-learn
 matplotlib
 seaborn
+xgboost>=1.7.0
+shap>=0.41.0
+streamlit>=1.28.0
+altair>=5.0.0
+sqlalchemy>=2.0.0

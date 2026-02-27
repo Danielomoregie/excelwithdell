@@ -147,4 +147,33 @@ Once added:
 
 Note: No need to create a `.env` file, it is already included in this repository.
 
+---
+
+## AI Product Risk Management System (ML Pipeline)
+
+Enterprise-ready Revenue-Weighted Product Risk Engine with temporal split, feature engineering, and explainability.
+
+### Run the pipeline
+
+```bash
+python run_pipeline.py
+```
+
+Outputs are saved to `ml_pipeline/outputs/`:
+- `trained_model.pkl` – trained model for reload
+- `feature_importance.csv` – feature rankings
+- `monthly_risk_predictions.csv` – risk scores by product × month
+- `revenue_impact_summary.csv` – revenue exposure & savings
+- `risk_trend.png`, `confusion_matrix.png` – visualizations
+
+### Run the Streamlit interface
+
+```bash
+python -m streamlit run ml_pipeline/app.py
+```
+
+Then open http://localhost:8501 in your browser. Use the sidebar to run the full pipeline, view predictions, revenue impact, feature importance, and synthetic ticket simulations.
+
+---
+
 You're now ready to work on the project 🚀
