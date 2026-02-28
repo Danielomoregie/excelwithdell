@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FusionTech Product Risk Dashboard</title>
+    <link rel="stylesheet" href="/static/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-text">
+                <h1>FusionTech Product Risk Dashboard</h1>
+                <p class="subtitle">AI-Powered Real-Time Review Intelligence &mdash; Team 7</p>
+            </div>
+            <button id="theme-toggle" class="theme-toggle" title="Switch to light mode">&#9728;&#65039; Light Mode</button>
+        </div>
+    </header>
+
+    <!-- KPI Summary Cards -->
+    <section class="kpi-section">
+        <div class="kpi-card">
+            <div class="kpi-icon">&#128230;</div>
+            <div class="kpi-value" id="kpi-products">--</div>
+            <div class="kpi-label">Products Monitored</div>
+            <div class="kpi-desc">Active products being tracked by AI</div>
+        </div>
+        <div class="kpi-card kpi-critical">
+            <div class="kpi-icon">&#128680;</div>
+            <div class="kpi-value" id="kpi-critical">--</div>
+            <div class="kpi-label">High / Critical Alerts</div>
+            <div class="kpi-desc">Products that need immediate attention</div>
+        </div>
+        <div class="kpi-card kpi-revenue">
+            <div class="kpi-icon">&#128176;</div>
+            <div class="kpi-value" id="kpi-revenue">--</div>
+            <div class="kpi-label">Monthly Revenue at Risk</div>
+            <div class="kpi-desc">Estimated revenue affected by poor reviews</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon">&#128172;</div>
+            <div class="kpi-value" id="kpi-reviews">--</div>
+            <div class="kpi-label">Reviews Analyzed</div>
+            <div class="kpi-desc">Total customer reviews read by the AI</div>
+        </div>
+    </section>
+
+    <!-- Alerts Banner (shown only when there are critical/high alerts) -->
+    <section class="alerts-section" id="alerts-section" style="display:none;">
+        <h2>&#128680; Active Alerts</h2>
+        <div id="alerts-container"></div>
+    </section>
+
+    <!-- ===== CHARTS SECTION (moved above the table) ===== -->
+    <section class="section-block">
+        <div class="section-header">
+            <h2>&#128202; Performance Overview</h2>
+            <p class="section-desc">These charts give you a quick snapshot of how customers are feeling and what they're complaining about — no technical background needed to read them.</p>
+        </div>
+
+        <div class="charts-grid">
+
+            <!-- Chart 1: Sentiment over time -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>Are Customers Getting Happier or Angrier?</h3>
+                    <p class="chart-description">
+                        The <span class="legend-dot blue"></span><strong>blue line</strong> shows the overall customer mood each month — higher means happier.
+                        The <span class="legend-dot red"></span><strong>red line</strong> shows what percentage of reviews that month were negative.
+                    </p>
+                </div>
+                <canvas id="sentiment-chart"></canvas>
+            </div>
+
+            <!-- Chart 2: Review volume -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>How Many Reviews Came In Each Month?</h3>
+                    <p class="chart-description">
+                        A sudden spike in reviews can be a warning sign — it may mean a product went viral for the <em>wrong</em> reasons. A steady volume is normal and healthy.
+                    </p>
+                </div>
+                <canvas id="volume-chart"></canvas>
+            </div>
+
+            <!-- Chart 3: Complaint themes -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>What Are Customers Most Upset About?</h3>
+                    <p class="chart-description">
+                        These are the most common problems mentioned across <em>all</em> negative reviews. The longer the bar, the more customers are complaining about that specific issue.
+                    </p>
+                </div>
+                <canvas id="themes-chart"></canvas>
+            </div>
+
+            <!-- Chart 4: Revenue at risk -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>Which Products Have the Most Money at Stake?</h3>
+                    <p class="chart-description">
+                        Products with higher risk scores are estimated to be losing more revenue each month. These are the ones that need the most urgent action.
+                    </p>
+                </div>
+                <canvas id="revenue-chart"></canvas>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ===== PRODUCT RISK TABLE (below charts) ===== -->
+    <section class="section-block">
+        <div class="section-header">
+            <h2>&#128269; Product Risk Scores</h2>
+            <p class="section-desc">
+                Every product ranked by AI-calculated risk. <strong>Click any row</strong> to see the full breakdown — complaint themes, star rating history, and recent negative reviews.
+                <br>
+                <span class="score-guide">
+                    <span class="guide-item"><span class="dot green"></span> 0&ndash;24 = Low risk</span>
+                    <span class="guide-item"><span class="dot yellow"></span> 25&ndash;49 = Moderate</span>
+                    <span class="guide-item"><span class="dot orange"></span> 50&ndash;74 = High</span>
+                    <span class="guide-item"><span class="dot red"></span> 75&ndash;100 = Critical</span>
+                </span>
+            </p>
+        </div>
+
+        <div class="table-controls">
+            <input type="text" id="search-input" placeholder="Search by product name..." class="search-input">
+            <select id="filter-alert" class="filter-select">
+                <option value="all">All Alert Levels</option>
+                <option value="CRITICAL">&#128308; Critical (75&ndash;100)</option>
+                <option value="HIGH">&#128992; High (50&ndash;74)</option>
+                <option value="MODERATE">&#128993; Moderate (25&ndash;49)</option>
+                <option value="LOW">&#128994; Low (0&ndash;24)</option>
+            </select>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="products-table">
+                <thead>
+                    <tr>
+                        <th data-sort="rank">#</th>
+                        <th data-sort="product_name">Product Name</th>
+                        <th data-sort="risk_score" class="active-sort">Risk Score &#8597;</th>
+                        <th data-sort="alert_level">Alert Level</th>
+                        <th>Main Complaints</th>
+                        <th data-sort="review_count">Reviews</th>
+                        <th data-sort="average_rating">Avg Rating</th>
+                        <th data-sort="revenue">Revenue at Risk / mo</th>
+                    </tr>
+                </thead>
+                <tbody id="products-tbody"></tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            <button id="show-more-btn" class="show-more-btn" style="display:none;">Show More Products &#8595;</button>
+            <span id="table-count" class="table-count"></span>
+        </div>
+    </section>
+
+    <!-- Product Detail Modal -->
+    <div id="product-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="modal-close" id="modal-close">&times;</span>
+            <h2 id="modal-title">Product Detail</h2>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Chatbot / AI Assistant -->
+    <section class="section-block">
+        <div class="section-header">
+            <h2>&#129302; Ask the AI Assistant</h2>
+            <p class="section-desc">
+                Ask a question in plain English and get an instant answer. You don't need to know any tech — just type what you want to know.
+                <br><em>Examples: "How is the gaming laptop doing?" &nbsp;&bull;&nbsp; "Which product has overheating problems?" &nbsp;&bull;&nbsp; "What's our biggest risk right now?"</em>
+            </p>
+        </div>
+        <div class="chatbot-container">
+            <div class="chatbot-input-row">
+                <input type="text" id="chatbot-input"
+                    placeholder="e.g. 'How is the Worktop 15 doing?' or 'Any battery complaints?'"
+                    class="chatbot-input">
+                <button id="chatbot-btn" class="chatbot-btn">Ask AI</button>
+            </div>
+            <div id="chatbot-response" class="chatbot-response"></div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>FusionTech Product Risk Management System &nbsp;&bull;&nbsp; Team 7 &mdash; Excel with Dell 2026</p>
+    </footer>
+
+    <script src="/static/dashboard.js"></script>
+</body>
+</html>
