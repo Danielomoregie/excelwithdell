@@ -32,8 +32,6 @@ def close_connection(conn):
 # Example Function (if we wanted to return a row given name of dataset and index):
 # Idea is to show how to code such helper functions:
 
-from psycopg2 import sql
-
 def get_row_by_index(table_name, row_index, conn):
     """
     Fetch a single row ordered chronologically by date.
@@ -66,18 +64,33 @@ def get_user_by_email(email, conn):
     Fetch user profile by email.
     Returns dict with user data or None if not found.
     """
-    query = """
-        SELECT user_id, first_name, last_name, email, department, 
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT user_id, first_name, last_name, email, department,
                sub_department, location, created_at, updated_at
         FROM users
         WHERE email = %s;
-    """
-    df = pd.read_sql(query, conn, params=(email,))
-    
-    if df.empty:
+        """,
+        (email,)
+    )
+    row = cursor.fetchone()
+    cursor.close()
+
+    if not row:
         return None
-    
-    return df.iloc[0].to_dict()
+
+    return {
+        'user_id': str(row[0]),
+        'first_name': row[1],
+        'last_name': row[2],
+        'email': row[3],
+        'department': row[4],
+        'sub_department': row[5],
+        'location': row[6],
+        'created_at': row[7],
+        'updated_at': row[8],
+    }
 
 
 def create_user(first_name, last_name, email, department, sub_department=None, location=None, conn=None):
@@ -196,13 +209,25 @@ def get_departments(conn=None):
         should_close = True
     
     try:
-        df = pd.read_sql("""
+        cursor = conn.cursor()
+        cursor.execute(
+            """
             SELECT department_code, department_name, parent_department_code
             FROM departments
             ORDER BY department_name;
-        """, conn)
-        
-        return df.to_dict('records')
+            """
+        )
+        rows = cursor.fetchall()
+        cursor.close()
+
+        return [
+            {
+                'department_code': row[0],
+                'department_name': row[1],
+                'parent_department_code': row[2],
+            }
+            for row in rows
+        ]
     finally:
         if should_close:
             close_connection(conn)
@@ -227,7 +252,7 @@ def update_password(email, old_password, new_password, conn):
             SET password_hash = %s, updated_at = now()
             WHERE email = %s;
         """, (password_hash, email))
-        
+        cursor.close()
         conn.commit()
         return True
     except Exception as e:
@@ -270,11 +295,12 @@ def create_user_with_password(first_name, last_name, email, password, department
         """, (first_name, last_name, email, password_hash, department, sub_department, location))
         
         row = cursor.fetchone()
+        cursor.close()
         conn.commit()
         
         if row:
             return {
-                'user_id': row[0],
+                'user_id': str(row[0]),
                 'first_name': row[1],
                 'last_name': row[2],
                 'email': row[3],
@@ -299,20 +325,34 @@ def authenticate_user(email, password, conn):
     Authenticate a user with email and password.
     Returns user data if authentication successful, None otherwise.
     """
-    user = get_user_by_email(email, conn)
-    if not user:
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT user_id, first_name, last_name, email, department,
+               sub_department, location, created_at, updated_at, password_hash
+        FROM users
+        WHERE email = %s;
+        """,
+        (email,)
+    )
+    row = cursor.fetchone()
+    cursor.close()
+
+    if not row:
         return None
-    
-    # Get password hash from database
-    query = "SELECT password_hash FROM users WHERE email = %s;"
-    df = pd.read_sql(query, conn, params=(email,))
-    
-    if df.empty:
+
+    password_hash = row[9]
+    if not password_hash or not verify_password(password, password_hash):
         return None
-    
-    password_hash = df.iloc[0]['password_hash']
-    
-    if verify_password(password, password_hash):
-        return user
-    else:
-        return None
+
+    return {
+        'user_id': str(row[0]),
+        'first_name': row[1],
+        'last_name': row[2],
+        'email': row[3],
+        'department': row[4],
+        'sub_department': row[5],
+        'location': row[6],
+        'created_at': row[7],
+        'updated_at': row[8],
+    }

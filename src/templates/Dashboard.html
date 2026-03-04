@@ -13,7 +13,14 @@
     <header class="header">
         <div class="header-content">
             <div class="header-left">
-                <img src="/static/fusiontech_logo_compact.svg" alt="FusionTech Systems" class="header-logo">
+                <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open navigation" title="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <a href="/" aria-label="Go to dashboard home">
+                    <img src="/static/fusiontech_logo_compact.svg" alt="FusionTech Systems" class="header-logo">
+                </a>
                 <div class="header-text">
                     <h1>Product Risk Dashboard</h1>
                     <p class="subtitle">AI-Powered Real-Time Review Intelligence</p>
@@ -45,6 +52,29 @@
             </div>
         </div>
     </header>
+
+    <aside class="side-drawer" id="sideDrawer" aria-hidden="true">
+        <div class="side-drawer-header">
+            <h3>Navigation</h3>
+        </div>
+        <nav class="side-drawer-nav">
+            <a href="/" class="side-drawer-item active" id="dashboardNavItem">
+                <span class="side-drawer-item-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="/raw-dataset" class="side-drawer-item" id="rawReviewNavItem">
+                <span class="side-drawer-item-icon">📋</span>
+                <span>Raw Reviews</span>
+            </a>
+        </nav>
+    </aside>
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+
+    <!-- Greeting Section -->
+    <section class="greeting-section">
+        <h2 class="greeting-text" id="greetingText">Good Morning, <span id="greetingName">{{ user.first_name if user else 'User' }}</span></h2>
+        <p class="greeting-date" id="greetingDate">Loading...</p>
+    </section>
 
     <!-- KPI Summary Cards -->
     <section class="kpi-section">
@@ -226,7 +256,7 @@
                     <input type="text" id="editLocation" name="location" placeholder="Optional">
                 </div>
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;">
-                <h3 style="margin-top: 20px; margin-bottom: 16px; font-size: 16px; color: #1e293b;">Change Password (Optional)</h3>
+                <h3 style="margin-top: 20px; margin-bottom: 16px; font-size: 16px; color: #ffffff;">Change Password (Optional)</h3>
                 <div class="form-group">
                     <label for="editNewPassword">New Password</label>
                     <input type="password" id="editNewPassword" name="newPassword" placeholder="Leave blank to keep current password" autocomplete="new-password">

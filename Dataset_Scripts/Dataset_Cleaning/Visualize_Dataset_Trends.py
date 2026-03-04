@@ -1,8 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-df = pd.read_csv("Dataset_Scripts/CSV_Files/FusionTech Online Reviews.csv") # original dataset
-#df = pd.read_csv("Dataset_Scripts/CSV_Files/FusionTech_2014_06_to_2022_06.csv")  # cleaned dataset
+df = pd.read_csv("Dataset_Scripts/CSV_Files/FusionTech Online Reviews_Initial.csv") # original dataset
+#df = pd.read_csv("Dataset_Scripts/CSV_Files/FusionTech_2014_06_to_2022_06_Initial.csv")  # cleaned dataset
 
 df["date"] = pd.to_datetime(df["timestamp"] / 1000, unit="s")
 df["year_month"] = df["date"].dt.to_period("M")

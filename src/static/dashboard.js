@@ -19,12 +19,75 @@ let sentimentChart, volumeChart, themesChart, revenueChart;
 
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
+    setGreeting();
     loadDashboard();
     loadProducts();
     loadTrends();
     setupEventListeners();
     setupHeaderScroll();
 });
+
+// ============================================================
+//  GREETING & DATE
+// ============================================================
+
+function setGreeting() {
+    const now = new Date();
+    const hours = now.getHours();
+    
+    // Determine greeting based on time
+    let greeting;
+    if (hours >= 2 && hours < 12) {
+        greeting = 'Good Morning';
+    } else if (hours >= 12 && hours < 17.5) { // 5:30 PM = 17.5 hours
+        greeting = 'Good Afternoon';
+    } else {
+        greeting = 'Good Evening';
+    }
+    
+    // Get day name
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = days[now.getDay()];
+    
+    // Get month name
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                    'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthName = months[now.getMonth()];
+    
+    // Get day with ordinal suffix (1st, 2nd, 3rd, 4th, etc.)
+    const day = now.getDate();
+    const ordinal = getOrdinalSuffix(day);
+    
+    // Get year
+    const year = now.getFullYear();
+    
+    // Format: "Tuesday, March 4th, 2026"
+    const dateString = `${dayName}, ${monthName} ${day}${ordinal}, ${year}`;
+    
+    // Update the DOM
+    const greetingTextEl = document.getElementById('greetingText');
+    const greetingDateEl = document.getElementById('greetingDate');
+    const greetingNameEl = document.getElementById('greetingName');
+    
+    if (greetingTextEl && greetingNameEl) {
+        const userName = greetingNameEl.textContent;
+        greetingTextEl.innerHTML = `${greeting}, <span id="greetingName">${userName}</span>`;
+    }
+    
+    if (greetingDateEl) {
+        greetingDateEl.textContent = dateString;
+    }
+}
+
+function getOrdinalSuffix(day) {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+        case 1: return 'st';
+        case 2: return 'nd';
+        case 3: return 'rd';
+        default: return 'th';
+    }
+}
 
 // ============================================================
 //  HEADER SCROLL BEHAVIOR
@@ -126,6 +189,39 @@ function setupEventListeners() {
 
     // Theme toggle
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
+    // Side drawer
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const sideDrawer = document.getElementById('sideDrawer');
+    const drawerBackdrop = document.getElementById('drawerBackdrop');
+
+    hamburgerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = sideDrawer.classList.toggle('open');
+        hamburgerBtn.classList.toggle('active', isOpen);
+        drawerBackdrop.classList.toggle('show', isOpen);
+        sideDrawer.setAttribute('aria-hidden', String(!isOpen));
+    });
+
+    drawerBackdrop.addEventListener('click', closeSideDrawer);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeSideDrawer();
+        }
+    });
+}
+
+function closeSideDrawer() {
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const sideDrawer = document.getElementById('sideDrawer');
+    const drawerBackdrop = document.getElementById('drawerBackdrop');
+    if (!hamburgerBtn || !sideDrawer || !drawerBackdrop) return;
+
+    sideDrawer.classList.remove('open');
+    hamburgerBtn.classList.remove('active');
+    drawerBackdrop.classList.remove('show');
+    sideDrawer.setAttribute('aria-hidden', 'true');
 }
 
 // ============================================================

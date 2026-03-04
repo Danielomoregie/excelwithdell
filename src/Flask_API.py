@@ -1,8 +1,11 @@
 import os
 import pickle
 import pandas as pd
+import re
+import math
 from flask import Flask, jsonify, request, render_template, session, redirect, url_for
 from functools import wraps
+from psycopg2 import sql
 
 from Sentiment_Analyzer import analyze_sentiment, clean_review_text
 from Theme_Extractor import classify_review_themes, COMPLAINT_CATEGORIES
@@ -91,6 +94,213 @@ def load_artifacts():
 def dashboard():
     user = get_current_user()
     return render_template("Dashboard.html", user=user)
+
+
+@app.route("/raw-dataset")
+@require_profile
+def raw_dataset_page():
+    user = get_current_user()
+    return render_template("raw_dataset.html", user=user)
+
+
+RAW_DATASET_ALLOWED_TABLES = [
+    "online_reviews",
+]
+
+
+def _list_public_tables(conn):
+        cursor = conn.cursor()
+        cursor.execute(
+                """
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                    AND table_type = 'BASE TABLE'
+                ORDER BY table_name;
+                """
+        )
+        tables = [str(row[0]) for row in cursor.fetchall()]
+        cursor.close()
+        return tables
+
+
+@app.route("/api/raw-dataset/tables")
+@require_profile
+def raw_dataset_tables():
+    conn = get_connection()
+    try:
+        available = set(_list_public_tables(conn))
+        tables = [table for table in RAW_DATASET_ALLOWED_TABLES if table in available]
+        return jsonify({
+            "status": "success",
+            "tables": tables,
+        })
+    finally:
+        close_connection(conn)
+
+
+@app.route("/api/raw-dataset/data")
+@require_profile
+def raw_dataset_data():
+    table = (request.args.get("table") or "").strip()
+
+    try:
+        limit = int(request.args.get("limit", 100))
+    except ValueError:
+        limit = 100
+    limit = max(1, min(limit, 500))
+
+    try:
+        offset = int(request.args.get("offset", 0))
+    except ValueError:
+        offset = 0
+    offset = max(0, offset)
+
+    if not table:
+        return jsonify({"status": "error", "message": "table is required"}), 400
+
+    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", table):
+        return jsonify({"status": "error", "message": "Invalid table name"}), 400
+
+    if table not in RAW_DATASET_ALLOWED_TABLES:
+        return jsonify({"status": "error", "message": "Only allowed datasets are available here"}), 403
+
+    conn = get_connection()
+    result_columns = []
+    fetched_rows = []
+    total_rows = 0
+    try:
+        available_tables = set(_list_public_tables(conn))
+        if table not in available_tables:
+            return jsonify({"status": "error", "message": "Table not found"}), 404
+
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = %s
+            ORDER BY ordinal_position;
+            """,
+            (table,)
+        )
+        columns = [str(row[0]) for row in cursor.fetchall()]
+        if not columns:
+            cursor.close()
+            return jsonify({
+                "status": "success",
+                "table": table,
+                "columns": [],
+                "rows": [],
+                "total_rows": 0,
+                "returned_rows": 0,
+                "offset": offset,
+                "limit": limit,
+            })
+
+        table_ident = sql.Identifier(table)
+        where_conditions = []
+        params = []
+
+        # Process column-specific filters
+        for key, value in request.args.items():
+            if key.startswith('filter_') and value:
+                # Extract column name from filter key
+                filter_key = key[7:]  # Remove 'filter_' prefix
+                
+                if filter_key.endswith('_min'):
+                    # Range filter minimum
+                    col_name = filter_key[:-4]
+                    if col_name in columns:
+                        max_val = request.args.get(f'filter_{col_name}_max')
+                        if max_val:
+                            where_conditions.append(
+                                sql.SQL("{col} >= %s AND {col} <= %s").format(col=sql.Identifier(col_name))
+                            )
+                            params.extend([float(value), float(max_val)])
+                elif filter_key.endswith('_op'):
+                    # Operator-based filter
+                    continue  # Handled with the main filter
+                elif filter_key.endswith('_max'):
+                    # Skip, already handled with _min
+                    continue
+                else:
+                    # Check if there's an operator
+                    op = request.args.get(f'filter_{filter_key}_op', '')
+                    if op and op in ['=', '>', '<', '>=', '<=']:
+                        where_conditions.append(
+                            sql.SQL("{col} " + op + " %s").format(col=sql.Identifier(filter_key))
+                        )
+                        params.append(float(value) if op != '=' else value)
+                    elif filter_key in columns:
+                        # Text search
+                        where_conditions.append(
+                            sql.SQL("CAST({col} AS TEXT) ILIKE %s").format(col=sql.Identifier(filter_key))
+                        )
+                        params.append(f"%{value}%")
+
+        where_clause = sql.SQL("")
+        if where_conditions:
+            where_clause = sql.SQL(" WHERE ") + sql.SQL(" AND ").join(where_conditions)
+
+        # Default sort by timestamp DESC
+        order_clause = sql.SQL(" ORDER BY timestamp DESC") if 'timestamp' in columns else sql.SQL("")
+
+        count_query = sql.SQL("SELECT COUNT(*) FROM {table}{where}").format(
+            table=table_ident,
+            where=where_clause,
+        )
+        cursor.execute(count_query, params)
+        total_rows = cursor.fetchone()[0]
+
+        data_query = sql.SQL("SELECT * FROM {table}{where}{order} LIMIT %s OFFSET %s").format(
+            table=table_ident,
+            where=where_clause,
+            order=order_clause,
+        )
+        data_params = params + [limit, offset]
+        cursor.execute(data_query, data_params)
+        fetched_rows = cursor.fetchall()
+        result_columns = [desc[0] for desc in cursor.description]
+        cursor.close()
+    except Exception as exc:
+        return jsonify({"status": "error", "message": f"Failed to query table rows: {str(exc)}"}), 500
+    finally:
+        close_connection(conn)
+
+    rows = []
+    for row in fetched_rows:
+        row_dict = {}
+        for idx, col_name in enumerate(result_columns):
+            value = row[idx]
+            try:
+                if pd.isna(value):
+                    value = None
+            except Exception:
+                pass
+            if hasattr(value, 'isoformat'):
+                value = value.isoformat()
+            elif isinstance(value, memoryview):
+                value = value.tobytes().hex()
+            elif isinstance(value, (bytes, bytearray)):
+                value = value.hex()
+            elif isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+                value = None
+            elif value is not None and not isinstance(value, (str, int, float, bool, list, dict)):
+                value = str(value)
+            row_dict[col_name] = value
+        rows.append(row_dict)
+
+    return jsonify({
+        "status": "success",
+        "table": table,
+        "columns": result_columns,
+        "rows": rows,
+        "total_rows": total_rows,
+        "returned_rows": len(rows),
+        "offset": offset,
+        "limit": limit,
+    })
 
 
 # ==============================
