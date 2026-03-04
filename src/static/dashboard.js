@@ -175,11 +175,15 @@ function setupEventListeners() {
         }
     });
 
-    // Chatbot
-    document.getElementById('chatbot-btn').addEventListener('click', askChatbot);
-    document.getElementById('chatbot-input').addEventListener('keydown', e => {
-        if (e.key === 'Enter') askChatbot();
-    });
+    // AI Assistant - Enable/Disable button based on input
+    const aiInput = document.getElementById('chatbot-input');
+    const aiBtn = document.getElementById('chatbot-btn');
+    
+    if (aiInput && aiBtn) {
+        aiInput.addEventListener('input', () => {
+            aiBtn.disabled = aiInput.value.trim() === '';
+        });
+    }
 
     // Show-more / show-less
     document.getElementById('show-more-btn').addEventListener('click', () => {
@@ -894,32 +898,6 @@ function renderRevenueChart(products) {
             },
         },
     });
-}
-
-// ============================================================
-//  CHATBOT
-// ============================================================
-
-async function askChatbot() {
-    const input = document.getElementById('chatbot-input');
-    const resp  = document.getElementById('chatbot-response');
-    const q     = input.value.trim();
-    if (!q) return;
-
-    resp.className   = 'chatbot-response active';
-    resp.textContent = 'Analyzing\u2026';
-
-    try {
-        const data = await fetchJSON(`/api/chatbot?q=${encodeURIComponent(q)}`);
-        if (data && data.status === 'success') {
-            resp.textContent = data.response;
-            resp.style.borderLeftColor = alertColor(data.alert_level);
-        } else {
-            resp.textContent = (data && data.message) || 'Could not process your question. Try rephrasing it!';
-        }
-    } catch (e) {
-        resp.textContent = 'Failed to connect. Please try again.';
-    }
 }
 
 // ============================================================

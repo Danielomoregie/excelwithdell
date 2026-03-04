@@ -4,6 +4,7 @@ let currentTable = '';
 let currentTotal = 0;
 let currentColumns = [];
 let activeFilters = {};
+let currentRows = []; // Store current rows for modal access
 
 // Table display name mapping
 const TABLE_DISPLAY_NAMES = {
@@ -45,6 +46,7 @@ function getTableDisplayName(tableName) {
 document.addEventListener('DOMContentLoaded', () => {
     setupDrawer();
     setupControls();
+    setupModal();
     loadTables();
 });
 
@@ -382,15 +384,27 @@ function renderTable(columns, rows) {
         return;
     }
 
-    body.innerHTML = rows.map((row) => {
+    // Store rows for modal access
+    currentRows = rows;
+
+    body.innerHTML = rows.map((row, index) => {
         const cells = columns.map((col) => {
             const value = row[col];
             const displayValue = value === null || value === undefined ? '' : String(value);
             const className = col === 'date_time' ? ' class="datetime-column"' : '';
             return `<td${className} title="${escapeHtml(displayValue)}">${escapeHtml(displayValue)}</td>`;
         }).join('');
-        return `<tr>${cells}</tr>`;
+        return `<tr data-row-index="${index}">${cells}</tr>`;
     }).join('');
+
+    // Add click event listeners to rows
+    const tableRows = body.querySelectorAll('tr[data-row-index]');
+    tableRows.forEach(row => {
+        row.addEventListener('click', () => {
+            const rowIndex = parseInt(row.getAttribute('data-row-index'));
+            openReviewModal(currentRows[rowIndex]);
+        });
+    });
 }
 
 function updatePagination() {
@@ -409,4 +423,179 @@ function escapeHtml(text) {
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#039;');
+}
+
+// ============================================================
+//  MODAL FUNCTIONS
+// ============================================================
+
+function openReviewModal(rowData) {
+    const modal = document.getElementById('reviewModal');
+    const modalBody = document.getElementById('modalBody');
+    
+    if (!rowData) return;
+
+    // Generate modal content
+    const detailsHtml = generateModalContent(rowData);
+    modalBody.innerHTML = detailsHtml;
+    
+    // Show modal
+    modal.classList.add('show');
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+}
+
+function closeReviewModal() {
+    const modal = document.getElementById('reviewModal');
+    modal.classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+function generateModalContent(data) {
+    const grid = document.createElement('div');
+    grid.className = 'detail-grid';
+    
+    // Iterate through all columns and create detail items
+    Object.entries(data).forEach(([key, value]) => {
+        // Skip null/undefined values or add them with "N/A"
+        const displayValue = value === null || value === undefined ? 'N/A' : value;
+        
+        const item = document.createElement('div');
+        item.className = 'detail-item';
+        
+        const label = document.createElement('span');
+        label.className = 'detail-label';
+        label.textContent = key.replace(/_/g, ' ').toUpperCase();
+        
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'detail-value';
+        
+        // Special handling for different data types
+        if (key === 'rating' || key === 'average_rating') {
+            const rating = parseFloat(displayValue);
+            valueSpan.className = 'detail-value rating';
+            const badge = getRatingBadge(rating);
+            valueSpan.innerHTML = `${rating} ${badge}`;
+        } else if (key === 'date_time') {
+            valueSpan.className = 'detail-value datetime-value';
+            valueSpan.textContent = displayValue;
+        } else if (key === 'text' || key === 'title_x' || key === 'title_y' || key === 'features') {
+            // Long text fields
+            const textDiv = document.createElement('div');
+            textDiv.className = 'long-text';
+            textDiv.textContent = displayValue;
+            valueSpan.appendChild(textDiv);
+        } else if (typeof displayValue === 'number' || !isNaN(displayValue)) {
+            // Numbers
+            valueSpan.className = 'detail-value number';
+            valueSpan.textContent = displayValue;
+        } else {
+            // Regular text
+            valueSpan.textContent = displayValue;
+        }
+        
+        item.appendChild(label);
+        item.appendChild(valueSpan);
+        
+        // Add copy button for ASIN, User ID, and other IDs
+        if (key === 'asin' || key === 'user_id' || key === 'id') {
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-btn';
+            copyBtn.textContent = 'Copy';
+            copyBtn.onclick = () => copyToClipboard(displayValue, copyBtn);
+            valueSpan.appendChild(copyBtn);
+        }
+        
+        grid.appendChild(item);
+    });
+    
+    return grid.outerHTML;
+}
+
+function getRatingBadge(rating) {
+    if (rating >= 4.5) {
+        return '<span class="rating-badge excellent">Excellent</span>';
+    } else if (rating >= 3.5) {
+        return '<span class="rating-badge good">Good</span>';
+    } else if (rating >= 2.5) {
+        return '<span class="rating-badge average">Average</span>';
+    } else if (rating >= 1.5) {
+        return '<span class="rating-badge poor">Poor</span>';
+    } else {
+        return '<span class="rating-badge bad">Bad</span>';
+    }
+}
+
+async function copyToClipboard(text, button) {
+    const value = text === null || text === undefined ? '' : String(text);
+    const originalText = button.textContent;
+
+    const showButtonState = (label, className = '', timeout = 1600) => {
+        button.textContent = label;
+        if (className) {
+            button.classList.add(className);
+        }
+        setTimeout(() => {
+            button.textContent = originalText;
+            button.classList.remove('copied');
+        }, timeout);
+    };
+
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(value);
+            showButtonState('Copied!', 'copied');
+            return;
+        }
+
+        const tempTextArea = document.createElement('textarea');
+        tempTextArea.value = value;
+        tempTextArea.setAttribute('readonly', '');
+        tempTextArea.style.position = 'fixed';
+        tempTextArea.style.opacity = '0';
+        tempTextArea.style.pointerEvents = 'none';
+        document.body.appendChild(tempTextArea);
+        tempTextArea.focus();
+        tempTextArea.select();
+
+        const copied = document.execCommand('copy');
+        document.body.removeChild(tempTextArea);
+
+        if (copied) {
+            showButtonState('Copied!', 'copied');
+        } else {
+            showButtonState('Failed');
+        }
+    } catch (err) {
+        console.error('Failed to copy:', err);
+        showButtonState('Failed');
+    }
+}
+
+// Setup modal event listeners
+function setupModal() {
+    const modal = document.getElementById('reviewModal');
+    const closeBtn = document.getElementById('closeModal');
+    
+    // Close on button click
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeReviewModal);
+    }
+    
+    // Close on backdrop click
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeReviewModal();
+            }
+        });
+    }
+    
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal && modal.classList.contains('show')) {
+            closeReviewModal();
+        }
+    });
 }
