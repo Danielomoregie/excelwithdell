@@ -2,6 +2,7 @@ from Neon_Accessibility_Helper_Functions import *
 
 conn = get_connection()
 print("Hello World!")
+print("Test")
 
 # File Names (use these names when calling functions!)
 # cleaned_test_20_percent.csv - Uploaded to Neon

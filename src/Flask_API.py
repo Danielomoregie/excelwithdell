@@ -1,13 +1,19 @@
 import os
 import pickle
 import pandas as pd
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, session, redirect, url_for
+from functools import wraps
 
 from Sentiment_Analyzer import analyze_sentiment, clean_review_text
 from Theme_Extractor import classify_review_themes, COMPLAINT_CATEGORIES
 from Risk_Score_Engine import _get_alert_level
 from Revenue_Impact_Calculator import (
     calculate_revenue_impact, calculate_portfolio_impact, format_currency
+)
+from Neon_Accessibility_Helper_Functions import (
+    get_connection, close_connection, get_user_by_email, 
+    create_user, update_user, get_departments,
+    hash_password, verify_password, authenticate_user, create_user_with_password, update_password
 )
 
 # ==============================
@@ -20,10 +26,49 @@ app = Flask(
     static_folder=os.path.join(os.path.dirname(__file__), "static"),
 )
 
+# Secret key for session management
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
+
 ARTIFACTS_PATH = os.path.join(os.path.dirname(__file__), "models", "Risk_Model_Artifacts.pkl")
 
 # Global artifacts (loaded on startup)
 artifacts = None
+
+
+def require_profile(f):
+    """Decorator to require user profile before accessing route."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_email' not in session:
+            return redirect(url_for('login_page'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def get_current_user():
+    """Get current logged-in user from session."""
+    if 'user_email' not in session:
+        return None
+    
+    conn = get_connection()
+    user = get_user_by_email(session['user_email'], conn)
+    close_connection(conn)
+    return user
+
+
+def filter_by_department(data, user):
+    """Filter dashboard data by user's department (scaffolding for future use).
+    
+    TODO: Implement department-specific filtering:
+    - Marketing: Focus on trends, summary metrics
+    - Engineering: Product quality signals, technical issues
+    - Finance: Revenue risk, KPI rollups
+    - Customer Support: Complaint themes, response times
+    
+    For now, returns data unfiltered.
+    """
+    # Placeholder for department-specific logic
+    return data
 
 
 def load_artifacts():
@@ -42,8 +87,227 @@ def load_artifacts():
 # ==============================
 
 @app.route("/")
+@require_profile
 def dashboard():
-    return render_template("Dashboard.html")
+    user = get_current_user()
+    return render_template("Dashboard.html", user=user)
+
+
+# ==============================
+# ROUTES - AUTHENTICATION & PROFILE
+# ==============================
+
+@app.route("/login")
+def login_page():
+    """Show login/registration page."""
+    return render_template("login.html")
+
+
+@app.route("/api/check_email", methods=["POST"])
+def check_email():
+    """Check if email exists. Does NOT log in - just returns exists status."""
+    body = request.get_json()
+    email = body.get("email", "").strip().lower()
+    
+    if not email:
+        return jsonify({"status": "error", "message": "Email required"}), 400
+    
+    # Validate FusionTech domain
+    if not email.endswith('@fusiontech.com'):
+        return jsonify({"status": "error", "message": "Please use your FusionTech Systems company email."}), 400
+    
+    conn = get_connection()
+    user = get_user_by_email(email, conn)
+    close_connection(conn)
+    
+    if user:
+        return jsonify({
+            "status": "success",
+            "exists": True
+        })
+    else:
+        return jsonify({
+            "status": "success",
+            "exists": False
+        })
+
+
+@app.route("/api/login", methods=["POST"])
+def login():
+    """Authenticate user with email and password."""
+    body = request.get_json()
+    email = body.get("email", "").strip().lower()
+    password = body.get("password", "")
+    
+    if not email or not password:
+        return jsonify({"status": "error", "message": "Email and password required"}), 400
+    
+    # Validate FusionTech domain
+    if not email.endswith('@fusiontech.com'):
+        return jsonify({"status": "error", "message": "Please use your FusionTech Systems company email."}), 400
+    
+    conn = get_connection()
+    user = authenticate_user(email, password, conn)
+    close_connection(conn)
+    
+    if user:
+        # Authentication successful
+        session['user_email'] = email
+        return jsonify({
+            "status": "success",
+            "user": {
+                "first_name": user['first_name'],
+                "last_name": user['last_name'],
+                "email": user['email'],
+                "department": user['department'],
+            }
+        })
+    else:
+        # Authentication failed
+        return jsonify({"status": "error", "message": "Invalid email or password"}), 401
+
+
+@app.route("/api/register", methods=["POST"])
+def register():
+    """Register a new user profile with password."""
+    body = request.get_json()
+    
+    required = ['email', 'first_name', 'last_name', 'department', 'password']
+    for field in required:
+        if not body.get(field):
+            return jsonify({"status": "error", "message": f"{field} is required"}), 400
+    
+    email = body['email'].strip().lower()
+    password = body['password']
+    
+    # Validate password strength
+    if len(password) < 8:
+        return jsonify({"status": "error", "message": "Password must be at least 8 characters"}), 400
+    
+    # Validate FusionTech domain
+    if not email.endswith('@fusiontech.com'):
+        return jsonify({"status": "error", "message": "Please use your FusionTech Systems company email."}), 400
+    
+    conn = get_connection()
+    
+    # Check if user already exists
+    existing = get_user_by_email(email, conn)
+    if existing:
+        close_connection(conn)
+        return jsonify({"status": "error", "message": "Email already registered"}), 400
+    
+    # Create user with password
+    user = create_user_with_password(
+        first_name=body['first_name'],
+        last_name=body['last_name'],
+        email=email,
+        password=password,
+        department=body['department'],
+        sub_department=body.get('sub_department'),
+        location=body.get('location'),
+        conn=conn
+    )
+    
+    close_connection(conn)
+    
+    if user:
+        session['user_email'] = user['email']
+        return jsonify({
+            "status": "success",
+            "user": {
+                "first_name": user['first_name'],
+                "last_name": user['last_name'],
+                "email": user['email'],
+                "department": user['department'],
+            }
+        })
+    else:
+        return jsonify({"status": "error", "message": "Failed to create user"}), 500
+
+
+@app.route("/api/profile")
+@require_profile
+def get_profile():
+    """Get current user's profile."""
+    user = get_current_user()
+    if not user:
+        return jsonify({"status": "error", "message": "Not logged in"}), 401
+    
+    return jsonify({
+        "status": "success",
+        "user": user
+    })
+
+
+@app.route("/api/profile", methods=["PUT"])
+@require_profile
+def update_profile():
+    """Update current user's profile and optionally change password."""
+    user = get_current_user()
+    if not user:
+        return jsonify({"status": "error", "message": "Not logged in"}), 401
+    
+    body = request.get_json()
+    
+    conn = get_connection()
+    
+    # Handle password change if provided
+    if body.get('new_password'):
+        # Validate password change fields
+        new_password = body.get('new_password', '').strip()
+        current_password = body.get('current_password', '').strip()
+        
+        if not new_password or not current_password:
+            close_connection(conn)
+            return jsonify({"status": "error", "message": "Both current and new password required"}), 400
+        
+        if len(new_password) < 8:
+            close_connection(conn)
+            return jsonify({"status": "error", "message": "New password must be at least 8 characters"}), 400
+        
+        # Verify current password and update
+        password_updated = update_password(user['email'], current_password, new_password, conn)
+        
+        if not password_updated:
+            close_connection(conn)
+            return jsonify({"status": "error", "message": "Invalid current password"}), 401
+    
+    # Update profile fields
+    success = update_user(
+        email=user['email'],
+        first_name=body.get('first_name'),
+        last_name=body.get('last_name'),
+        department=body.get('department'),
+        sub_department=body.get('sub_department'),
+        location=body.get('location'),
+        conn=conn
+    )
+    close_connection(conn)
+    
+    if success:
+        return jsonify({"status": "success", "message": "Profile updated"})
+    else:
+        return jsonify({"status": "error", "message": "Update failed"}), 500
+
+
+@app.route("/api/departments")
+def list_departments():
+    """Get list of available departments."""
+    conn = get_connection()
+    departments = get_departments(conn)
+    close_connection(conn)
+    
+    return jsonify({
+        "status": "success",
+        "departments": departments
+    })
+
+
+@app.route("/logout")
+def logout():
+    """Log out current user."""
+    session.clear()
+    return redirect(url_for('login_page'))
 
 
 # ==============================
@@ -51,11 +315,17 @@ def dashboard():
 # ==============================
 
 @app.route("/api/dashboard")
+@require_profile
 def api_dashboard():
+    user = get_current_user()
+    
     risk = artifacts['risk_results']
     portfolio = artifacts['portfolio_impact']
     alerts = artifacts['alerts']
 
+    # TODO: Apply department-specific filtering here
+    # risk = filter_by_department(risk, user)
+    
     scored = [r for r in risk.values() if r['risk_score'] is not None]
     critical = sum(1 for r in scored if r['alert_level'] == 'CRITICAL')
     high = sum(1 for r in scored if r['alert_level'] == 'HIGH')

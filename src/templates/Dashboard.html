@@ -12,11 +12,37 @@
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <div class="header-text">
-                <h1>FusionTech Product Risk Dashboard</h1>
-                <p class="subtitle">AI-Powered Real-Time Review Intelligence &mdash; Team 7</p>
+            <div class="header-left">
+                <img src="/static/fusiontech_logo_compact.svg" alt="FusionTech Systems" class="header-logo">
+                <div class="header-text">
+                    <h1>Product Risk Dashboard</h1>
+                    <p class="subtitle">AI-Powered Real-Time Review Intelligence</p>
+                </div>
             </div>
-            <button id="theme-toggle" class="theme-toggle" title="Switch to light mode">&#9728;&#65039; Light Mode</button>
+            <div class="header-right">
+                <button id="theme-toggle" class="theme-toggle" title="Switch to light mode">&#9728;&#65039; Light Mode</button>
+                <div class="profile-dropdown">
+                    <button class="profile-button" id="profileButton">
+                        <span class="profile-icon">👤</span>
+                        <span class="profile-name" id="profileName">{{ user.first_name if user else 'User' }}</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="profile-menu" id="profileMenu">
+                        <div class="profile-menu-header">
+                            <strong id="menuUserName">{{ user.first_name + ' ' + user.last_name if user else 'User' }}</strong>
+                            <small id="menuUserEmail">{{ user.email if user else '' }}</small>
+                            <small id="menuUserDept">{{ user.department if user else '' }}</small>
+                        </div>
+                        <div class="profile-menu-divider"></div>
+                        <a href="#" class="profile-menu-item" id="editProfileBtn">
+                            <span>✏️</span> Edit Profile
+                        </a>
+                        <a href="/logout" class="profile-menu-item">
+                            <span>🚪</span> Sign Out
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -171,6 +197,59 @@
         </div>
     </div>
 
+    <!-- Profile Edit Modal -->
+    <div id="profile-modal" class="modal" style="display:none;">
+        <div class="modal-content profile-modal-content">
+            <span class="modal-close" id="profile-modal-close">&times;</span>
+            <h2>Edit Profile</h2>
+            <form id="profileEditForm">
+                <div class="form-group">
+                    <label for="editFirstName">First Name</label>
+                    <input type="text" id="editFirstName" name="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editLastName">Last Name</label>
+                    <input type="text" id="editLastName" name="lastName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDepartment">Department</label>
+                    <select id="editDepartment" name="department" required>
+                        <option value="">Select Department</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editSubDepartment">Sub-Department</label>
+                    <input type="text" id="editSubDepartment" name="subDepartment" placeholder="Optional">
+                </div>
+                <div class="form-group">
+                    <label for="editLocation">Location</label>
+                    <input type="text" id="editLocation" name="location" placeholder="Optional">
+                </div>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;">
+                <h3 style="margin-top: 20px; margin-bottom: 16px; font-size: 16px; color: #1e293b;">Change Password (Optional)</h3>
+                <div class="form-group">
+                    <label for="editNewPassword">New Password</label>
+                    <input type="password" id="editNewPassword" name="newPassword" placeholder="Leave blank to keep current password" autocomplete="new-password">
+                    <div id="editNewPasswordError" class="error-text" style="display: none;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="editConfirmPassword">Confirm New Password</label>
+                    <input type="password" id="editConfirmPassword" name="confirmPassword" placeholder="Re-enter new password" autocomplete="new-password">
+                    <div id="editConfirmPasswordError" class="error-text" style="display: none;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="editCurrentPassword">Current Password (Required to change password)</label>
+                    <input type="password" id="editCurrentPassword" name="currentPassword" placeholder="Enter your current password" autocomplete="current-password">
+                    <div id="editCurrentPasswordError" class="error-text" style="display: none;"></div>
+                </div>
+                <div class="profile-form-actions">
+                    <button type="button" class="btn-secondary" id="cancelEditBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Chatbot / AI Assistant -->
     <section class="section-block">
         <div class="section-header">
@@ -193,7 +272,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <p>FusionTech Product Risk Management System &nbsp;&bull;&nbsp; Team 7 &mdash; Excel with Dell 2026</p>
+        <p>FusionTech Systems &nbsp;&bull;&nbsp; Product Risk Management Platform &nbsp;&bull;&nbsp; © 2026</p>
     </footer>
 
     <script src="/static/dashboard.js"></script>

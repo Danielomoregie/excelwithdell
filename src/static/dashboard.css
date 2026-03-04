@@ -91,6 +91,15 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
     background: linear-gradient(135deg, #1a2a42 0%, #0d47a1 100%);
     padding: 1.4rem 2rem;
     border-bottom: 3px solid #1565c0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease-out;
+}
+
+.header.header-hide {
+    transform: translateY(-100%);
 }
 
 .header-content {
@@ -102,17 +111,35 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
     gap: 1rem;
 }
 
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-logo {
+    height: 59px;
+    filter: brightness(0) invert(1);
+    flex-shrink: 0;
+}
+
 .header h1 {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     color: #fff;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: 0.3px;
 }
 
 .subtitle {
     color: #90caf9;
-    font-size: 0.85rem;
-    margin-top: 0.15rem;
+    font-size: 0.8rem;
+    margin-top: 0.1rem;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
 /* Theme toggle button */
@@ -133,6 +160,193 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
 .theme-toggle:hover {
     background: rgba(255,255,255,0.22);
     transform: scale(1.04);
+}
+
+/* Profile Dropdown */
+.profile-dropdown {
+    position: relative;
+}
+
+.profile-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 50px;
+    padding: 0.45rem 1.1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
+    transition: background var(--transition);
+}
+
+.profile-button:hover {
+    background: rgba(255,255,255,0.22);
+}
+
+.profile-icon {
+    font-size: 1.1rem;
+}
+
+.dropdown-arrow {
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+}
+
+.profile-button.active .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.profile-menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-modal);
+    min-width: 220px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-10px);
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 1000;
+}
+
+.profile-menu.show {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0);
+}
+
+.profile-menu-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.profile-menu-header strong {
+    display: block;
+    color: var(--text-heading);
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.profile-menu-header small {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.profile-menu-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0;
+}
+
+.profile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: background var(--transition);
+    cursor: pointer;
+}
+
+.profile-menu-item:hover {
+    background: var(--bg-hover);
+}
+
+.profile-menu-item span {
+    font-size: 1.1rem;
+}
+
+/* Profile Modal Form Styling */
+.profile-modal-content {
+    max-width: 500px;
+}
+
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border-input);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: border-color var(--transition);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.error-text {
+    color: #dc2626;
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+    display: none;
+}
+
+.error-text.show {
+    display: block;
+}
+
+.profile-form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.btn-primary {
+    background: var(--accent-btn);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: var(--bg-deep);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-hover);
 }
 
 /* ======================================================
@@ -658,20 +872,477 @@ td {
 }
 
 /* ======================================================
-   RESPONSIVE
+   RESPONSIVE DESIGN - COMPREHENSIVE
    ====================================================== */
 
-@media (max-width: 960px) {
-    .charts-grid { grid-template-columns: 1fr; }
+/* Large Tablets & Small Desktops (up to 1200px) */
+@media (max-width: 1200px) {
+    .header-content {
+        max-width: 100%;
+        padding: 0 1rem;
+    }
+
+    .kpi-section {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        padding: 1.5rem 1rem;
+    }
+
+    .section-block {
+        padding: 0 1rem;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    table {
+        min-width: 800px;
+    }
 }
 
+/* Medium Tablets (up to 960px) */
+@media (max-width: 960px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .header h1 {
+        font-size: 1.3rem;
+    }
+
+    .subtitle {
+        font-size: 0.8rem;
+    }
+
+    .header-logo {
+        height: 52px;
+    }
+
+    .kpi-card {
+        padding: 1.2rem;
+    }
+
+    .kpi-value {
+        font-size: 1.6rem;
+    }
+
+    .kpi-label {
+        font-size: 0.85rem;
+    }
+}
+
+/* Small Tablets & Large Phones (up to 768px) */
 @media (max-width: 768px) {
-    .header h1       { font-size: 1.2rem; }
-    .detail-grid     { grid-template-columns: 1fr; }
-    .kpi-section     { grid-template-columns: 1fr 1fr; padding: 1rem; }
-    .table-controls  { flex-direction: column; }
-    .search-input    { max-width: 100%; }
-    .section-block   { padding: 0 1rem; }
-    .chatbot-input-row { flex-direction: column; }
-    .header-content  { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
+    body {
+        font-size: 14px;
+    }
+
+    .header {
+        padding: 1rem 1.5rem;
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+    }
+
+    .header-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .header-text {
+        text-align: left;
+    }
+
+    .header h1 {
+        font-size: 1.2rem;
+    }
+
+    .subtitle {
+        font-size: 0.75rem;
+    }
+
+    .header-logo {
+        height: 46px;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .theme-toggle {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+    }
+
+    .profile-button {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+
+    .kpi-section {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.8rem;
+        padding: 1rem;
+    }
+
+    .kpi-card {
+        padding: 1rem;
+    }
+
+    .kpi-icon {
+        font-size: 1.5rem;
+    }
+
+    .kpi-value {
+        font-size: 1.4rem;
+    }
+
+    .kpi-label {
+        font-size: 0.8rem;
+    }
+
+    .kpi-desc {
+        font-size: 0.7rem;
+    }
+
+    .alerts-section {
+        padding: 1rem;
+    }
+
+    .alert-banner {
+        padding: 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    .section-block {
+        padding: 0 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .section-desc {
+        font-size: 0.85rem;
+    }
+
+    .chart-header h3 {
+        font-size: 0.95rem;
+    }
+
+    .chart-description {
+        font-size: 0.8rem;
+    }
+
+    .table-controls {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .search-input {
+        max-width: 100%;
+        width: 100%;
+        font-size: 0.85rem;
+    }
+
+    .filter-group select {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.6rem;
+    }
+
+    table {
+        font-size: 0.8rem;
+        min-width: 700px;
+    }
+
+    th, td {
+        padding: 0.6rem 0.5rem;
+    }
+
+    .btn-details {
+        padding: 0.35rem 0.7rem;
+        font-size: 0.75rem;
+    }
+
+    .chatbot-container {
+        padding: 1rem;
+    }
+
+    .chatbot-messages {
+        max-height: 250px;
+    }
+
+    .chatbot-message {
+        font-size: 0.85rem;
+        padding: 0.6rem 0.8rem;
+    }
+
+    .chatbot-input {
+        font-size: 0.85rem;
+        padding: 0.7rem;
+    }
+
+    .chatbot-send {
+        padding: 0.7rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .modal-content {
+        width: 95%;
+        max-width: 500px;
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+
+    .modal-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .detail-item strong {
+        font-size: 0.85rem;
+    }
+
+    .detail-value {
+        font-size: 0.8rem;
+    }
+}
+
+/* Mobile Phones (up to 480px) */
+@media (max-width: 480px) {
+    body {
+        font-size: 13px;
+    }
+
+    .header {
+        padding: 0.8rem 1rem;
+    }
+
+    .header h1 {
+        font-size: 1rem;
+    }
+
+    .subtitle {
+        font-size: 0.7rem;
+    }
+
+    .header-logo {
+        height: 39px;
+    }
+
+    .theme-toggle {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.7rem;
+    }
+
+    .profile-button {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.75rem;
+    }
+
+    .profile-name {
+        display: none;
+    }
+
+    .kpi-section {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
+        padding: 0.8rem;
+    }
+
+    .kpi-card {
+        padding: 0.8rem;
+    }
+
+    .kpi-icon {
+        font-size: 1.3rem;
+    }
+
+    .kpi-value {
+        font-size: 1.2rem;
+    }
+
+    .kpi-label {
+        font-size: 0.75rem;
+    }
+
+    .kpi-desc {
+        font-size: 0.65rem;
+    }
+
+    .section-block {
+        padding: 0 0.8rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .section-header h2 {
+        font-size: 1rem;
+    }
+
+    .section-desc {
+        font-size: 0.8rem;
+    }
+
+    .chart-container {
+        padding: 0.8rem;
+    }
+
+    .chart-header h3 {
+        font-size: 0.9rem;
+    }
+
+    .chart-description {
+        font-size: 0.75rem;
+    }
+
+    table {
+        font-size: 0.75rem;
+        min-width: 600px;
+    }
+
+    th, td {
+        padding: 0.5rem 0.4rem;
+    }
+
+    .btn-details {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.7rem;
+    }
+
+    .risk-badge {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.65rem;
+    }
+
+    .chatbot-container {
+        padding: 0.8rem;
+    }
+
+    .chatbot-header h2 {
+        font-size: 1rem;
+    }
+
+    .chatbot-messages {
+        max-height: 200px;
+    }
+
+    .chatbot-message {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.7rem;
+    }
+
+    .chatbot-input {
+        font-size: 0.8rem;
+        padding: 0.6rem;
+    }
+
+    .chatbot-send {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.8rem;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 1rem;
+        margin: 0.5rem;
+    }
+
+    .modal-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .close-modal {
+        font-size: 1.5rem;
+    }
+
+    .detail-item {
+        padding: 0.6rem;
+    }
+
+    .detail-item strong {
+        font-size: 0.8rem;
+    }
+
+    .detail-value {
+        font-size: 0.75rem;
+    }
+}
+
+/* Large Screens & 4K Displays (1920px+) */
+@media (min-width: 1920px) {
+    .header-content {
+        max-width: 1800px;
+    }
+
+    .kpi-section {
+        max-width: 1800px;
+        margin: 0 auto;
+        gap: 2rem;
+    }
+
+    .section-block {
+        max-width: 1800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .kpi-card {
+        padding: 2rem;
+    }
+
+    .kpi-value {
+        font-size: 2.2rem;
+    }
+
+    .chart-container {
+        padding: 2rem;
+    }
+
+    table {
+        font-size: 1rem;
+    }
+
+    .modal-content {
+        max-width: 800px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .header-right,
+    .chatbot-container,
+    .btn-details,
+    .theme-toggle,
+    #particle-canvas {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+        color: black;
+    }
+
+    .section-block {
+        page-break-inside: avoid;
+    }
+
+    table {
+        page-break-inside: auto;
+    }
+
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
 }

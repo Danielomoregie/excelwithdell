@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - FusionTech Systems</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0d47a1 0%, #1a2a42 50%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(37, 99, 235, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Particle background container */
+        #bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        #particle-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            opacity: 0.85;
+        }
+
+        body > .header,
+        body > .login-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a2a42 0%, #0d47a1 100%);
+            padding: 1.4rem 2rem;
+            border-bottom: 3px solid #1565c0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .header img {
+            height: 65px;
+            display: block;
+            filter: brightness(0) invert(1);
+        }
+
+        /* Main container */
+        .login-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 20px;
+        }
+
+        .login-container {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+            max-width: 420px;
+            width: 100%;
+            padding: 50px 45px;
+        }
+
+        .login-title {
+            color: #0f172a;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1e293b;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #f8fafc;
+            color: #1e293b;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+
+        .form-group select {
+            padding-right: 32px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-group input.error {
+            border-color: #dc2626;
+            background: #fff5f5;
+        }
+
+        .form-group input.error:focus {
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+
+        .error-text {
+            color: #dc2626;
+            font-size: 13px;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .error-text.show {
+            display: block;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-primary:active {
+            background: #1e40af;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 12px;
+            position: relative;
+        }
+
+        .auth-links {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .auth-links a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .auth-links a:hover {
+            text-decoration: underline;
+        }
+
+        #loginForm { display: block; }
+        #loginForm.hidden { display: none; }
+
+        #createAccountForm { display: none; }
+        #createAccountForm.visible { display: block; }
+
+        .back-button {
+            color: #2563eb;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+            cursor: pointer;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .back-button.visible {
+            display: flex;
+        }
+
+        .back-button:hover {
+            text-decoration: underline;
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem 1.5rem;
+            }
+
+            .header img {
+                height: 50px;
+            }
+
+            .login-wrapper {
+                padding: 30px 15px;
+            }
+
+            .login-container {
+                padding: 35px 25px;
+                max-width: 100%;
+            }
+
+            .login-title {
+                font-size: 24px;
+                margin-bottom: 24px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            .form-group label {
+                font-size: 13px;
+            }
+
+            .form-group input,
+            .form-group select {
+                padding: 11px 12px;
+                font-size: 13px;
+            }
+
+            .btn-primary {
+                padding: 11px;
+                font-size: 14px;
+            }
+
+            .auth-links {
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 0.8rem 1rem;
+            }
+
+            .header img {
+                height: 40px;
+            }
+
+            .login-wrapper {
+                padding: 20px 10px;
+            }
+
+            .login-container {
+                padding: 25px 20px;
+                border-radius: 8px;
+            }
+
+            .login-title {
+                font-size: 22px;
+                margin-bottom: 20px;
+            }
+
+            .form-group {
+                margin-bottom: 18px;
+            }
+
+            .form-group label {
+                font-size: 12px;
+                margin-bottom: 6px;
+            }
+
+            .form-group input,
+            .form-group select {
+                padding: 10px 11px;
+                font-size: 12px;
+            }
+
+            .btn-primary {
+                padding: 10px;
+                font-size: 13px;
+            }
+
+            .auth-links {
+                font-size: 12px;
+                margin-top: 16px;
+            }
+
+            .error-text {
+                font-size: 11px;
+            }
+        }
+
+        @media (min-width: 1920px) {
+            .login-container {
+                max-width: 480px;
+                padding: 60px 50px;
+            }
+
+            .login-title {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particle background -->
+    <div id="bg">
+        <canvas id="particle-canvas"></canvas>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <img src="{{ url_for('static', filename='fusiontech_logo.svg') }}" alt="FusionTech Systems">
+    </div>
+
+    <!-- Login Container -->
+    <div class="login-wrapper">
+        <div class="login-container">
+            <!-- Back Button -->
+            <div id="backBtn" class="back-button">
+                <span>← Back to Sign In</span>
+            </div>
+
+            <!-- Sign In Form -->
+            <form id="loginForm">
+                <div class="login-title">Sign In</div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="your.email@fusiontech.com" autocomplete="email">
+                    <div id="emailError" class="error-text"></div>
+                </div>
+
+                <div class="form-group password-group" id="passwordGroup" style="display: none;">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password">
+                    <div id="passwordError" class="error-text"></div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="loginBtn">Sign In</button>
+
+                <div class="auth-links">
+                    Don't have an account? <a id="createLink">Create an account</a>
+                </div>
+            </form>
+
+            <!-- Create Account Form -->
+            <form id="createAccountForm">
+                <div class="login-title">Create Account</div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name *</label>
+                        <input type="text" id="firstName" name="firstName" required placeholder="John">
+                        <div id="firstNameError" class="error-text"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name *</label>
+                        <input type="text" id="lastName" name="lastName" required placeholder="Doe">
+                        <div id="lastNameError" class="error-text"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="regEmail">FusionTech Email *</label>
+                    <input type="email" id="regEmail" name="regEmail" required placeholder="john.doe@fusiontech.com" autocomplete="email">
+                    <div id="regEmailError" class="error-text"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="department">Department *</label>
+                    <select id="department" name="department" required>
+                        <option value="">Select Department</option>
+                    </select>
+                    <div id="departmentError" class="error-text"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="subDepartment">Sub-Department (Optional)</label>
+                    <input type="text" id="subDepartment" name="subDepartment" placeholder="e.g., Software Engineering">
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Location (Optional)</label>
+                    <input type="text" id="location" name="location" placeholder="e.g., Austin, TX">
+                </div>
+
+                <div class="form-group password-group">
+                    <label for="regPassword">Password *</label>
+                    <input type="password" id="regPassword" name="regPassword" required placeholder="At least 8 characters" autocomplete="new-password">
+                    <div id="regPasswordError" class="error-text"></div>
+                </div>
+
+                <div class="form-group password-group">
+                    <label for="confirmPassword">Confirm Password *</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Re-enter your password" autocomplete="new-password">
+                    <div id="confirmPasswordError" class="error-text"></div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="registerBtn">Create Account</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Load departments
+        async function loadDepartments() {
+            try {
+                const response = await fetch('/api/departments');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const select = document.getElementById('department');
+                    data.departments.forEach(dept => {
+                        const option = document.createElement('option');
+                        option.value = dept.department_code;
+                        option.textContent = dept.department_name;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load departments:', error);
+            }
+        }
+
+        // Validate FusionTech email
+        function validateFusionTechEmail(email) {
+            const emailLower = (email || '').toLowerCase().trim();
+            return emailLower.endsWith('@fusiontech.com');
+        }
+
+        // Clear field error
+        function clearFieldError(fieldId) {
+            const field = document.getElementById(fieldId);
+            const errorDiv = document.getElementById(fieldId + 'Error');
+            if (field) field.classList.remove('error');
+            if (errorDiv) errorDiv.classList.remove('show');
+        }
+
+        // Show field error
+        function showFieldError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorDiv = document.getElementById(fieldId + 'Error');
+            if (field) field.classList.add('error');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.classList.add('show');
+            }
+        }
+
+        // Show login form
+        function showLoginForm() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('createAccountForm').classList.remove('visible');
+            document.getElementById('backBtn').classList.remove('visible');
+            clearFieldError('email');
+            clearFieldError('password');
+            document.getElementById('passwordGroup').style.display = 'none';
+            document.getElementById('password').value = '';
+            document.getElementById('password').type = 'password';
+        }
+
+        // Show create account form
+        function showCreateForm() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('createAccountForm').classList.add('visible');
+            document.getElementById('backBtn').classList.add('visible');
+        }
+
+        // Handle Sign In
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const password = document.getElementById('password').value;
+            const passwordGroup = document.getElementById('passwordGroup');
+            const btn = document.getElementById('loginBtn');
+            
+            // Clear previous errors
+            clearFieldError('email');
+            clearFieldError('password');
+            
+            // Validate domain
+            if (!validateFusionTechEmail(email)) {
+                showFieldError('email', 'Please use your FusionTech Systems email (@fusiontech.com)');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = 'Checking...';
+            
+            try {
+                // If password field is not visible, check if account exists
+                if (passwordGroup.style.display === 'none') {
+                    const response = await fetch('/api/check_email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+                    
+                    const data = await response.json();
+                    btn.disabled = false;
+                    btn.textContent = 'Sign In';
+                    
+                    if (data.status === 'success' && data.exists) {
+                        // Account exists - show password field
+                        passwordGroup.style.display = 'block';
+                        document.getElementById('password').focus();
+                    } else {
+                        // Account doesn't exist
+                        showFieldError('email', 'No account found with this email. Create one to get started.');
+                    }
+                } else {
+                    // Password field is visible - authenticate with email and password
+                    if (!password) {
+                        showFieldError('password', 'Password is required');
+                        btn.disabled = false;
+                        btn.textContent = 'Sign In';
+                        return;
+                    }
+                    
+                    btn.textContent = 'Signing in...';
+                    
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    
+                    const data = await response.json();
+                    btn.disabled = false;
+                    btn.textContent = 'Sign In';
+                    
+                    if (data.status === 'success') {
+                        // Authentication successful - redirect to dashboard
+                        window.location.href = '/';
+                    } else {
+                        // Authentication failed
+                        showFieldError('password', data.message || 'Incorrect password');
+                    }
+                }
+            } catch (error) {
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+                showFieldError('email', 'Connection error. Please try again.');
+            }
+        });
+
+        // Handle Create Account link
+        document.getElementById('createLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            showCreateForm();
+            document.getElementById('regEmail').focus();
+        });
+
+        // Handle Back button
+        document.getElementById('backBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            showLoginForm();
+            document.getElementById('email').focus();
+        });
+
+        // Handle Create Account submission
+        document.getElementById('createAccountForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const regEmail = document.getElementById('regEmail').value.trim().toLowerCase();
+            const department = document.getElementById('department').value;
+            const subDepartment = document.getElementById('subDepartment').value.trim() || null;
+            const location = document.getElementById('location').value.trim() || null;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // Clear previous errors
+            ['firstName', 'lastName', 'regEmail', 'department', 'regPassword', 'confirmPassword'].forEach(id => clearFieldError(id));
+            
+            // Validate
+            let hasError = false;
+            if (!firstName) {
+                showFieldError('firstName', 'First name is required');
+                hasError = true;
+            }
+            if (!lastName) {
+                showFieldError('lastName', 'Last name is required');
+                hasError = true;
+            }
+            if (!validateFusionTechEmail(regEmail)) {
+                showFieldError('regEmail', 'Please use your FusionTech Systems email (@fusiontech.com)');
+                hasError = true;
+            }
+            if (!department) {
+                showFieldError('department', 'Department is required');
+                hasError = true;
+            }
+            if (!password) {
+                showFieldError('regPassword', 'Password is required');
+                hasError = true;
+            } else if (password.length < 8) {
+                showFieldError('regPassword', 'Password must be at least 8 characters');
+                hasError = true;
+            }
+            if (!confirmPassword) {
+                showFieldError('confirmPassword', 'Please confirm your password');
+                hasError = true;
+            } else if (password !== confirmPassword) {
+                showFieldError('confirmPassword', 'Passwords do not match');
+                hasError = true;
+            }
+            
+            if (hasError) return;
+            
+            const btn = document.getElementById('registerBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creating...';
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: regEmail,
+                        first_name: firstName,
+                        last_name: lastName,
+                        department: department,
+                        sub_department: subDepartment,
+                        location: location,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Redirect to dashboard
+                    window.location.href = '/';
+                } else {
+                    // Show error for specific field or general error
+                    if (data.message === 'Email already registered') {
+                        showFieldError('regEmail', 'This email is already registered');
+                    } else if (data.message && data.message.includes('password')) {
+                        showFieldError('regPassword', data.message);
+                    } else {
+                        showFieldError('regEmail', data.message || 'Registration failed');
+                    }
+                    btn.disabled = false;
+                    btn.textContent = 'Create Account';
+                }
+            } catch (error) {
+                showFieldError('regEmail', 'Connection error. Please try again.');
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        });
+        
+        // Load departments on page load
+        loadDepartments();
+    </script>
+
+    <!-- Particle Background System -->
+    <script>
+        (() => {
+            const canvas = document.getElementById("particle-canvas");
+            const ctx = canvas.getContext("2d", { alpha: true });
+
+            // Config - optimized for performance
+            const NUM_PARTICLES = 350;
+            const MAX_SPEED = 0.400;
+            const LINK_DIST = 200;
+            const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+            let w = 0, h = 0;
+            let particles = [];
+            let rafId = null;
+            let lastFrameTime = 0;
+            const targetFPS = 60;
+            const frameInterval = 1000 / targetFPS;
+
+            function resize() {
+                w = Math.floor(window.innerWidth);
+                h = Math.floor(window.innerHeight);
+                canvas.style.width = w + "px";
+                canvas.style.height = h + "px";
+                canvas.width = Math.floor(w * DPR);
+                canvas.height = Math.floor(h * DPR);
+                ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+            }
+
+            function rand(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            function makeParticle() {
+                const r = rand(1, 2);
+                return {
+                    x: rand(0, w),
+                    y: rand(0, h),
+                    vx: rand(-MAX_SPEED, MAX_SPEED),
+                    vy: rand(-MAX_SPEED, MAX_SPEED),
+                    r,
+                    glow: rand(0.1, 0.2)
+                };
+            }
+
+            function init() {
+                particles = Array.from({ length: NUM_PARTICLES }, makeParticle);
+            }
+
+function step(currentTime) {
+                // Frame rate throttling
+                if (!lastFrameTime) lastFrameTime = currentTime;
+                const elapsed = currentTime - lastFrameTime;
+                
+                if (elapsed < frameInterval) {
+                    rafId = requestAnimationFrame(step);
+                    return;
+                }
+                
+                lastFrameTime = currentTime - (elapsed % frameInterval);
+                
+                ctx.clearRect(0, 0, w, h);
+
+                // Update particle positions first
+                for (const p of particles) {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < -10) p.x = w + 10;
+                    if (p.x > w + 10) p.x = -10;
+                    if (p.y < -10) p.y = h + 10;
+                    if (p.y > h + 10) p.y = -10;
+                }
+
+                // Draw connections (optimized)
+                ctx.lineWidth = 1;
+                for (let i = 0; i < particles.length; i++) {
+                    const a = particles[i];
+                    // Only check nearby particles for performance
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const b = particles[j];
+                        const dx = a.x - b.x;
+                        const dy = a.y - b.y;
+                        
+                        // Quick distance check without sqrt
+                        const distSq = dx * dx + dy * dy;
+                        const linkDistSq = LINK_DIST * LINK_DIST;
+                        
+                        if (distSq < linkDistSq) {
+                            const d = Math.sqrt(distSq);
+                            const t = 1 - d / LINK_DIST;
+                            ctx.globalAlpha = 0.38 * t;
+                            
+                            // Use solid color instead of gradient for performance
+                            ctx.strokeStyle = "rgba(124, 99, 241, 0.8)";
+
+                            ctx.beginPath();
+                            ctx.moveTo(a.x, a.y);
+                            ctx.lineTo(b.x, b.y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // Draw particles
+                for (const p of particles) {
+                    // Glow
+                    ctx.globalAlpha = 1;
+                    ctx.beginPath();
+                    const glowRadius = p.r * 4;
+                    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowRadius);
+                    g.addColorStop(0, `rgba(255,255,255,${p.glow})`);  
+                    g.addColorStop(0.4, "rgba(99, 102, 241, 0.15)");
+                    g.addColorStop(1, "rgba(168, 85, 247, 0)");
+                    ctx.fillStyle = g;
+                    ctx.arc(p.x, p.y, glowRadius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Core
+                    ctx.beginPath();
+                    ctx.fillStyle = "rgba(255,255,255,0.7)";
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                rafId = requestAnimationFrame(step);
+            }
+
+            function start() {
+                stop();
+                resize();
+                init();
+                step();
+            }
+
+            function stop() {
+                if (rafId) cancelAnimationFrame(rafId);
+                rafId = null;
+            }
+
+            // Reduce CPU when tab hidden
+            document.addEventListener("visibilitychange", () => {
+                if (document.hidden) stop();
+                else start();
+            });
+
+            window.addEventListener("resize", () => {
+                resize();
+            });
+
+            start();
+        })();
+    </script>
+</body>
+</html>

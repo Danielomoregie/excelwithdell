@@ -23,7 +23,40 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProducts();
     loadTrends();
     setupEventListeners();
+    setupHeaderScroll();
 });
+
+// ============================================================
+//  HEADER SCROLL BEHAVIOR
+// ============================================================
+
+let lastScrollTop = 0;
+
+function setupHeaderScroll() {
+    const header = document.querySelector('.header');
+    
+    window.addEventListener('scroll', () => {
+        const scrollTop = window.scrollY;
+        
+        // If at top, always show header
+        if (scrollTop === 0) {
+            header.classList.remove('header-hide');
+            lastScrollTop = 0;
+            return;
+        }
+        
+        // Scrolling down
+        if (scrollTop > lastScrollTop) {
+            header.classList.add('header-hide');
+        } 
+        // Scrolling up
+        else {
+            header.classList.remove('header-hide');
+        }
+        
+        lastScrollTop = scrollTop;
+    });
+}
 
 function setupEventListeners() {
     // Search / filter — reset pagination on change
@@ -53,6 +86,30 @@ function setupEventListeners() {
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('product-modal').addEventListener('click', e => {
         if (e.target === e.currentTarget) closeModal();
+    });
+
+    // Profile dropdown
+    document.getElementById('profileButton').addEventListener('click', toggleProfileMenu);
+    document.getElementById('editProfileBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        openProfileEditModal();
+    });
+    
+    // Profile modal
+    document.getElementById('profile-modal-close').addEventListener('click', closeProfileModal);
+    document.getElementById('cancelEditBtn').addEventListener('click', closeProfileModal);
+    document.getElementById('profileEditForm').addEventListener('submit', saveProfile);
+    document.getElementById('profile-modal').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeProfileModal();
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        const dropdown = document.querySelector('.profile-dropdown');
+        if (dropdown && !dropdown.contains(e.target)) {
+            document.getElementById('profileMenu').classList.remove('show');
+            document.getElementById('profileButton').classList.remove('active');
+        }
     });
 
     // Chatbot
@@ -110,6 +167,175 @@ function chartColors() {
         legend: light ? '#334155' : '#b0bec5',
         grid:   light ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)',
     };
+}
+
+// ============================================================
+//  PROFILE MANAGEMENT
+// ============================================================
+
+function toggleProfileMenu() {
+    const menu = document.getElementById('profileMenu');
+    const button = document.getElementById('profileButton');
+    menu.classList.toggle('show');
+    button.classList.toggle('active');
+}
+
+async function openProfileEditModal() {
+    // Close dropdown
+    document.getElementById('profileMenu').classList.remove('show');
+    document.getElementById('profileButton').classList.remove('active');
+    
+    // Clear password fields
+    document.getElementById('editNewPassword').value = '';
+    document.getElementById('editConfirmPassword').value = '';
+    document.getElementById('editCurrentPassword').value = '';
+    document.getElementById('editNewPasswordError').style.display = 'none';
+    document.getElementById('editConfirmPasswordError').style.display = 'none';
+    document.getElementById('editCurrentPasswordError').style.display = 'none';
+    
+    // Load departments
+    try {
+        const response = await fetch('/api/departments');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            const select = document.getElementById('editDepartment');
+            select.innerHTML = '<option value="">Select Department</option>';
+            data.departments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept.department_code;
+                option.textContent = dept.department_name;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Failed to load departments:', error);
+    }
+    
+    // Load current user profile
+    try {
+        const response = await fetch('/api/profile');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            const user = data.user;
+            document.getElementById('editFirstName').value = user.first_name || '';
+            document.getElementById('editLastName').value = user.last_name || '';
+            document.getElementById('editDepartment').value = user.department || '';
+            document.getElementById('editSubDepartment').value = user.sub_department || '';
+            document.getElementById('editLocation').value = user.location || '';
+        }
+    } catch (error) {
+        console.error('Failed to load profile:', error);
+    }
+    
+    // Show modal
+    document.getElementById('profile-modal').style.display = 'flex';
+}
+
+function closeProfileModal() {
+    document.getElementById('profile-modal').style.display = 'none';
+    // Clear password fields
+    document.getElementById('editNewPassword').value = '';
+    document.getElementById('editConfirmPassword').value = '';
+    document.getElementById('editCurrentPassword').value = '';
+    document.getElementById('editNewPasswordError').style.display = 'none';
+    document.getElementById('editConfirmPasswordError').style.display = 'none';
+    document.getElementById('editCurrentPasswordError').style.display = 'none';
+}
+
+async function saveProfile(e) {
+    e.preventDefault();
+    
+    // Get form values
+    const formData = {
+        first_name: document.getElementById('editFirstName').value.trim(),
+        last_name: document.getElementById('editLastName').value.trim(),
+        department: document.getElementById('editDepartment').value,
+        sub_department: document.getElementById('editSubDepartment').value.trim() || null,
+        location: document.getElementById('editLocation').value.trim() || null,
+    };
+    
+    // Get password change fields
+    const newPassword = document.getElementById('editNewPassword').value;
+    const confirmPassword = document.getElementById('editConfirmPassword').value;
+    const currentPassword = document.getElementById('editCurrentPassword').value;
+    
+    // Clear previous errors
+    document.getElementById('editNewPasswordError').style.display = 'none';
+    document.getElementById('editConfirmPasswordError').style.display = 'none';
+    document.getElementById('editCurrentPasswordError').style.display = 'none';
+    
+    // Validate password change if new password is provided
+    let hasPasswordError = false;
+    if (newPassword || confirmPassword || currentPassword) {
+        if (!newPassword) {
+            showPasswordError('editNewPassword', 'New password is required');
+            hasPasswordError = true;
+        } else if (newPassword.length < 8) {
+            showPasswordError('editNewPassword', 'Password must be at least 8 characters');
+            hasPasswordError = true;
+        }
+        
+        if (!confirmPassword) {
+            showPasswordError('editConfirmPassword', 'Please confirm new password');
+            hasPasswordError = true;
+        } else if (newPassword !== confirmPassword) {
+            showPasswordError('editConfirmPassword', 'Passwords do not match');
+            hasPasswordError = true;
+        }
+        
+        if (!currentPassword) {
+            showPasswordError('editCurrentPassword', 'Current password is required to change password');
+            hasPasswordError = true;
+        }
+        
+        if (hasPasswordError) return;
+        
+        // Add password change to form data
+        formData.new_password = newPassword;
+        formData.current_password = currentPassword;
+    }
+    
+    try {
+        const response = await fetch('/api/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Update UI
+            document.getElementById('profileName').textContent = formData.first_name;
+            document.getElementById('menuUserName').textContent = `${formData.first_name} ${formData.last_name}`;
+            document.getElementById('menuUserDept').textContent = formData.department;
+            
+            closeProfileModal();
+            alert('Profile updated successfully!');
+        } else {
+            // Show errors
+            if (data.message === 'Invalid current password') {
+                showPasswordError('editCurrentPassword', 'Current password is incorrect');
+            } else if (data.message && data.message.includes('password')) {
+                showPasswordError('editNewPassword', data.message);
+            } else {
+                alert(data.message || 'Failed to update profile');
+            }
+        }
+    } catch (error) {
+        console.error('Failed to save profile:', error);
+        alert('Connection error. Please try again.');
+    }
+}
+
+function showPasswordError(fieldId, message) {
+    const errorDiv = document.getElementById(fieldId + 'Error');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+    }
 }
 
 // ============================================================

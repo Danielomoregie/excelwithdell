@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" width="400" height="80">
+  <defs>
+    <linearGradient id="fusionGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Icon: Abstract fusion symbol (hexagonal tech pattern) -->
+  <g transform="translate(10, 10)">
+    <!-- Outer hexagon -->
+    <path d="M 30 5 L 50 15 L 50 35 L 30 45 L 10 35 L 10 15 Z" 
+          fill="none" stroke="url(#fusionGradient)" stroke-width="2.5" opacity="0.8"/>
+    
+    <!-- Inner hexagon -->
+    <path d="M 30 15 L 42 21 L 42 29 L 30 35 L 18 29 L 18 21 Z" 
+          fill="url(#fusionGradient)" opacity="0.3"/>
+    
+    <!-- Center convergence lines -->
+    <line x1="30" y1="5" x2="30" y2="25" stroke="url(#fusionGradient)" stroke-width="2" opacity="0.9"/>
+    <line x1="10" y1="15" x2="25" y2="25" stroke="url(#fusionGradient)" stroke-width="2" opacity="0.9"/>
+    <line x1="50" y1="15" x2="35" y2="25" stroke="url(#fusionGradient)" stroke-width="2" opacity="0.9"/>
+    
+    <!-- Center dot -->
+    <circle cx="30" cy="25" r="3" fill="url(#fusionGradient)"/>
+  </g>
+  
+  <!-- Wordmark: FusionTech Systems -->
+  <text x="75" y="38" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="url(#fusionGradient)">
+    FusionTech
+  </text>
+  <text x="75" y="55" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="400" fill="#64748b" letter-spacing="1">
+    SYSTEMS
+  </text>
+</svg>

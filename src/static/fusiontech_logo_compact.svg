@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50">
+  <defs>
+    <linearGradient id="fusionGradientCompact" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Compact Icon -->
+  <g transform="translate(5, 8)">
+    <path d="M 17 3 L 28 9 L 28 21 L 17 27 L 6 21 L 6 9 Z" 
+          fill="none" stroke="url(#fusionGradientCompact)" stroke-width="2" opacity="0.8"/>
+    <path d="M 17 9 L 24 13 L 24 17 L 17 21 L 10 17 L 10 13 Z" 
+          fill="url(#fusionGradientCompact)" opacity="0.3"/>
+    <line x1="17" y1="3" x2="17" y2="15" stroke="url(#fusionGradientCompact)" stroke-width="1.5"/>
+    <circle cx="17" cy="15" r="2" fill="url(#fusionGradientCompact)"/>
+  </g>
+  
+  <!-- Compact Wordmark -->
+  <text x="42" y="25" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="url(#fusionGradientCompact)">
+    FusionTech
+  </text>
+  <text x="42" y="37" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="400" fill="#64748b" letter-spacing="0.5">
+    SYSTEMS
+  </text>
+</svg>
