@@ -62,6 +62,9 @@
             padding: 1.4rem 2rem;
             border-bottom: 3px solid #1565c0;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .header img {
@@ -70,24 +73,79 @@
             filter: brightness(0) invert(1);
         }
 
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 0.6rem;
+        }
+
+        .nav-tab {
+            padding: 0.66rem 1.35rem;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.08) 100%);
+            border: 1px solid rgba(147, 197, 253, 0.35);
+            border-radius: 10px;
+            color: rgba(239, 246, 255, 0.92);
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.1px;
+            cursor: pointer;
+            transition: all 0.24s ease;
+            text-decoration: none;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 2px 6px rgba(2, 6, 23, 0.2);
+        }
+
+        .nav-tab:hover {
+            transform: translateY(-1px);
+            background: linear-gradient(180deg, rgba(191, 219, 254, 0.32) 0%, rgba(147, 197, 253, 0.14) 100%);
+            color: white;
+            border-color: rgba(147, 197, 253, 0.6);
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.28);
+        }
+
+        .nav-tab.active {
+            transform: none;
+            background: linear-gradient(180deg, #ffffff 0%, #e8f1ff 100%);
+            color: #0b4cc5;
+            border-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
+        }
+
         /* Main container */
         .login-wrapper {
             flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 60px 20px;
+            padding: 40px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            transition: all 0.4s ease;
         }
 
-        .login-container {
+        /* Hide containers by default */
+        .login-container, .review-container {
+            display: none;
             background: #ffffff;
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.12);
-            max-width: 420px;
             width: 100%;
-            padding: 50px 45px;
+            max-width: 780px;
+            padding: 50px 68px;
+            transition: all 0.4s ease;
         }
 
+        .login-container {
+            max-width: 1170px;
+            padding-left: 102px;
+            padding-right: 102px;
+        }
+
+        /* Show active container */
+        .login-container.active, .review-container.active {
+            display: block;
+        }
+
+        /* Login form styling */
         .login-title {
             color: #0f172a;
             font-size: 28px;
@@ -239,6 +297,63 @@
         #createAccountForm { display: none; }
         #createAccountForm.visible { display: block; }
 
+        /* Slightly widen create-account content horizontally */
+        #createAccountForm.visible {
+            width: 112%;
+            margin-left: -6%;
+        }
+
+        /* Compact create account mode to avoid page scroll */
+        .login-container.create-mode {
+            padding-top: 30px;
+            padding-bottom: 30px;
+        }
+
+        .login-container.create-mode .back-button {
+            margin-bottom: 10px;
+            margin-left: -6%;
+        }
+
+        #createAccountForm.visible .login-title {
+            margin-bottom: 18px;
+            font-size: 24px;
+        }
+
+        #createAccountForm.visible .form-row {
+            gap: 12px;
+        }
+
+        #createAccountForm.visible .form-group {
+            margin-bottom: 14px;
+        }
+
+        #createAccountForm.visible .form-group label {
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        #createAccountForm.visible .form-group input,
+        #createAccountForm.visible .form-group select {
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+
+        #createAccountForm.visible .btn-primary {
+            padding: 11px;
+            margin-top: 4px;
+        }
+
+        #createAccountForm.visible .error-text {
+            margin-top: 4px;
+            font-size: 12px;
+        }
+
+        /* Keep sign-in form aligned to container width */
+        .login-container #loginForm {
+            width: 100%;
+            margin-left: 0;
+        }
+
         .back-button {
             color: #2563eb;
             text-decoration: none;
@@ -258,26 +373,427 @@
             text-decoration: underline;
         }
 
+        /* ===== REVIEW CONTAINER STYLES ===== */
+        .review-container {
+            border: 2px solid #e2e8f0;
+            position: relative;
+            max-width: min(1280px, 96vw);
+            padding: 34px 42px;
+        }
+
+        .review-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.03) 0%, rgba(124, 58, 237, 0.03) 100%);
+            border-radius: 12px;
+            pointer-events: none;
+        }
+
+        .review-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-height: calc(100vh - 190px);
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .review-title {
+            color: #0d47a1;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .review-subtitle {
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+
+        .review-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #2563eb 0%, #1e3a5f 100%);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .review-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Review Form Styles */
+        .review-form-container {
+            display: none;
+        }
+
+        .review-form-container.active {
+            display: block;
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .review-form-title {
+            color: #0f172a;
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+
+        .review-form-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px 16px;
+        }
+
+        .review-form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .product-autocomplete {
+            position: relative;
+        }
+
+        .product-suggestions {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+            max-height: 260px;
+            overflow-y: auto;
+            z-index: 25;
+            display: none;
+        }
+
+        .product-suggestions.show {
+            display: block;
+        }
+
+        .product-suggestion-item {
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: left;
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eef2ff;
+            transition: background 0.18s ease;
+        }
+
+        .product-suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .product-suggestion-item:hover,
+        .product-suggestion-item.active {
+            background: linear-gradient(90deg, #eff6ff 0%, #f8fbff 100%);
+        }
+
+        .product-suggestion-title {
+            color: #0f172a;
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        .product-suggestion-title strong {
+            color: #1d4ed8;
+            font-weight: 700;
+        }
+
+        .product-suggestion-meta {
+            color: #64748b;
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        .review-form-group {
+            margin-bottom: 8px;
+        }
+
+        .review-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1e293b;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .review-form-group label .required {
+            color: #dc2626;
+        }
+
+        .review-form-group input,
+        .review-form-group select,
+        .review-form-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #f8fafc;
+            color: #1e293b;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+
+        .review-form-group textarea {
+            resize: vertical;
+            min-height: 96px;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .review-form-group input:focus,
+        .review-form-group select:focus,
+        .review-form-group textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .review-form-group input.error,
+        .review-form-group select.error,
+        .review-form-group textarea.error {
+            border-color: #dc2626;
+            background: #fff5f5;
+        }
+
+        .review-form-error {
+            color: #dc2626;
+            font-size: 13px;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .review-form-error.show {
+            display: block;
+        }
+
+        .rating-input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .rating-star {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            background: #f8fafc;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .rating-star:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+            transform: scale(1.1);
+        }
+
+        .rating-star.selected {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .review-form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .review-form-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-submit-review {
+            background: linear-gradient(135deg, #2563eb 0%, #1e3a5f 100%);
+            color: white;
+        }
+
+        .btn-submit-review:hover {
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-cancel-review {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .btn-cancel-review:hover {
+            background: #e2e8f0;
+        }
+
+        /* Thank You Screen */
+        .thank-you-screen {
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .thank-you-screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .thank-you-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 0.8s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .thank-you-title {
+            color: #0d47a1;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .thank-you-text {
+            color: #64748b;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .btn-back-home {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #2563eb 0%, #1e3a5f 100%);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-back-home:hover {
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
         /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 1000px) {
+            .login-wrapper {
+                padding: 30px 15px;
+            }
+
+            .login-container, .review-container {
+                max-width: 100%;
+                padding: 40px 30px;
+            }
+
+            #createAccountForm.visible {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .login-container.create-mode .back-button {
+                margin-left: 0;
+            }
+
+            .login-container #loginForm {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .login-container.sign-in-active ~ .review-container {
+                display: none;
+            }
+        }
+
         @media (max-width: 768px) {
             .header {
                 padding: 1rem 1.5rem;
+                flex-direction: column;
+                gap: 1rem;
             }
 
             .header img {
                 height: 50px;
             }
 
-            .login-wrapper {
-                padding: 30px 15px;
+            .nav-tabs {
+                width: 100%;
+                justify-content: center;
             }
 
-            .login-container {
+            .nav-tab {
+                padding: 0.6rem 1.2rem;
+                font-size: 13px;
+            }
+
+            .login-wrapper {
+                padding: 20px 15px;
+            }
+
+            .login-container, .review-container {
                 padding: 35px 25px;
                 max-width: 100%;
             }
 
-            .login-title {
+            .login-title, .review-form-title {
                 font-size: 24px;
                 margin-bottom: 24px;
             }
@@ -291,17 +807,28 @@
                 margin-bottom: 20px;
             }
 
-            .form-group label {
+            .form-group label, .review-form-group label {
                 font-size: 13px;
             }
 
-            .form-group input,
-            .form-group select {
+            .form-group input, .form-group select,
+            .review-form-group input, .review-form-group select, .review-form-group textarea {
                 padding: 11px 12px;
                 font-size: 13px;
             }
 
-            .btn-primary {
+            .review-form-layout {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .review-content {
+                max-height: none;
+                overflow-y: visible;
+                padding-right: 0;
+            }
+
+            .btn-primary, .review-btn, .btn-submit-review {
                 padding: 11px;
                 font-size: 14px;
             }
@@ -320,16 +847,25 @@
                 height: 40px;
             }
 
+            .nav-tabs {
+                gap: 0.3rem;
+            }
+
+            .nav-tab {
+                padding: 0.5rem 0.8rem;
+                font-size: 12px;
+            }
+
             .login-wrapper {
                 padding: 20px 10px;
             }
 
-            .login-container {
+            .login-container, .review-container {
                 padding: 25px 20px;
                 border-radius: 8px;
             }
 
-            .login-title {
+            .login-title, .review-form-title {
                 font-size: 22px;
                 margin-bottom: 20px;
             }
@@ -338,18 +874,18 @@
                 margin-bottom: 18px;
             }
 
-            .form-group label {
+            .form-group label, .review-form-group label {
                 font-size: 12px;
                 margin-bottom: 6px;
             }
 
-            .form-group input,
-            .form-group select {
+            .form-group input, .form-group select,
+            .review-form-group input, .review-form-group select, .review-form-group textarea {
                 padding: 10px 11px;
                 font-size: 12px;
             }
 
-            .btn-primary {
+            .btn-primary, .review-btn, .btn-submit-review {
                 padding: 10px;
                 font-size: 13px;
             }
@@ -359,18 +895,52 @@
                 margin-top: 16px;
             }
 
-            .error-text {
+            .error-text, .review-form-error {
                 font-size: 11px;
+            }
+
+            .rating-input-group {
+                gap: 6px;
+            }
+
+            .rating-star {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
+
+            .thank-you-icon {
+                font-size: 60px;
+                margin-bottom: 16px;
+            }
+
+            .thank-you-title {
+                font-size: 24px;
+            }
+
+            .thank-you-text {
+                font-size: 14px;
             }
         }
 
         @media (min-width: 1920px) {
-            .login-container {
+            .login-container, .review-container {
                 max-width: 480px;
                 padding: 60px 50px;
             }
 
-            .login-title {
+            .review-container {
+                max-width: min(1280px, 96vw);
+                padding: 34px 42px;
+            }
+
+            .login-container {
+                max-width: 720px;
+                padding-left: 75px;
+                padding-right: 75px;
+            }
+
+            .login-title, .review-form-title {
                 font-size: 32px;
             }
         }
@@ -385,11 +955,17 @@
     <!-- Header -->
     <div class="header">
         <img src="{{ url_for('static', filename='fusiontech_logo.svg') }}" alt="FusionTech Systems">
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="signin">Sign In</button>
+            <button class="nav-tab" data-tab="review">Share a Review</button>
+            <button class="nav-tab" data-tab="developer">Developer Mode</button>
+        </div>
     </div>
 
-    <!-- Login Container -->
+    <!-- Login & Review Wrapper -->
     <div class="login-wrapper">
-        <div class="login-container">
+        <!-- Sign In Container -->
+        <div class="login-container active" id="loginContainer">
             <!-- Back Button -->
             <div id="backBtn" class="back-button">
                 <span>← Back to Sign In</span>
@@ -397,7 +973,7 @@
 
             <!-- Sign In Form -->
             <form id="loginForm">
-                <div class="login-title">Sign In</div>
+                <div class="login-title">Employee Sign In</div>
 
                 <div class="form-group">
                     <label for="email">Email Address</label>
@@ -405,7 +981,7 @@
                     <div id="emailError" class="error-text"></div>
                 </div>
 
-                <div class="form-group password-group" id="passwordGroup" style="display: none;">
+                <div class="form-group password-group" id="passwordGroup">
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password">
                     <div id="passwordError" class="error-text"></div>
@@ -450,11 +1026,6 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="subDepartment">Sub-Department (Optional)</label>
-                    <input type="text" id="subDepartment" name="subDepartment" placeholder="e.g., Software Engineering">
-                </div>
-
-                <div class="form-group">
                     <label for="location">Location (Optional)</label>
                     <input type="text" id="location" name="location" placeholder="e.g., Austin, TX">
                 </div>
@@ -474,9 +1045,488 @@
                 <button type="submit" class="btn-primary" id="registerBtn">Create Account</button>
             </form>
         </div>
+
+        <!-- Review Container -->
+        <div class="review-container" id="reviewContainer">
+            <div class="review-content">
+                <!-- Review Welcome Screen -->
+                <div id="reviewWelcome">
+                    <div class="review-title">Share Your Experience</div>
+                    <div class="review-subtitle">
+                        Help other customers by sharing your honest feedback about FusionTech products. Your review matters!
+                    </div>
+                    <button class="review-btn" id="startReviewBtn">Submit a Review</button>
+                </div>
+
+                <!-- Review Form -->
+                <div id="reviewFormContainer" class="review-form-container">
+                    <button type="button" class="back-button visible" id="backFromReviewBtn">
+                        <span>← Back</span>
+                    </button>
+                    <form id="reviewForm">
+                        <div class="review-form-title">Leave a Review</div>
+
+                        <div class="review-form-layout">
+                            <div class="review-form-group">
+                                <label for="reviewProduct">Product <span class="required">*</span></label>
+                                <div class="product-autocomplete">
+                                    <input type="text" id="reviewProduct" name="reviewProduct" required autocomplete="off" placeholder="Type product name (e.g., Fusio...)">
+                                    <input type="hidden" id="reviewProductId" name="reviewProductId">
+                                    <div id="reviewProductSuggestions" class="product-suggestions"></div>
+                                </div>
+                                <div id="reviewProductError" class="review-form-error"></div>
+                            </div>
+
+                            <div class="review-form-group">
+                                <label>Rating <span class="required">*</span></label>
+                                <div class="rating-input-group">
+                                    <button type="button" class="rating-star" data-rating="1">⭐</button>
+                                    <button type="button" class="rating-star" data-rating="2">⭐</button>
+                                    <button type="button" class="rating-star" data-rating="3">⭐</button>
+                                    <button type="button" class="rating-star" data-rating="4">⭐</button>
+                                    <button type="button" class="rating-star" data-rating="5">⭐</button>
+                                </div>
+                                <input type="hidden" id="reviewRating" name="reviewRating" value="">
+                                <div id="reviewRatingError" class="review-form-error"></div>
+                            </div>
+
+                            <div class="review-form-group full-width">
+                                <label for="reviewTitle">Review Title <span class="required">*</span></label>
+                                <input type="text" id="reviewTitle" name="reviewTitle" required placeholder="e.g., Amazing laptop, highly recommend!">
+                                <div id="reviewTitleError" class="review-form-error"></div>
+                            </div>
+
+                            <div class="review-form-group full-width">
+                                <label for="reviewText">Your Review <span class="required">*</span></label>
+                                <textarea id="reviewText" name="reviewText" required placeholder="Share your thoughts about this product..."></textarea>
+                                <div id="reviewTextError" class="review-form-error"></div>
+                            </div>
+
+                            <div class="review-form-group">
+                                <label for="reviewOS">Operating System (Optional)</label>
+                                <select id="reviewOS" name="reviewOS">
+                                    <option value="">Select OS</option>
+                                    <option value="Windows 10 Home">Windows 10 Home</option>
+                                    <option value="Windows 10 Pro">Windows 10 Pro</option>
+                                    <option value="Windows 11">Windows 11</option>
+                                    <option value="macOS">macOS</option>
+                                    <option value="Linux">Linux</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="review-form-group">
+                                <label for="reviewColor">Color (Optional)</label>
+                                <input type="text" id="reviewColor" name="reviewColor" placeholder="e.g., Black, Silver">
+                            </div>
+                        </div>
+
+                        <div class="review-form-actions">
+                            <button type="submit" class="btn-submit-review" id="submitReviewBtn">Submit Review</button>
+                            <button type="button" class="btn-cancel-review" id="cancelReviewBtn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Thank You Screen -->
+                <div id="thankYouScreen" class="thank-you-screen">
+                    <div class="thank-you-icon">✨</div>
+                    <div class="thank-you-title">Thank You!</div>
+                    <div class="thank-you-text">
+                        <p style="margin-bottom: 12px;">Your review has been submitted successfully.</p>
+                        <p>We appreciate your valuable feedback!</p>
+                    </div>
+                    <button class="btn-back-home" id="backToStartBtn">Back to Home</button>
+                </div>
+            </div>
+        </div>
     </div>
     
     <script>
+        // =========================
+        // TAB SWITCHING LOGIC
+        // =========================
+        document.addEventListener('DOMContentLoaded', function() {
+            const navTabs = document.querySelectorAll('.nav-tab');
+            const loginContainer = document.getElementById('loginContainer');
+            const reviewContainer = document.getElementById('reviewContainer');
+            const reviewProductInput = document.getElementById('reviewProduct');
+            const reviewProductSuggestions = document.getElementById('reviewProductSuggestions');
+
+            // Keep focus on input while selecting a suggestion so click always applies.
+            reviewProductSuggestions.addEventListener('mousedown', (event) => {
+                event.preventDefault();
+            });
+
+            loadReviewProducts();
+
+            reviewProductInput.addEventListener('input', () => {
+                document.getElementById('reviewProductId').value = '';
+                clearReviewFormError('reviewProduct');
+                renderProductSuggestions(reviewProductInput.value.trim());
+            });
+
+            reviewProductInput.addEventListener('focus', () => {
+                if (reviewProductInput.value.trim()) {
+                    renderProductSuggestions(reviewProductInput.value.trim());
+                }
+            });
+
+            reviewProductInput.addEventListener('blur', () => {
+                window.setTimeout(() => {
+                    reviewProductSuggestions.classList.remove('show');
+                }, 120);
+            });
+
+            navTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs
+                    navTabs.forEach(t => t.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Show/hide containers based on tab
+                    if (tabName === 'signin') {
+                        showLoginForm();
+                        loginContainer.classList.add('active');
+                        reviewContainer.classList.remove('active');
+                    } else if (tabName === 'review') {
+                        loginContainer.classList.remove('active');
+                        reviewContainer.classList.add('active');
+                    } else if (tabName === 'developer') {
+                        // Developer Mode - do nothing for now
+                        loginContainer.classList.remove('active');
+                        reviewContainer.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        // =========================
+        // REVIEW FORM STATE & LOGIC
+        // =========================
+        let selectedRating = 0;
+        const reviewProducts = [];
+        const reviewProductById = new Map();
+        let activeSuggestionIndex = -1;
+
+        async function loadReviewProducts() {
+            try {
+                const response = await fetch('/api/review-products');
+                const data = await response.json();
+                if (data.status !== 'success') {
+                    throw new Error(data.message || 'Failed to load products');
+                }
+
+                reviewProducts.length = 0;
+                reviewProductById.clear();
+                data.products.forEach(product => {
+                    reviewProducts.push(product);
+                    reviewProductById.set(String(product.product_id), product);
+                });
+            } catch (error) {
+                console.error('Failed to load review products:', error);
+                showReviewFormError('reviewProduct', 'Could not load product list. Please try again.');
+            }
+        }
+
+        function escapeHtml(input) {
+            return String(input || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function highlightMatch(text, query) {
+            const safeText = escapeHtml(text);
+            const safeQuery = escapeHtml(query);
+            if (!safeQuery) return safeText;
+            const regex = new RegExp(`(${safeQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'ig');
+            return safeText.replace(regex, '<strong>$1</strong>');
+        }
+
+        function selectProductSuggestion(product) {
+            document.getElementById('reviewProduct').value = product.title_y;
+            document.getElementById('reviewProductId').value = String(product.product_id);
+            document.getElementById('reviewProductSuggestions').classList.remove('show');
+            activeSuggestionIndex = -1;
+            applyProductDefaults();
+            clearReviewFormError('reviewProduct');
+        }
+
+        function renderProductSuggestions(query) {
+            const suggestionBox = document.getElementById('reviewProductSuggestions');
+            suggestionBox.innerHTML = '';
+            activeSuggestionIndex = -1;
+
+            if (!query) {
+                suggestionBox.classList.remove('show');
+                return;
+            }
+
+            const queryLower = query.toLowerCase();
+            const matches = reviewProducts
+                .filter(product => (product.title_y || '').toLowerCase().includes(queryLower))
+                .slice(0, 8);
+
+            if (!matches.length) {
+                suggestionBox.classList.remove('show');
+                return;
+            }
+
+            matches.forEach((product, index) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'product-suggestion-item';
+                btn.dataset.index = String(index);
+                btn.innerHTML = `
+                    <div class="product-suggestion-title">${highlightMatch(product.title_y, query)}</div>
+                    <div class="product-suggestion-meta">${escapeHtml(product.asin || 'ASIN unavailable')}</div>
+                `;
+                btn.addEventListener('mousedown', (event) => {
+                    event.preventDefault();
+                    selectProductSuggestion(product);
+                });
+                btn.addEventListener('click', () => selectProductSuggestion(product));
+                suggestionBox.appendChild(btn);
+            });
+
+            const input = document.getElementById('reviewProduct');
+            input.onkeydown = (event) => {
+                const items = Array.from(suggestionBox.querySelectorAll('.product-suggestion-item'));
+                if (!items.length) return;
+
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    activeSuggestionIndex = Math.min(activeSuggestionIndex + 1, items.length - 1);
+                } else if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    activeSuggestionIndex = Math.max(activeSuggestionIndex - 1, 0);
+                } else if (event.key === 'Enter' && activeSuggestionIndex >= 0) {
+                    event.preventDefault();
+                    items[activeSuggestionIndex].click();
+                } else if (event.key === 'Enter' && activeSuggestionIndex < 0 && items.length > 0) {
+                    event.preventDefault();
+                    items[0].click();
+                } else {
+                    return;
+                }
+
+                items.forEach((item, idx) => item.classList.toggle('active', idx === activeSuggestionIndex));
+            };
+
+            suggestionBox.classList.add('show');
+        }
+
+        function applyProductDefaults() {
+            const selectedId = document.getElementById('reviewProductId').value;
+            const product = reviewProductById.get(String(selectedId));
+            if (!product) return;
+
+            const osField = document.getElementById('reviewOS');
+            const colorField = document.getElementById('reviewColor');
+
+            if (!osField.value && product.default_os) {
+                const existing = Array.from(osField.options).find(opt => opt.value === product.default_os);
+                if (!existing) {
+                    const dynamicOption = document.createElement('option');
+                    dynamicOption.value = product.default_os;
+                    dynamicOption.textContent = product.default_os;
+                    osField.appendChild(dynamicOption);
+                }
+                osField.value = product.default_os;
+            }
+
+            if (!colorField.value && product.default_color) {
+                colorField.value = product.default_color;
+            }
+        }
+
+        function showReviewForm() {
+            // Show review form, hide welcome screen
+            document.getElementById('reviewWelcome').style.display = 'none';
+            document.getElementById('reviewFormContainer').classList.add('active');
+            document.getElementById('backFromReviewBtn').classList.add('visible');
+            document.getElementById('reviewProduct').focus();
+        }
+
+        function hidereviewForm() {
+            // Show welcome screen, hide review form
+            document.getElementById('reviewWelcome').style.display = 'block';
+            document.getElementById('reviewFormContainer').classList.remove('active');
+            document.getElementById('backFromReviewBtn').classList.remove('visible');
+            // Reset form
+            document.getElementById('reviewForm').reset();
+            document.getElementById('reviewProductId').value = '';
+            document.getElementById('reviewProductSuggestions').classList.remove('show');
+            selectedRating = 0;
+            document.querySelectorAll('.rating-star').forEach(star => star.classList.remove('selected'));
+            document.getElementById('reviewRating').value = '';
+        }
+
+        function showThankYouScreen() {
+            document.getElementById('reviewFormContainer').classList.remove('active');
+            document.getElementById('thankYouScreen').classList.add('active');
+        }
+
+        function backToReviewWelcome() {
+            document.getElementById('thankYouScreen').classList.remove('active');
+            document.getElementById('reviewFormContainer').classList.remove('active');
+            document.getElementById('reviewWelcome').style.display = 'block';
+            document.getElementById('reviewForm').reset();
+            document.getElementById('reviewProductId').value = '';
+            document.getElementById('reviewProductSuggestions').classList.remove('show');
+            selectedRating = 0;
+            document.querySelectorAll('.rating-star').forEach(star => star.classList.remove('selected'));
+            document.getElementById('reviewRating').value = '';
+        }
+
+        // Clear review form error
+        function clearReviewFormError(fieldId) {
+            const field = document.getElementById(fieldId);
+            const errorDiv = document.getElementById(fieldId + 'Error');
+            if (field) field.classList.remove('error');
+            if (errorDiv) errorDiv.classList.remove('show');
+        }
+
+        // Show review form error
+        function showReviewFormError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorDiv = document.getElementById(fieldId + 'Error');
+            if (field) field.classList.add('error');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.classList.add('show');
+            }
+        }
+
+        // Rating star click handlers
+        document.querySelectorAll('.rating-star').forEach(star => {
+            star.addEventListener('click', (e) => {
+                e.preventDefault();
+                selectedRating = parseInt(star.getAttribute('data-rating'));
+                document.getElementById('reviewRating').value = selectedRating;
+                clearReviewFormError('reviewRating');
+                
+                // Update visual selection
+                document.querySelectorAll('.rating-star').forEach(s => {
+                    if (parseInt(s.getAttribute('data-rating')) <= selectedRating) {
+                        s.classList.add('selected');
+                    } else {
+                        s.classList.remove('selected');
+                    }
+                });
+            });
+        });
+
+        // Review form submission
+        document.getElementById('reviewForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const productId = document.getElementById('reviewProductId').value;
+            const rating = document.getElementById('reviewRating').value;
+            const title = document.getElementById('reviewTitle').value.trim();
+            const text = document.getElementById('reviewText').value.trim();
+            const os = document.getElementById('reviewOS').value.trim() || null;
+            const color = document.getElementById('reviewColor').value.trim() || null;
+
+            // Clear previous errors
+            ['reviewProduct', 'reviewRating', 'reviewTitle', 'reviewText'].forEach(id => clearReviewFormError(id));
+
+            // Validate required fields
+            let hasError = false;
+            if (!productId) {
+                showReviewFormError('reviewProduct', 'Please choose a product');
+                hasError = true;
+            }
+            if (!rating) {
+                showReviewFormError('reviewRating', 'Please select a rating');
+                hasError = true;
+            }
+            if (!title) {
+                showReviewFormError('reviewTitle', 'Review title is required');
+                hasError = true;
+            }
+            if (!text) {
+                showReviewFormError('reviewText', 'Your review text is required');
+                hasError = true;
+            } else if (text.length < 10) {
+                showReviewFormError('reviewText', 'Review must be at least 10 characters');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            const submitBtn = document.getElementById('submitReviewBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            try {
+                const response = await fetch('/api/submit_review', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        rating: rating,
+                        title: title,
+                        text: text,
+                        os: os,
+                        color: color
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Review';
+                    showThankYouScreen();
+                } else {
+                    showReviewFormError('reviewProduct', data.message || 'Failed to submit review');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Review';
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showReviewFormError('reviewProduct', 'Error submitting review. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Review';
+            }
+        });
+
+        // Review form cancel button
+        document.getElementById('cancelReviewBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            hidereviewForm();
+        });
+
+        // Back from review button
+        document.getElementById('backFromReviewBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            hidereviewForm();
+        });
+
+        // Start review button
+        document.getElementById('startReviewBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            showReviewForm();
+        });
+
+        // Back to start button (from thank you)
+        document.getElementById('backToStartBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            backToReviewWelcome();
+        });
+
+        // =========================
+        // LOGIN & SIGN UP FUNCTIONS
+        // =========================
+
         // Load departments
         async function loadDepartments() {
             try {
@@ -485,10 +1535,21 @@
                 
                 if (data.status === 'success') {
                     const select = document.getElementById('department');
+                    const enabledDepartments = ['Engineering & IT', 'Marketing', 'Sales'];
+                    
                     data.departments.forEach(dept => {
                         const option = document.createElement('option');
                         option.value = dept.department_code;
-                        option.textContent = dept.department_name;
+                        
+                        const isEnabled = enabledDepartments.includes(dept.department_name);
+                        
+                        if (isEnabled) {
+                            option.textContent = dept.department_name;
+                        } else {
+                            option.textContent = dept.department_name + ' (beta)';
+                            option.disabled = true;
+                        }
+                        
                         select.appendChild(option);
                     });
                 }
@@ -527,9 +1588,9 @@
             document.getElementById('loginForm').classList.remove('hidden');
             document.getElementById('createAccountForm').classList.remove('visible');
             document.getElementById('backBtn').classList.remove('visible');
+            document.getElementById('loginContainer').classList.remove('create-mode');
             clearFieldError('email');
             clearFieldError('password');
-            document.getElementById('passwordGroup').style.display = 'none';
             document.getElementById('password').value = '';
             document.getElementById('password').type = 'password';
         }
@@ -539,6 +1600,7 @@
             document.getElementById('loginForm').classList.add('hidden');
             document.getElementById('createAccountForm').classList.add('visible');
             document.getElementById('backBtn').classList.add('visible');
+            document.getElementById('loginContainer').classList.add('create-mode');
         }
 
         // Handle Sign In
@@ -547,7 +1609,6 @@
             
             const email = document.getElementById('email').value.trim().toLowerCase();
             const password = document.getElementById('password').value;
-            const passwordGroup = document.getElementById('passwordGroup');
             const btn = document.getElementById('loginBtn');
             
             // Clear previous errors
@@ -560,58 +1621,32 @@
                 return;
             }
             
+            // Validate password
+            if (!password) {
+                showFieldError('password', 'Password is required');
+                return;
+            }
+            
             btn.disabled = true;
-            btn.textContent = 'Checking...';
+            btn.textContent = 'Signing in...';
             
             try {
-                // If password field is not visible, check if account exists
-                if (passwordGroup.style.display === 'none') {
-                    const response = await fetch('/api/check_email', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email })
-                    });
-                    
-                    const data = await response.json();
-                    btn.disabled = false;
-                    btn.textContent = 'Sign In';
-                    
-                    if (data.status === 'success' && data.exists) {
-                        // Account exists - show password field
-                        passwordGroup.style.display = 'block';
-                        document.getElementById('password').focus();
-                    } else {
-                        // Account doesn't exist
-                        showFieldError('email', 'No account found with this email. Create one to get started.');
-                    }
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+                
+                if (data.status === 'success') {
+                    // Authentication successful - redirect to dashboard
+                    window.location.href = '/';
                 } else {
-                    // Password field is visible - authenticate with email and password
-                    if (!password) {
-                        showFieldError('password', 'Password is required');
-                        btn.disabled = false;
-                        btn.textContent = 'Sign In';
-                        return;
-                    }
-                    
-                    btn.textContent = 'Signing in...';
-                    
-                    const response = await fetch('/api/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password })
-                    });
-                    
-                    const data = await response.json();
-                    btn.disabled = false;
-                    btn.textContent = 'Sign In';
-                    
-                    if (data.status === 'success') {
-                        // Authentication successful - redirect to dashboard
-                        window.location.href = '/';
-                    } else {
-                        // Authentication failed
-                        showFieldError('password', data.message || 'Incorrect password');
-                    }
+                    // Authentication failed
+                    showFieldError('password', data.message || 'Incorrect password');
                 }
             } catch (error) {
                 btn.disabled = false;
@@ -642,7 +1677,6 @@
             const lastName = document.getElementById('lastName').value.trim();
             const regEmail = document.getElementById('regEmail').value.trim().toLowerCase();
             const department = document.getElementById('department').value;
-            const subDepartment = document.getElementById('subDepartment').value.trim() || null;
             const location = document.getElementById('location').value.trim() || null;
             const password = document.getElementById('regPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
@@ -698,7 +1732,6 @@
                         first_name: firstName,
                         last_name: lastName,
                         department: department,
-                        sub_department: subDepartment,
                         location: location,
                         password: password
                     })

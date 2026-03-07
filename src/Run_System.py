@@ -4,7 +4,6 @@ import sys
 MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
 ARTIFACTS_PATH = os.path.join(MODELS_DIR, "Risk_Model_Artifacts.pkl")
 
-
 def main():
     print("=" * 60)
     print("  FusionTech Product Risk Management System")

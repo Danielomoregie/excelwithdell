@@ -3,6 +3,8 @@ import pickle
 import pandas as pd
 import re
 import math
+import time
+import uuid
 from flask import Flask, jsonify, request, render_template, session, redirect, url_for
 from functools import wraps
 from psycopg2 import sql
@@ -511,6 +513,288 @@ def list_departments():
         "status": "success",
         "departments": departments
     })
+
+
+def ensure_review_tables(conn):
+    """Create review-related tables and seed product catalog from online_reviews."""
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS "FusionTech_Product" (
+            product_id SERIAL PRIMARY KEY,
+            title_y TEXT UNIQUE NOT NULL,
+            asin TEXT,
+            main_category TEXT,
+            average_rating TEXT,
+            rating_number TEXT,
+            features TEXT,
+            price TEXT,
+            store TEXT,
+            brand TEXT,
+            default_os TEXT,
+            default_color TEXT,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS fusiontech_submitted_reviews (
+            review_id BIGSERIAL PRIMARY KEY,
+            product_id INTEGER REFERENCES "FusionTech_Product"(product_id),
+            rating INTEGER NOT NULL,
+            title_x TEXT NOT NULL,
+            text TEXT NOT NULL,
+            asin TEXT,
+            user_id TEXT,
+            timestamp BIGINT NOT NULL,
+            helpful_vote INTEGER NULL,
+            main_category TEXT,
+            title_y TEXT,
+            average_rating TEXT,
+            rating_number TEXT,
+            features TEXT,
+            price TEXT,
+            store TEXT,
+            os TEXT,
+            color TEXT,
+            brand TEXT,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_submitted_reviews_product_id
+        ON fusiontech_submitted_reviews(product_id);
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_submitted_reviews_timestamp
+        ON fusiontech_submitted_reviews(timestamp DESC);
+        """
+    )
+
+    # Seed the product catalog from online_reviews when available.
+    cursor.execute(
+        """
+        SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_name = 'online_reviews'
+        );
+        """
+    )
+    has_online_reviews = cursor.fetchone()[0]
+
+    if has_online_reviews:
+        cursor.execute(
+            """
+            INSERT INTO "FusionTech_Product"
+                (title_y, asin, main_category, average_rating, rating_number, features, price, store, brand, default_os, default_color)
+            SELECT DISTINCT ON (title_y)
+                title_y,
+                asin,
+                main_category,
+                average_rating,
+                rating_number,
+                features,
+                price,
+                store,
+                brand,
+                os,
+                color
+            FROM online_reviews
+            WHERE title_y IS NOT NULL AND TRIM(title_y) <> ''
+            ORDER BY title_y, COALESCE(rating_number::TEXT, '') DESC, COALESCE(asin, '') ASC
+            ON CONFLICT (title_y) DO UPDATE SET
+                asin = EXCLUDED.asin,
+                main_category = EXCLUDED.main_category,
+                average_rating = EXCLUDED.average_rating,
+                rating_number = EXCLUDED.rating_number,
+                features = EXCLUDED.features,
+                price = EXCLUDED.price,
+                store = EXCLUDED.store,
+                brand = EXCLUDED.brand,
+                default_os = EXCLUDED.default_os,
+                default_color = EXCLUDED.default_color;
+            """
+        )
+
+    cursor.close()
+
+
+@app.route("/api/review-products")
+def list_review_products():
+    """Return products available for review selection."""
+    conn = get_connection()
+    try:
+        ensure_review_tables(conn)
+        conn.commit()
+
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT product_id, title_y, asin, main_category, average_rating, rating_number,
+                   features, price, store, brand, default_os, default_color
+            FROM "FusionTech_Product"
+            ORDER BY title_y ASC;
+            """
+        )
+        rows = cursor.fetchall()
+        cursor.close()
+
+        products = [
+            {
+                "product_id": row[0],
+                "title_y": row[1],
+                "asin": row[2],
+                "main_category": row[3],
+                "average_rating": row[4],
+                "rating_number": row[5],
+                "features": row[6],
+                "price": row[7],
+                "store": row[8],
+                "brand": row[9],
+                "default_os": row[10],
+                "default_color": row[11],
+            }
+            for row in rows
+        ]
+
+        return jsonify({"status": "success", "products": products})
+    except Exception as exc:
+        conn.rollback()
+        return jsonify({"status": "error", "message": f"Failed to load review products: {str(exc)}"}), 500
+    finally:
+        close_connection(conn)
+
+
+@app.route("/api/submit_review", methods=["POST"])
+def submit_review():
+    """Persist customer review and infer metadata from selected product."""
+    body = request.get_json() or {}
+
+    product_id = body.get("product_id")
+    rating = body.get("rating")
+    title = (body.get("title") or "").strip()
+    text = (body.get("text") or "").strip()
+    os_value = (body.get("os") or "").strip() or None
+    color_value = (body.get("color") or "").strip() or None
+
+    if not product_id:
+        return jsonify({"status": "error", "message": "Product is required"}), 400
+    if rating is None:
+        return jsonify({"status": "error", "message": "Rating is required"}), 400
+    if not title:
+        return jsonify({"status": "error", "message": "Review title is required"}), 400
+    if not text:
+        return jsonify({"status": "error", "message": "Review text is required"}), 400
+
+    try:
+        product_id = int(product_id)
+        rating = int(rating)
+    except (TypeError, ValueError):
+        return jsonify({"status": "error", "message": "Invalid product or rating value"}), 400
+
+    if rating < 1 or rating > 5:
+        return jsonify({"status": "error", "message": "Rating must be between 1 and 5"}), 400
+
+    conn = get_connection()
+    try:
+        ensure_review_tables(conn)
+
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT product_id, title_y, asin, main_category, average_rating, rating_number,
+                   features, price, store, brand, default_os, default_color
+            FROM "FusionTech_Product"
+            WHERE product_id = %s;
+            """,
+            (product_id,)
+        )
+        product_row = cursor.fetchone()
+
+        if not product_row:
+            cursor.close()
+            conn.rollback()
+            return jsonify({"status": "error", "message": "Selected product was not found"}), 404
+
+        resolved_user_id = session.get("user_email") or f"guest_{uuid.uuid4().hex[:16]}"
+        review_timestamp = int(time.time())
+
+        if not os_value:
+            os_value = product_row[10]
+        if not color_value:
+            color_value = product_row[11]
+
+        cursor.execute(
+            """
+            INSERT INTO fusiontech_submitted_reviews
+                (product_id, rating, title_x, text, asin, user_id, timestamp, helpful_vote,
+                 main_category, title_y, average_rating, rating_number, features, price,
+                 store, os, color, brand)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING review_id;
+            """,
+            (
+                product_row[0],
+                rating,
+                title,
+                text,
+                product_row[2],
+                resolved_user_id,
+                review_timestamp,
+                product_row[3],
+                product_row[1],
+                product_row[4],
+                product_row[5],
+                product_row[6],
+                product_row[7],
+                product_row[8],
+                os_value,
+                color_value,
+                product_row[9],
+            )
+        )
+        review_id = cursor.fetchone()[0]
+        cursor.close()
+        conn.commit()
+
+        return jsonify(
+            {
+                "status": "success",
+                "message": "Review submitted successfully",
+                "review_id": review_id,
+                "inferred": {
+                    "asin": product_row[2],
+                    "user_id": resolved_user_id,
+                    "timestamp": review_timestamp,
+                    "helpful_vote": None,
+                    "main_category": product_row[3],
+                    "average_rating": product_row[4],
+                    "rating_number": product_row[5],
+                    "features": product_row[6],
+                    "price": product_row[7],
+                    "store": product_row[8],
+                    "title_y": product_row[1],
+                    "brand": product_row[9],
+                    "os": os_value,
+                    "color": color_value,
+                },
+            }
+        )
+    except Exception as exc:
+        conn.rollback()
+        return jsonify({"status": "error", "message": f"Failed to submit review: {str(exc)}"}), 500
+    finally:
+        close_connection(conn)
 
 
 @app.route("/logout")

@@ -301,10 +301,21 @@ async function openProfileEditModal() {
         if (data.status === 'success') {
             const select = document.getElementById('editDepartment');
             select.innerHTML = '<option value="">Select Department</option>';
+            const enabledDepartments = ['Engineering & IT', 'Marketing', 'Sales'];
+            
             data.departments.forEach(dept => {
                 const option = document.createElement('option');
                 option.value = dept.department_code;
-                option.textContent = dept.department_name;
+                
+                const isEnabled = enabledDepartments.includes(dept.department_name);
+                
+                if (isEnabled) {
+                    option.textContent = dept.department_name;
+                } else {
+                    option.textContent = dept.department_name + ' (beta)';
+                    option.disabled = true;
+                }
+                
                 select.appendChild(option);
             });
         }
@@ -322,7 +333,6 @@ async function openProfileEditModal() {
             document.getElementById('editFirstName').value = user.first_name || '';
             document.getElementById('editLastName').value = user.last_name || '';
             document.getElementById('editDepartment').value = user.department || '';
-            document.getElementById('editSubDepartment').value = user.sub_department || '';
             document.getElementById('editLocation').value = user.location || '';
         }
     } catch (error) {
@@ -352,7 +362,6 @@ async function saveProfile(e) {
         first_name: document.getElementById('editFirstName').value.trim(),
         last_name: document.getElementById('editLastName').value.trim(),
         department: document.getElementById('editDepartment').value,
-        sub_department: document.getElementById('editSubDepartment').value.trim() || null,
         location: document.getElementById('editLocation').value.trim() || null,
     };
     
