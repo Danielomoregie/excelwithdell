@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Risk Scores - FusionTech Dashboard</title>
+    <link rel="stylesheet" href="/static/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="product-risk-page">
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open navigation" title="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <a href="/" aria-label="Go to dashboard home">
+                    <img src="/static/fusiontech_logo_compact.svg" alt="FusionTech Systems" class="header-logo">
+                </a>
+                <div class="header-text">
+                    <h1>Product Risk Scores</h1>
+                    <p class="subtitle">AI-Powered Product Risk Assessment</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <a class="back-link" href="/">Back to Dashboard</a>
+            </div>
+        </div>
+    </header>
+
+    <aside class="side-drawer" id="sideDrawer" aria-hidden="true">
+        <div class="side-drawer-header">
+            <h3>Navigation</h3>
+        </div>
+        <nav class="side-drawer-nav">
+            <a href="{{ url_for('dashboard') }}" class="side-drawer-item" id="dashboardNavItem">
+                <span class="side-drawer-item-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('product_risk_page') }}" class="side-drawer-item active" id="productRiskNavItem">
+                <span class="side-drawer-item-icon">📈</span>
+                <span>Product Risk Scores</span>
+            </a>
+            <a href="{{ url_for('raw_dataset_page') }}" class="side-drawer-item" id="rawReviewNavItem">
+                <span class="side-drawer-item-icon">📋</span>
+                <span>Raw Reviews</span>
+            </a>
+        </nav>
+    </aside>
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+
+    <section class="kpi-heading-section">
+        <div class="kpi-heading-chip">Product Analysis</div>
+        <h2>Every Product Ranked by Risk</h2>
+    </section>
+
+    <!-- ===== PRODUCT RISK TABLE ===== -->
+    <section class="section-block product-risk-table-section">
+        <div class="section-header">
+            <h2>Product Risk Scores</h2>
+            <div class="score-guide" aria-label="Risk score ranges">
+                <span class="guide-item"><span class="dot green"></span> 0&ndash;24 = Low risk</span>
+                <span class="guide-item"><span class="dot yellow"></span> 25&ndash;49 = Moderate</span>
+                <span class="guide-item"><span class="dot orange"></span> 50&ndash;74 = High</span>
+                <span class="guide-item"><span class="dot red"></span> 75&ndash;100 = Critical</span>
+            </div>
+        </div>
+
+        <div class="table-controls">
+            <input type="text" id="search-input" placeholder="Search by product name..." class="search-input">
+            <select id="filter-alert" class="filter-select">
+                <option value="all">All Alert Levels</option>
+                <option value="CRITICAL">&#128308; Critical (75&ndash;100)</option>
+                <option value="HIGH">&#128992; High (50&ndash;74)</option>
+                <option value="MODERATE">&#128993; Moderate (25&ndash;49)</option>
+                <option value="LOW">&#128994; Low (0&ndash;24)</option>
+            </select>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="products-table">
+                <thead>
+                    <tr>
+                        <th data-sort="rank">#</th>
+                        <th data-sort="product_name">Product Name</th>
+                        <th data-sort="risk_score" class="active-sort">Risk Score &#8597;</th>
+                        <th data-sort="alert_level">Alert Level</th>
+                        <th>Main Complaints</th>
+                        <th data-sort="review_count">Reviews</th>
+                        <th data-sort="average_rating">Avg Rating</th>
+                        <th data-sort="revenue">Revenue at Risk / mo</th>
+                    </tr>
+                </thead>
+                <tbody id="products-tbody"></tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            <button id="show-more-btn" class="show-more-btn" style="display:none;">Show More Products &#8595;</button>
+            <span id="table-count" class="table-count"></span>
+        </div>
+    </section>
+
+    <!-- Product Detail Modal -->
+    <div id="product-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="modal-close" id="modal-close">&times;</span>
+            <h2 id="modal-title">Product Detail</h2>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Profile Edit Modal -->
+    <div id="profile-modal" class="modal" style="display:none;">
+        <div class="modal-content profile-modal-content">
+            <span class="modal-close" id="profile-modal-close">&times;</span>
+            <h2>Edit Profile</h2>
+            <form id="profileEditForm">
+                <div class="form-group">
+                    <label for="editFirstName">First Name</label>
+                    <input type="text" id="editFirstName" name="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editLastName">Last Name</label>
+                    <input type="text" id="editLastName" name="lastName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDepartment">Department</label>
+                    <select id="editDepartment" name="department" required>
+                        <option value="">Select Department</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editLocation">Location</label>
+                    <input type="text" id="editLocation" name="location" placeholder="Optional">
+                </div>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;">
+                <h3 style="margin-top: 20px; margin-bottom: 16px; font-size: 16px; color: #ffffff;">Change Password (Optional)</h3>
+                <div class="form-group">
+                    <label for="editNewPassword">New Password</label>
+                    <input type="password" id="editNewPassword" name="newPassword" placeholder="Leave blank to keep current password" autocomplete="new-password">
+                    <div id="editNewPasswordError" class="error-text" style="display: none;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="editConfirmPassword">Confirm New Password</label>
+                    <input type="password" id="editConfirmPassword" name="confirmPassword" placeholder="Re-enter new password" autocomplete="new-password">
+                    <div id="editConfirmPasswordError" class="error-text" style="display: none;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="editCurrentPassword">Current Password (Required to change password)</label>
+                    <input type="password" id="editCurrentPassword" name="currentPassword" placeholder="Enter your current password" autocomplete="current-password">
+                    <div id="editCurrentPasswordError" class="error-text" style="display: none;"></div>
+                </div>
+                <div class="profile-form-actions">
+                    <button type="button" class="btn-secondary" id="cancelEditBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>FusionTech Systems &nbsp;&bull;&nbsp; Product Risk Management Platform &nbsp;&bull;&nbsp; © 2026</p>
+    </footer>
+
+    <script src="/static/dashboard.js"></script>
+</body>
+</html>

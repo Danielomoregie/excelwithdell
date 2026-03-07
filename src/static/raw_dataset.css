@@ -39,7 +39,7 @@ body {
 
 .header {
     background: linear-gradient(135deg, #1a2a42 0%, #0d47a1 100%);
-    padding: 1.2rem 1.5rem;
+    padding: 1.08rem 1.5rem;
     border-bottom: 3px solid #1565c0;
     position: sticky;
     top: 0;
@@ -59,6 +59,11 @@ body {
     display: flex;
     align-items: center;
     gap: 0.9rem;
+}
+
+.header-left a {
+    display: flex;
+    align-items: center;
 }
 
 .hamburger-btn {
@@ -88,17 +93,34 @@ body {
 .hamburger-btn.active span:nth-child(2) { opacity: 0; }
 .hamburger-btn.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-.header-logo { height: 59px; filter: brightness(0) invert(1); }
+.header-logo { height: 71px; filter: brightness(0) invert(1); }
 .header-text h1 { margin: 0; font-size: 1.3rem; color: #fff; }
 .subtitle { margin: 0.2rem 0 0; color: #bfdbfe; font-size: 0.82rem; }
 
 .back-link {
+    display: inline-block;
     text-decoration: none;
     color: #fff;
-    border: 1px solid rgba(255,255,255,0.25);
-    padding: 0.5rem 0.9rem;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 0.6rem 1.2rem;
     border-radius: 8px;
-    background: rgba(255,255,255,0.12);
+    background: linear-gradient(135deg, rgba(66, 165, 245, 0.25) 0%, rgba(37, 99, 235, 0.2) 100%);
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.back-link:hover {
+    background: linear-gradient(135deg, rgba(66, 165, 245, 0.35) 0%, rgba(37, 99, 235, 0.3) 100%);
+    border-color: rgba(66, 165, 245, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(66, 165, 245, 0.25);
+}
+
+.back-link:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(66, 165, 245, 0.2);
 }
 
 .page-wrap {

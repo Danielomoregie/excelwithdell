@@ -110,13 +110,14 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
 
 .header {
     background: linear-gradient(135deg, #1a2a42 0%, #0d47a1 100%);
-    padding: 1.4rem 2rem;
+    padding: 1.26rem 2rem;
     border-bottom: 3px solid #1565c0;
     position: sticky;
     top: 0;
-    z-index: 100;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 999;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
     transition: transform 0.3s ease-out;
+    backdrop-filter: blur(8px);
 }
 
 .header.header-hide {
@@ -136,6 +137,11 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
     display: flex;
     align-items: center;
     gap: 1rem;
+}
+
+.header-left a {
+    display: flex;
+    align-items: center;
 }
 
 .hamburger-btn {
@@ -180,7 +186,7 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
 }
 
 .header-logo {
-    height: 59px;
+    height: 71px;
     filter: brightness(0) invert(1);
     flex-shrink: 0;
 }
@@ -209,8 +215,8 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
     background: rgba(255,255,255,0.12);
     border: 1px solid rgba(255,255,255,0.25);
     border-radius: 50px;
-    padding: 0.45rem 1.1rem;
-    font-size: 0.85rem;
+    padding: 0.54rem 1.32rem;
+    font-size: 1.02rem;
     font-weight: 600;
     cursor: pointer;
     color: #fff;
@@ -232,12 +238,12 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
 .profile-button {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.6rem;
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.18) 0%, rgba(30, 58, 138, 0.25) 100%);
     border: 1.5px solid rgba(59, 130, 246, 0.4);
     border-radius: 50px;
-    padding: 0.5rem 1.2rem;
-    font-size: 0.85rem;
+    padding: 0.54rem 1.32rem;
+    font-size: 1.02rem;
     font-weight: 600;
     cursor: pointer;
     color: #fff;
@@ -253,7 +259,7 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
 }
 
 .profile-icon {
-    font-size: 1.1rem;
+    font-size: 1.32rem;
 }
 
 .dropdown-arrow {
@@ -561,15 +567,27 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
 
 .greeting-section {
     max-width: 1400px;
-    margin: 0 auto;
-    padding: 2rem 2rem 1rem 2rem;
+    margin: 1.8rem auto 0;
+    padding: 2.2rem 2.5rem 2rem 2.5rem;
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.18) 0%, rgba(15, 23, 42, 0.34) 100%);
+    border: 1px solid rgba(96, 165, 250, 0.24);
+    border-radius: 14px;
+    box-shadow: 0 8px 22px rgba(2, 6, 23, 0.24);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.greeting-section:hover {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.28) 0%, rgba(15, 23, 42, 0.42) 100%);
+    border-color: rgba(96, 165, 250, 0.4);
+    box-shadow: 0 12px 32px rgba(66, 165, 245, 0.15), 0 0 0 1px rgba(96, 165, 250, 0.2);
+    transform: translateY(-2px);
 }
 
 .greeting-text {
-    font-size: 2rem;
+    font-size: 2.45rem;
     font-weight: 700;
     color: var(--text-heading);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.9rem;
     letter-spacing: -0.02em;
 }
 
@@ -581,7 +599,7 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
 }
 
 .greeting-date {
-    font-size: 1rem;
+    font-size: 1.16rem;
     color: #0ea5e9;
     font-weight: 600;
     margin: 0;
@@ -670,15 +688,111 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
     box-shadow: none;
 }
 
+.ai-section-divider {
+    border: none;
+    height: 5px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(66, 165, 245, 0.6) 50%, 
+        transparent 100%
+    ),
+    linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(66, 165, 245, 0.3) 50%, 
+        transparent 100%
+    );
+    background-size: 100% 1px, 100% 1px;
+    background-position: 0 0, 0 4px;
+    background-repeat: repeat-x;
+    margin: 1.5rem 0 1.125rem 0;
+}
+
+.ai-heading-section {
+    margin-bottom: 1.2rem;
+    padding: 0;
+}
+
 /* ======================================================
    KPI CARDS
    ====================================================== */
+
+.kpi-heading-section {
+    max-width: 1400px;
+    margin: 2.5rem auto 0;
+    padding: 0 2rem;
+}
+
+.kpi-heading-chip {
+    display: inline-block;
+    padding: 0.28rem 0.72rem;
+    border: 1px solid rgba(248, 113, 113, 0.58);
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(153, 27, 27, 0.44) 0%, rgba(69, 10, 10, 0.24) 100%);
+    color: #fee2e2;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+    animation: chipPulseRed 2.6s ease-in-out infinite;
+}
+
+@keyframes chipPulseRed {
+    0%, 100% {
+        box-shadow: 0 0 0 rgba(239, 68, 68, 0), 0 0 0 rgba(239, 68, 68, 0);
+        border-color: rgba(248, 113, 113, 0.55);
+        color: #fee2e2;
+    }
+    50% {
+        box-shadow: 0 0 12px rgba(239, 68, 68, 0.44), 0 0 24px rgba(239, 68, 68, 0.2);
+        border-color: rgba(254, 202, 202, 0.96);
+        color: #fff1f2;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .kpi-heading-chip {
+        animation: none;
+    }
+}
+
+.kpi-heading-section h2 {
+    margin-top: 0.55rem;
+    margin-bottom: 0.2rem;
+    color: #e8f1ff;
+    font-size: clamp(1.2rem, 2vw, 1.75rem);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+.kpi-heading-desc {
+    margin-top: 0.1rem;
+    margin-bottom: 0;
+    color: #42a5f5;
+    font-size: 1.02rem;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+.chat-heading-section {
+    padding: 0 0 0 2rem;
+    margin: 0.5rem 0 0;
+}
+
+.chat-heading-section h2 {
+    margin-top: 0.55rem;
+    margin-bottom: 0.2rem;
+    color: #e8f1ff;
+    font-size: clamp(1.2rem, 2vw, 1.75rem);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
 
 .kpi-section {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
     gap: 1rem;
-    padding: 1.5rem 2rem;
+    padding: 1.7rem 2rem;
     max-width: 1400px;
     margin: 0 auto;
 }
@@ -820,6 +934,72 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
 .dot.orange { background: #fb8c00; }
 .dot.red    { background: #ef5350; }
 
+/* Back to Dashboard button styling */
+.back-link {
+    display: inline-block;
+    text-decoration: none;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(66, 165, 245, 0.25) 0%, rgba(37, 99, 235, 0.2) 100%);
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.back-link:hover {
+    background: linear-gradient(135deg, rgba(66, 165, 245, 0.35) 0%, rgba(37, 99, 235, 0.3) 100%);
+    border-color: rgba(66, 165, 245, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(66, 165, 245, 0.25);
+}
+
+.back-link:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(66, 165, 245, 0.2);
+}
+
+/* Product Risk page refinements */
+body.product-risk-page .kpi-heading-section {
+    margin-top: 2rem;
+    margin-bottom: 1.1rem;
+}
+
+body.product-risk-page .kpi-heading-section h2 {
+    margin-top: 0.7rem;
+    margin-bottom: 0.35rem;
+}
+
+body.product-risk-page .product-risk-table-section {
+    margin-top: 0.45rem;
+}
+
+body.product-risk-page .product-risk-table-section .section-header {
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(66, 165, 245, 0.1) 0%, rgba(10, 16, 24, 0.12) 100%);
+}
+
+body.product-risk-page .product-risk-table-section .section-header h2 {
+    margin-bottom: 0.75rem;
+}
+
+body.product-risk-page .product-risk-table-section .score-guide {
+    gap: 0.9rem 1.2rem;
+    margin-top: 0;
+}
+
+body.product-risk-page .product-risk-table-section .guide-item {
+    padding: 0.28rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 /* ======================================================
    CHARTS
    ====================================================== */
@@ -887,17 +1067,48 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
     background: var(--bg-input);
     color: var(--text-primary);
     font-size: 0.88rem;
-    transition: border-color var(--transition), box-shadow var(--transition);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .search-input { flex: 1; min-width: 180px; max-width: 420px; }
-.filter-select { min-width: 200px; }
+
+.filter-select { 
+    min-width: 200px;
+    position: relative;
+    background: linear-gradient(135deg, rgba(66, 165, 245, 0.12) 0%, rgba(37, 99, 235, 0.08) 100%);
+    border: 1px solid rgba(66, 165, 245, 0.35);
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(66, 165, 245, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.filter-select:hover {
+    background: linear-gradient(135deg, rgba(66, 165, 245, 0.18) 0%, rgba(37, 99, 235, 0.12) 100%);
+    border-color: rgba(66, 165, 245, 0.5);
+    box-shadow: 0 4px 12px rgba(66, 165, 245, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transform: translateY(-1px);
+}
 
 .search-input:focus,
 .filter-select:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(66,165,245,0.15);
+    box-shadow: 0 0 0 3px rgba(66,165,245,0.15), 0 4px 12px rgba(66, 165, 245, 0.2);
+}
+
+.filter-select:active {
+    transform: translateY(0);
+}
+
+.filter-select option {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    padding: 0.6rem 1rem;
+    font-weight: 500;
+}
+
+.filter-select option:hover {
+    background: linear-gradient(135deg, rgba(66, 165, 245, 0.15) 0%, rgba(37, 99, 235, 0.1) 100%);
 }
 
 .table-wrapper {
@@ -1176,7 +1387,7 @@ td {
     }
 
     .header-logo {
-        height: 52px;
+        height: 62px;
     }
 
     .kpi-card {
@@ -1227,7 +1438,7 @@ td {
     }
 
     .header-logo {
-        height: 46px;
+        height: 55px;
     }
 
     .header-right {
@@ -1246,15 +1457,17 @@ td {
     }
 
     .greeting-section {
-        padding: 1.5rem 1rem 0.75rem 1rem;
+        margin: 0.85rem auto 0;
+        padding: 1.15rem 1rem 0.9rem 1rem;
+        border-radius: 12px;
     }
 
     .greeting-text {
-        font-size: 1.5rem;
+        font-size: 1.85rem;
     }
 
     .greeting-date {
-        font-size: 0.9rem;
+        font-size: 1rem;
     }
 
     .ai-assistant-section {
@@ -1406,7 +1619,7 @@ td {
     }
 
     .header-logo {
-        height: 39px;
+        height: 47px;
     }
 
     .theme-toggle {

@@ -62,6 +62,10 @@
                 <span class="side-drawer-item-icon">📊</span>
                 <span>Dashboard</span>
             </a>
+            <a href="/product-risk" class="side-drawer-item" id="productRiskNavItem">
+                <span class="side-drawer-item-icon">📈</span>
+                <span>Product Risk Scores</span>
+            </a>
             <a href="/raw-dataset" class="side-drawer-item" id="rawReviewNavItem">
                 <span class="side-drawer-item-icon">📋</span>
                 <span>Raw Reviews</span>
@@ -74,6 +78,12 @@
     <section class="greeting-section">
         <h2 class="greeting-text" id="greetingText">Good Morning, <span id="greetingName">{{ user.first_name if user else 'User' }}</span></h2>
         <p class="greeting-date" id="greetingDate">Loading...</p>
+    </section>
+
+    <section class="kpi-heading-section">
+        <div class="kpi-heading-chip">Live Business Pulse</div>
+        <h2>Critical Metrics at a Glance</h2>
+        <p class="kpi-heading-desc">Snapshot of FusionTech's Recent Product Performance</p>
     </section>
 
     <!-- KPI Summary Cards -->
@@ -104,17 +114,6 @@
         </div>
     </section>
 
-    <!-- AI Assistant -->
-    <section class="ai-assistant-section">
-        <div class="ai-assistant-container">
-            <div class="ai-input-wrapper">
-                <input type="text" id="chatbot-input" placeholder="Any Questions Regarding Customer Feedback Trends Today?" class="ai-input">
-                <button id="chatbot-btn" class="ai-btn" disabled>Ask AI</button>
-            </div>
-        </div>
-    </section>
-    </section>
-
     <!-- Alerts Banner (shown only when there are critical/high alerts) -->
     <section class="alerts-section" id="alerts-section" style="display:none;">
         <h2>&#128680; Active Alerts</h2>
@@ -123,11 +122,6 @@
 
     <!-- ===== CHARTS SECTION (moved above the table) ===== -->
     <section class="section-block">
-        <div class="section-header">
-            <h2>&#128202; Performance Overview</h2>
-            <p class="section-desc">These charts give you a quick snapshot of how customers are feeling and what they're complaining about — no technical background needed to read them.</p>
-        </div>
-
         <div class="charts-grid">
 
             <!-- Chart 1: Sentiment over time -->
@@ -153,8 +147,27 @@
                 <canvas id="volume-chart"></canvas>
             </div>
 
+            <!-- Page Divider -->
+            <hr class="ai-section-divider" style="grid-column: 1 / -1;">
+
+            <section class="chat-heading-section" style="grid-column: 1 / -1;">
+                <div class="kpi-heading-chip">Chat with Agent</div>
+                <h2>Ask Our AI Assistant</h2>
+                <p class="kpi-heading-desc">Get Instant Insights and Answers About FusionTech's Product Performance</p>
+            </section>
+
+            <!-- AI Assistant -->
+            <div class="chart-container" style="grid-column: 1 / -1;">
+                <div class="ai-assistant-container">
+                    <div class="ai-input-wrapper">
+                        <input type="text" id="chatbot-input" placeholder="Any Questions Regarding Customer Feedback Trends Today?" class="ai-input">
+                        <button id="chatbot-btn" class="ai-btn" disabled>Ask AI</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Chart 3: Complaint themes -->
-            <div class="chart-container">
+            <div class="chart-container" style="display:none;">
                 <div class="chart-header">
                     <h3>What Are Customers Most Upset About?</h3>
                     <p class="chart-description">
@@ -165,7 +178,7 @@
             </div>
 
             <!-- Chart 4: Revenue at risk -->
-            <div class="chart-container">
+            <div class="chart-container" style="display:none;">
                 <div class="chart-header">
                     <h3>Which Products Have the Most Money at Stake?</h3>
                     <p class="chart-description">
@@ -177,66 +190,6 @@
 
         </div>
     </section>
-
-    <!-- ===== PRODUCT RISK TABLE (below charts) ===== -->
-    <section class="section-block">
-        <div class="section-header">
-            <h2>&#128269; Product Risk Scores</h2>
-            <p class="section-desc">
-                Every product ranked by AI-calculated risk. <strong>Click any row</strong> to see the full breakdown — complaint themes, star rating history, and recent negative reviews.
-                <br>
-                <span class="score-guide">
-                    <span class="guide-item"><span class="dot green"></span> 0&ndash;24 = Low risk</span>
-                    <span class="guide-item"><span class="dot yellow"></span> 25&ndash;49 = Moderate</span>
-                    <span class="guide-item"><span class="dot orange"></span> 50&ndash;74 = High</span>
-                    <span class="guide-item"><span class="dot red"></span> 75&ndash;100 = Critical</span>
-                </span>
-            </p>
-        </div>
-
-        <div class="table-controls">
-            <input type="text" id="search-input" placeholder="Search by product name..." class="search-input">
-            <select id="filter-alert" class="filter-select">
-                <option value="all">All Alert Levels</option>
-                <option value="CRITICAL">&#128308; Critical (75&ndash;100)</option>
-                <option value="HIGH">&#128992; High (50&ndash;74)</option>
-                <option value="MODERATE">&#128993; Moderate (25&ndash;49)</option>
-                <option value="LOW">&#128994; Low (0&ndash;24)</option>
-            </select>
-        </div>
-
-        <div class="table-wrapper">
-            <table id="products-table">
-                <thead>
-                    <tr>
-                        <th data-sort="rank">#</th>
-                        <th data-sort="product_name">Product Name</th>
-                        <th data-sort="risk_score" class="active-sort">Risk Score &#8597;</th>
-                        <th data-sort="alert_level">Alert Level</th>
-                        <th>Main Complaints</th>
-                        <th data-sort="review_count">Reviews</th>
-                        <th data-sort="average_rating">Avg Rating</th>
-                        <th data-sort="revenue">Revenue at Risk / mo</th>
-                    </tr>
-                </thead>
-                <tbody id="products-tbody"></tbody>
-            </table>
-        </div>
-
-        <div class="table-footer">
-            <button id="show-more-btn" class="show-more-btn" style="display:none;">Show More Products &#8595;</button>
-            <span id="table-count" class="table-count"></span>
-        </div>
-    </section>
-
-    <!-- Product Detail Modal -->
-    <div id="product-modal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <span class="modal-close" id="modal-close">&times;</span>
-            <h2 id="modal-title">Product Detail</h2>
-            <div id="modal-body"></div>
-        </div>
-    </div>
 
     <!-- Profile Edit Modal -->
     <div id="profile-modal" class="modal" style="display:none;">

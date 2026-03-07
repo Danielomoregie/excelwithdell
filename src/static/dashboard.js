@@ -20,9 +20,15 @@ let sentimentChart, volumeChart, themesChart, revenueChart;
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     setGreeting();
-    loadDashboard();
-    loadProducts();
-    loadTrends();
+
+    const hasSummarySection = !!(document.getElementById('kpi-products') || document.getElementById('alerts-section'));
+    const hasProductTable = !!document.getElementById('products-tbody');
+    const hasTrendCharts = !!(document.getElementById('sentiment-chart') && document.getElementById('volume-chart'));
+
+    if (hasSummarySection) loadDashboard();
+    if (hasProductTable) loadProducts();
+    if (hasTrendCharts) loadTrends();
+
     setupEventListeners();
     setupHeaderScroll();
 });
@@ -97,40 +103,32 @@ let lastScrollTop = 0;
 
 function setupHeaderScroll() {
     const header = document.querySelector('.header');
+    if (!header) return;
     
+    // Header now stays visible at all times (sticky behavior)
+    // Auto-hide on scroll disabled for better visibility
     window.addEventListener('scroll', () => {
-        const scrollTop = window.scrollY;
-        
-        // If at top, always show header
-        if (scrollTop === 0) {
-            header.classList.remove('header-hide');
-            lastScrollTop = 0;
-            return;
-        }
-        
-        // Scrolling down
-        if (scrollTop > lastScrollTop) {
-            header.classList.add('header-hide');
-        } 
-        // Scrolling up
-        else {
-            header.classList.remove('header-hide');
-        }
-        
-        lastScrollTop = scrollTop;
+        // Header remains visible - no hide/show logic
+        header.classList.remove('header-hide');
     });
 }
 
 function setupEventListeners() {
     // Search / filter — reset pagination on change
-    document.getElementById('search-input').addEventListener('input', () => {
-        showAll = false;
-        filterAndRenderTable();
-    });
-    document.getElementById('filter-alert').addEventListener('change', () => {
-        showAll = false;
-        filterAndRenderTable();
-    });
+    const searchInput = document.getElementById('search-input');
+    const filterAlert = document.getElementById('filter-alert');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            showAll = false;
+            filterAndRenderTable();
+        });
+    }
+    if (filterAlert) {
+        filterAlert.addEventListener('change', () => {
+            showAll = false;
+            filterAndRenderTable();
+        });
+    }
 
     // Sortable column headers
     document.querySelectorAll('th[data-sort]').forEach(th => {
@@ -146,25 +144,43 @@ function setupEventListeners() {
     });
 
     // Modal close
-    document.getElementById('modal-close').addEventListener('click', closeModal);
-    document.getElementById('product-modal').addEventListener('click', e => {
-        if (e.target === e.currentTarget) closeModal();
-    });
+    const modalClose = document.getElementById('modal-close');
+    const productModal = document.getElementById('product-modal');
+    if (modalClose) {
+        modalClose.addEventListener('click', closeModal);
+    }
+    if (productModal) {
+        productModal.addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeModal();
+        });
+    }
 
     // Profile dropdown
-    document.getElementById('profileButton').addEventListener('click', toggleProfileMenu);
-    document.getElementById('editProfileBtn').addEventListener('click', (e) => {
-        e.preventDefault();
-        openProfileEditModal();
-    });
+    const profileButton = document.getElementById('profileButton');
+    const editProfileBtn = document.getElementById('editProfileBtn');
+    if (profileButton) {
+        profileButton.addEventListener('click', toggleProfileMenu);
+    }
+    if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openProfileEditModal();
+        });
+    }
     
     // Profile modal
-    document.getElementById('profile-modal-close').addEventListener('click', closeProfileModal);
-    document.getElementById('cancelEditBtn').addEventListener('click', closeProfileModal);
-    document.getElementById('profileEditForm').addEventListener('submit', saveProfile);
-    document.getElementById('profile-modal').addEventListener('click', e => {
-        if (e.target === e.currentTarget) closeProfileModal();
-    });
+    const profileModalClose = document.getElementById('profile-modal-close');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const profileEditForm = document.getElementById('profileEditForm');
+    const profileModal = document.getElementById('profile-modal');
+    if (profileModalClose) profileModalClose.addEventListener('click', closeProfileModal);
+    if (cancelEditBtn) cancelEditBtn.addEventListener('click', closeProfileModal);
+    if (profileEditForm) profileEditForm.addEventListener('submit', saveProfile);
+    if (profileModal) {
+        profileModal.addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeProfileModal();
+        });
+    }
     
     // Close dropdown when clicking outside
     document.addEventListener('click', (e) => {
@@ -186,28 +202,34 @@ function setupEventListeners() {
     }
 
     // Show-more / show-less
-    document.getElementById('show-more-btn').addEventListener('click', () => {
-        showAll = !showAll;
-        filterAndRenderTable();
-    });
+    const showMoreBtn = document.getElementById('show-more-btn');
+    if (showMoreBtn) {
+        showMoreBtn.addEventListener('click', () => {
+            showAll = !showAll;
+            filterAndRenderTable();
+        });
+    }
 
     // Theme toggle
-    document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    if (themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
 
     // Side drawer
     const hamburgerBtn = document.getElementById('hamburgerBtn');
     const sideDrawer = document.getElementById('sideDrawer');
     const drawerBackdrop = document.getElementById('drawerBackdrop');
 
-    hamburgerBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isOpen = sideDrawer.classList.toggle('open');
-        hamburgerBtn.classList.toggle('active', isOpen);
-        drawerBackdrop.classList.toggle('show', isOpen);
-        sideDrawer.setAttribute('aria-hidden', String(!isOpen));
-    });
+    if (hamburgerBtn && sideDrawer && drawerBackdrop) {
+        hamburgerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = sideDrawer.classList.toggle('open');
+            hamburgerBtn.classList.toggle('active', isOpen);
+            drawerBackdrop.classList.toggle('show', isOpen);
+            sideDrawer.setAttribute('aria-hidden', String(!isOpen));
+        });
 
-    drawerBackdrop.addEventListener('click', closeSideDrawer);
+        drawerBackdrop.addEventListener('click', closeSideDrawer);
+    }
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
@@ -255,6 +277,7 @@ function toggleTheme() {
 function syncThemeButton() {
     const isLight = document.body.classList.contains('light-mode');
     const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
     btn.innerHTML = isLight ? '&#127769; Dark Mode' : '&#9728;&#65039; Light Mode';
     btn.title     = isLight ? 'Switch to dark mode' : 'Switch to light mode';
 }
@@ -276,22 +299,35 @@ function chartColors() {
 function toggleProfileMenu() {
     const menu = document.getElementById('profileMenu');
     const button = document.getElementById('profileButton');
+    if (!menu || !button) return;
     menu.classList.toggle('show');
     button.classList.toggle('active');
 }
 
 async function openProfileEditModal() {
+    const profileMenu = document.getElementById('profileMenu');
+    const profileButton = document.getElementById('profileButton');
+    const profileModal = document.getElementById('profile-modal');
+    if (!profileMenu || !profileButton || !profileModal) return;
+
     // Close dropdown
-    document.getElementById('profileMenu').classList.remove('show');
-    document.getElementById('profileButton').classList.remove('active');
+    profileMenu.classList.remove('show');
+    profileButton.classList.remove('active');
     
     // Clear password fields
-    document.getElementById('editNewPassword').value = '';
-    document.getElementById('editConfirmPassword').value = '';
-    document.getElementById('editCurrentPassword').value = '';
-    document.getElementById('editNewPasswordError').style.display = 'none';
-    document.getElementById('editConfirmPasswordError').style.display = 'none';
-    document.getElementById('editCurrentPasswordError').style.display = 'none';
+    const editNewPassword = document.getElementById('editNewPassword');
+    const editConfirmPassword = document.getElementById('editConfirmPassword');
+    const editCurrentPassword = document.getElementById('editCurrentPassword');
+    const editNewPasswordError = document.getElementById('editNewPasswordError');
+    const editConfirmPasswordError = document.getElementById('editConfirmPasswordError');
+    const editCurrentPasswordError = document.getElementById('editCurrentPasswordError');
+
+    if (editNewPassword) editNewPassword.value = '';
+    if (editConfirmPassword) editConfirmPassword.value = '';
+    if (editCurrentPassword) editCurrentPassword.value = '';
+    if (editNewPasswordError) editNewPasswordError.style.display = 'none';
+    if (editConfirmPasswordError) editConfirmPasswordError.style.display = 'none';
+    if (editCurrentPasswordError) editCurrentPasswordError.style.display = 'none';
     
     // Load departments
     try {
@@ -300,6 +336,7 @@ async function openProfileEditModal() {
         
         if (data.status === 'success') {
             const select = document.getElementById('editDepartment');
+            if (!select) return;
             select.innerHTML = '<option value="">Select Department</option>';
             const enabledDepartments = ['Engineering & IT', 'Marketing', 'Sales'];
             
@@ -330,28 +367,42 @@ async function openProfileEditModal() {
         
         if (data.status === 'success') {
             const user = data.user;
-            document.getElementById('editFirstName').value = user.first_name || '';
-            document.getElementById('editLastName').value = user.last_name || '';
-            document.getElementById('editDepartment').value = user.department || '';
-            document.getElementById('editLocation').value = user.location || '';
+            const editFirstName = document.getElementById('editFirstName');
+            const editLastName = document.getElementById('editLastName');
+            const editDepartment = document.getElementById('editDepartment');
+            const editLocation = document.getElementById('editLocation');
+
+            if (editFirstName) editFirstName.value = user.first_name || '';
+            if (editLastName) editLastName.value = user.last_name || '';
+            if (editDepartment) editDepartment.value = user.department || '';
+            if (editLocation) editLocation.value = user.location || '';
         }
     } catch (error) {
         console.error('Failed to load profile:', error);
     }
     
     // Show modal
-    document.getElementById('profile-modal').style.display = 'flex';
+    profileModal.style.display = 'flex';
 }
 
 function closeProfileModal() {
-    document.getElementById('profile-modal').style.display = 'none';
+    const profileModal = document.getElementById('profile-modal');
+    if (!profileModal) return;
+    profileModal.style.display = 'none';
     // Clear password fields
-    document.getElementById('editNewPassword').value = '';
-    document.getElementById('editConfirmPassword').value = '';
-    document.getElementById('editCurrentPassword').value = '';
-    document.getElementById('editNewPasswordError').style.display = 'none';
-    document.getElementById('editConfirmPasswordError').style.display = 'none';
-    document.getElementById('editCurrentPasswordError').style.display = 'none';
+    const editNewPassword = document.getElementById('editNewPassword');
+    const editConfirmPassword = document.getElementById('editConfirmPassword');
+    const editCurrentPassword = document.getElementById('editCurrentPassword');
+    const editNewPasswordError = document.getElementById('editNewPasswordError');
+    const editConfirmPasswordError = document.getElementById('editConfirmPasswordError');
+    const editCurrentPasswordError = document.getElementById('editCurrentPasswordError');
+
+    if (editNewPassword) editNewPassword.value = '';
+    if (editConfirmPassword) editConfirmPassword.value = '';
+    if (editCurrentPassword) editCurrentPassword.value = '';
+    if (editNewPasswordError) editNewPasswordError.style.display = 'none';
+    if (editConfirmPasswordError) editConfirmPasswordError.style.display = 'none';
+    if (editCurrentPasswordError) editCurrentPasswordError.style.display = 'none';
 }
 
 async function saveProfile(e) {
@@ -462,9 +513,11 @@ async function loadDashboard() {
         setText('kpi-revenue',  s.total_monthly_revenue_at_risk_formatted);
         setText('kpi-reviews',  s.total_reviews_analyzed.toLocaleString());
 
-        if (data.alerts && data.alerts.length > 0) {
-            document.getElementById('alerts-section').style.display = 'block';
-            document.getElementById('alerts-container').innerHTML = data.alerts.slice(0, 5).map(a => `
+        const alertsSection = document.getElementById('alerts-section');
+        const alertsContainer = document.getElementById('alerts-container');
+        if (alertsSection && alertsContainer && data.alerts && data.alerts.length > 0) {
+            alertsSection.style.display = 'block';
+            alertsContainer.innerHTML = data.alerts.slice(0, 5).map(a => `
                 <div class="alert-item ${a.alert_level}">
                     <span class="alert-badge badge-${a.alert_level}">${a.alert_level}</span>
                     <span>
@@ -504,8 +557,15 @@ async function loadTrends() {
 // ============================================================
 
 function filterAndRenderTable() {
-    const search      = document.getElementById('search-input').value.toLowerCase();
-    const alertFilter = document.getElementById('filter-alert').value;
+    const searchInput = document.getElementById('search-input');
+    const filterAlertSelect = document.getElementById('filter-alert');
+    const productsTbody = document.getElementById('products-tbody');
+    const showMoreButton = document.getElementById('show-more-btn');
+    const tableCount = document.getElementById('table-count');
+    if (!searchInput || !filterAlertSelect || !productsTbody || !showMoreButton || !tableCount) return;
+
+    const search = searchInput.value.toLowerCase();
+    const alertFilter = filterAlertSelect.value;
 
     let filtered = allProducts.filter(p => {
         const nameMatch  = !search || p.product_name.toLowerCase().includes(search) || p.asin.toLowerCase().includes(search);
@@ -531,7 +591,7 @@ function filterAndRenderTable() {
     // Paginate
     const visible = showAll ? filtered : filtered.slice(0, TABLE_LIMIT);
 
-    document.getElementById('products-tbody').innerHTML = visible.map((p, i) => {
+    productsTbody.innerHTML = visible.map((p, i) => {
         const score   = p.risk_score != null ? p.risk_score : '--';
         const color   = scoreColor(p.risk_score);
         const themes  = (p.top_themes || []).map(t => `<span class="theme-tag">${titleCase(t)}</span>`).join('');
@@ -556,8 +616,8 @@ function filterAndRenderTable() {
     }).join('');
 
     // Show-more button
-    const btn        = document.getElementById('show-more-btn');
-    const countLabel = document.getElementById('table-count');
+    const btn        = showMoreButton;
+    const countLabel = tableCount;
     const total      = filtered.length;
 
     if (total <= TABLE_LIMIT) {
@@ -580,6 +640,11 @@ function filterAndRenderTable() {
 // ============================================================
 
 async function openProductDetail(asin) {
+    const modalTitle = document.getElementById('modal-title');
+    const modalBody = document.getElementById('modal-body');
+    const productModal = document.getElementById('product-modal');
+    if (!modalTitle || !modalBody || !productModal) return;
+
     try {
         const data = await fetchJSON(`/api/products/${asin}`);
         if (!data || data.status !== 'success') return;
@@ -588,7 +653,7 @@ async function openProductDetail(asin) {
         const impact = p.revenue_impact || {};
         const color  = scoreColor(p.risk_score);
 
-        document.getElementById('modal-title').textContent = p.product_name;
+        modalTitle.textContent = p.product_name;
 
         // Sub-score friendly names
         const subNames = {
@@ -647,7 +712,7 @@ async function openProductDetail(asin) {
             </div>`
         ).join('') || '<p style="color:var(--text-muted)">No recent negative reviews found.</p>';
 
-        document.getElementById('modal-body').innerHTML = `
+        modalBody.innerHTML = `
             <!-- Header row: score + summary -->
             <div style="display:flex;align-items:flex-start;gap:1.5rem;margin:1rem 0 0;flex-wrap:wrap">
                 <div style="text-align:center;min-width:90px">
@@ -691,12 +756,13 @@ async function openProductDetail(asin) {
                 ${negHtml}
             </div>`;
 
-        document.getElementById('product-modal').style.display = 'flex';
+        productModal.style.display = 'flex';
     } catch (e) { console.error('openProductDetail:', e); }
 }
 
 function closeModal() {
-    document.getElementById('product-modal').style.display = 'none';
+    const productModal = document.getElementById('product-modal');
+    if (productModal) productModal.style.display = 'none';
 }
 
 // ============================================================
@@ -732,7 +798,9 @@ function baseOptions(yAxisLabel) {
 
 // Chart 1 — Customer happiness over time
 function renderSentimentChart(data) {
-    const ctx = document.getElementById('sentiment-chart').getContext('2d');
+    const canvas = document.getElementById('sentiment-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (sentimentChart) sentimentChart.destroy();
     const c   = chartColors();
     const opt = baseOptions(null);
@@ -792,7 +860,9 @@ function renderSentimentChart(data) {
 
 // Chart 2 — Review volume
 function renderVolumeChart(data) {
-    const ctx = document.getElementById('volume-chart').getContext('2d');
+    const canvas = document.getElementById('volume-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (volumeChart) volumeChart.destroy();
     const c = chartColors();
 
@@ -821,7 +891,9 @@ function renderVolumeChart(data) {
 
 // Chart 3 — Top complaint themes (horizontal)
 function renderThemesChart(themes) {
-    const ctx = document.getElementById('themes-chart').getContext('2d');
+    const canvas = document.getElementById('themes-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (themesChart) themesChart.destroy();
     const c = chartColors();
 
@@ -864,7 +936,9 @@ function renderThemesChart(themes) {
 
 // Chart 4 — Revenue at risk (horizontal, top 10)
 function renderRevenueChart(products) {
-    const ctx = document.getElementById('revenue-chart').getContext('2d');
+    const canvas = document.getElementById('revenue-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (revenueChart) revenueChart.destroy();
     const c = chartColors();
 

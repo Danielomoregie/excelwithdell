@@ -80,34 +80,52 @@
         }
 
         .nav-tab {
-            padding: 0.66rem 1.35rem;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.08) 100%);
-            border: 1px solid rgba(147, 197, 253, 0.35);
-            border-radius: 10px;
-            color: rgba(239, 246, 255, 0.92);
+            padding: 0.7rem 1.5rem;
+            background: transparent;
+            border: 2px solid #3b82f6;
+            border-radius: 6px;
+            color: #60a5fa;
             font-size: 14px;
             font-weight: 600;
-            letter-spacing: 0.1px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
             cursor: pointer;
-            transition: all 0.24s ease;
+            transition: all 0.3s ease;
             text-decoration: none;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 2px 6px rgba(2, 6, 23, 0.2);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .nav-tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+            transition: left 0.3s ease;
+            z-index: -1;
         }
 
         .nav-tab:hover {
-            transform: translateY(-1px);
-            background: linear-gradient(180deg, rgba(191, 219, 254, 0.32) 0%, rgba(147, 197, 253, 0.14) 100%);
             color: white;
-            border-color: rgba(147, 197, 253, 0.6);
-            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.28);
+            border-color: #60a5fa;
+        }
+
+        .nav-tab:hover::before {
+            left: 0;
         }
 
         .nav-tab.active {
-            transform: none;
-            background: linear-gradient(180deg, #ffffff 0%, #e8f1ff 100%);
-            color: #0b4cc5;
-            border-color: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
+            color: white;
+            border-color: #60a5fa;
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+        }
+
+        .nav-tab.active::before {
+            left: 0;
         }
 
         /* Main container */
@@ -130,14 +148,16 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.12);
             width: 100%;
             max-width: 780px;
-            padding: 50px 68px;
+            padding: 60px 80px;
             transition: all 0.4s ease;
         }
 
         .login-container {
-            max-width: 1170px;
-            padding-left: 102px;
-            padding-right: 102px;
+            max-width: 1400px;
+            padding-left: 130px;
+            padding-right: 130px;
+            padding-top: 65px;
+            padding-bottom: 65px;
         }
 
         /* Show active container */
@@ -148,31 +168,31 @@
         /* Login form styling */
         .login-title {
             color: #0f172a;
-            font-size: 28px;
+            font-size: 34px;
             font-weight: 700;
-            margin-bottom: 32px;
+            margin-bottom: 38px;
             text-align: center;
         }
 
         .form-group {
-            margin-bottom: 24px;
+            margin-bottom: 28px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 9px;
             color: #1e293b;
             font-weight: 500;
-            font-size: 14px;
+            font-size: 15px;
         }
 
         .form-group input,
         .form-group select {
             width: 100%;
-            padding: 12px 14px;
+            padding: 14px 16px;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 15px;
             background: #f8fafc;
             color: #1e293b;
             transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
@@ -212,12 +232,12 @@
 
         .btn-primary {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: #2563eb;
             border: none;
             border-radius: 6px;
             color: white;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s;
@@ -275,8 +295,8 @@
 
         .auth-links {
             text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
+            margin-top: 22px;
+            font-size: 15px;
             color: #64748b;
         }
 
@@ -299,8 +319,8 @@
 
         /* Slightly widen create-account content horizontally */
         #createAccountForm.visible {
-            width: 112%;
-            margin-left: -6%;
+            width: 120%;
+            margin-left: -10%;
         }
 
         /* Compact create account mode to avoid page scroll */
@@ -309,14 +329,9 @@
             padding-bottom: 30px;
         }
 
-        .login-container.create-mode .back-button {
-            margin-bottom: 10px;
-            margin-left: -6%;
-        }
-
         #createAccountForm.visible .login-title {
             margin-bottom: 18px;
-            font-size: 24px;
+            font-size: 28px;
         }
 
         #createAccountForm.visible .form-row {
@@ -324,23 +339,44 @@
         }
 
         #createAccountForm.visible .form-group {
-            margin-bottom: 14px;
+            margin-bottom: 16px;
         }
 
         #createAccountForm.visible .form-group label {
-            font-size: 13px;
-            margin-bottom: 5px;
+            font-size: 14px;
+            margin-bottom: 6px;
         }
 
         #createAccountForm.visible .form-group input,
         #createAccountForm.visible .form-group select {
-            padding: 10px 12px;
-            font-size: 13px;
+            padding: 11px 13px;
+            font-size: 14px;
         }
 
         #createAccountForm.visible .btn-primary {
             padding: 11px;
-            margin-top: 4px;
+            margin-top: 0;
+        }
+
+        .create-form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .create-form-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .create-form-actions .btn-primary {
+            width: auto;
         }
 
         #createAccountForm.visible .error-text {
@@ -348,10 +384,10 @@
             font-size: 12px;
         }
 
-        /* Keep sign-in form aligned to container width */
+        /* Keep sign-in form aligned to container width and make it wider */
         .login-container #loginForm {
-            width: 100%;
-            margin-left: 0;
+            width: 120%;
+            margin-left: -10%;
         }
 
         .back-button {
@@ -377,7 +413,7 @@
         .review-container {
             border: 2px solid #e2e8f0;
             position: relative;
-            max-width: min(1280px, 96vw);
+            max-width: min(1600px, 96vw);
             padding: 34px 42px;
         }
 
@@ -749,10 +785,6 @@
                 margin-left: 0;
             }
 
-            .login-container.create-mode .back-button {
-                margin-left: 0;
-            }
-
             .login-container #loginForm {
                 width: 100%;
                 margin-left: 0;
@@ -930,18 +962,20 @@
             }
 
             .review-container {
-                max-width: min(1280px, 96vw);
+                max-width: min(1600px, 96vw);
                 padding: 34px 42px;
             }
 
             .login-container {
-                max-width: 720px;
-                padding-left: 75px;
-                padding-right: 75px;
+                max-width: 1550px;
+                padding-left: 140px;
+                padding-right: 140px;
+                padding-top: 70px;
+                padding-bottom: 70px;
             }
 
             .login-title, .review-form-title {
-                font-size: 32px;
+                font-size: 38px;
             }
         }
     </style>
@@ -966,11 +1000,6 @@
     <div class="login-wrapper">
         <!-- Sign In Container -->
         <div class="login-container active" id="loginContainer">
-            <!-- Back Button -->
-            <div id="backBtn" class="back-button">
-                <span>← Back to Sign In</span>
-            </div>
-
             <!-- Sign In Form -->
             <form id="loginForm">
                 <div class="login-title">Employee Sign In</div>
@@ -1042,7 +1071,10 @@
                     <div id="confirmPasswordError" class="error-text"></div>
                 </div>
 
-                <button type="submit" class="btn-primary" id="registerBtn">Create Account</button>
+                <div class="create-form-actions">
+                    <button type="submit" class="btn-primary" id="registerBtn">Create Account</button>
+                    <button type="button" class="btn-cancel-review" id="cancelCreateBtn">Cancel</button>
+                </div>
             </form>
         </div>
 
@@ -1060,9 +1092,6 @@
 
                 <!-- Review Form -->
                 <div id="reviewFormContainer" class="review-form-container">
-                    <button type="button" class="back-button visible" id="backFromReviewBtn">
-                        <span>← Back</span>
-                    </button>
                     <form id="reviewForm">
                         <div class="review-form-title">Leave a Review</div>
 
@@ -1117,6 +1146,12 @@
                             <div class="review-form-group">
                                 <label for="reviewColor">Color (Optional)</label>
                                 <input type="text" id="reviewColor" name="reviewColor" placeholder="e.g., Black, Silver">
+                            </div>
+
+                            <div class="review-form-group">
+                                <label for="reviewPrice">Price Paid (Optional)</label>
+                                <input type="text" id="reviewPrice" name="reviewPrice" placeholder="e.g., 799.99" pattern="^\d*\.?\d*$" title="Numbers and one decimal point only">
+                                <div id="reviewPriceError" class="review-form-error"></div>
                             </div>
                         </div>
 
@@ -1423,6 +1458,20 @@
             });
         });
 
+        // Price field validation - only allow numbers and one decimal point
+        document.getElementById('reviewPrice').addEventListener('input', (e) => {
+            let value = e.target.value;
+            // Remove any character that isn't a digit or decimal point
+            value = value.replace(/[^\d.]/g, '');
+            // Ensure only one decimal point
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
+            e.target.value = value;
+            clearReviewFormError('reviewPrice');
+        });
+
         // Review form submission
         document.getElementById('reviewForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1433,9 +1482,10 @@
             const text = document.getElementById('reviewText').value.trim();
             const os = document.getElementById('reviewOS').value.trim() || null;
             const color = document.getElementById('reviewColor').value.trim() || null;
+            const price = document.getElementById('reviewPrice').value.trim() || null;
 
             // Clear previous errors
-            ['reviewProduct', 'reviewRating', 'reviewTitle', 'reviewText'].forEach(id => clearReviewFormError(id));
+            ['reviewProduct', 'reviewRating', 'reviewTitle', 'reviewText', 'reviewPrice'].forEach(id => clearReviewFormError(id));
 
             // Validate required fields
             let hasError = false;
@@ -1459,6 +1509,18 @@
                 hasError = true;
             }
 
+            // Validate price format if provided
+            if (price) {
+                const pricePattern = /^\d*\.?\d*$/;
+                if (!pricePattern.test(price)) {
+                    showReviewFormError('reviewPrice', 'Price must contain only numbers and one decimal point');
+                    hasError = true;
+                } else if (price.split('.').length > 2) {
+                    showReviewFormError('reviewPrice', 'Price can only have one decimal point');
+                    hasError = true;
+                }
+            }
+
             if (hasError) return;
 
             const submitBtn = document.getElementById('submitReviewBtn');
@@ -1475,7 +1537,8 @@
                         title: title,
                         text: text,
                         os: os,
-                        color: color
+                        color: color,
+                        price: price
                     })
                 });
 
@@ -1501,12 +1564,6 @@
 
         // Review form cancel button
         document.getElementById('cancelReviewBtn').addEventListener('click', (e) => {
-            e.preventDefault();
-            hidereviewForm();
-        });
-
-        // Back from review button
-        document.getElementById('backFromReviewBtn').addEventListener('click', (e) => {
             e.preventDefault();
             hidereviewForm();
         });
@@ -1587,7 +1644,6 @@
         function showLoginForm() {
             document.getElementById('loginForm').classList.remove('hidden');
             document.getElementById('createAccountForm').classList.remove('visible');
-            document.getElementById('backBtn').classList.remove('visible');
             document.getElementById('loginContainer').classList.remove('create-mode');
             clearFieldError('email');
             clearFieldError('password');
@@ -1599,7 +1655,6 @@
         function showCreateForm() {
             document.getElementById('loginForm').classList.add('hidden');
             document.getElementById('createAccountForm').classList.add('visible');
-            document.getElementById('backBtn').classList.add('visible');
             document.getElementById('loginContainer').classList.add('create-mode');
         }
 
@@ -1662,8 +1717,8 @@
             document.getElementById('regEmail').focus();
         });
 
-        // Handle Back button
-        document.getElementById('backBtn').addEventListener('click', (e) => {
+        // Handle Create Account cancel button
+        document.getElementById('cancelCreateBtn').addEventListener('click', (e) => {
             e.preventDefault();
             showLoginForm();
             document.getElementById('email').focus();

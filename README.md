@@ -87,7 +87,27 @@ This installs all required packages for the project.
 
 ---
 
-## 5️⃣ Test the Project (No Neon Required)
+## 5️⃣ Configure OpenAI Chatbot
+
+The dashboard chatbot now uses OpenAI (`gpt-4o-mini`).
+
+Set your API key in one of these ways:
+
+1. Environment variable (recommended):
+
+```bash
+set OPENAI_API_KEY=your_key_here
+```
+
+2. Or directly in `src/Flask_API.py` by updating:
+
+`OPENAI_API_KEY = "your_key_here"`
+
+If the key is missing or invalid, the chatbot automatically falls back to rule-based summaries from model artifacts.
+
+---
+
+## 6️⃣ Test the Project (No Neon Required)
 
 You can run core project files without setting up Neon.
 
@@ -108,7 +128,7 @@ If you see errors, make sure:
 
 ---
 
-## 6️⃣ (Optional) Set Up Neon Database
+## 7️⃣ (Optional) Set Up Neon Database
 
 ⚠ This step is ONLY required if you want to:
 - Visualize the datasets

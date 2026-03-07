@@ -105,6 +105,13 @@ def raw_dataset_page():
     return render_template("raw_dataset.html", user=user)
 
 
+@app.route("/product-risk")
+@require_profile
+def product_risk_page():
+    user = get_current_user()
+    return render_template("Product_Risk.html", user=user)
+
+
 RAW_DATASET_ALLOWED_TABLES = [
     "online_reviews",
 ]
@@ -686,6 +693,7 @@ def submit_review():
     text = (body.get("text") or "").strip()
     os_value = (body.get("os") or "").strip() or None
     color_value = (body.get("color") or "").strip() or None
+    price_value = (body.get("price") or "").strip() or None
 
     if not product_id:
         return jsonify({"status": "error", "message": "Product is required"}), 400
@@ -733,6 +741,8 @@ def submit_review():
             os_value = product_row[10]
         if not color_value:
             color_value = product_row[11]
+        if not price_value:
+            price_value = product_row[7]
 
         cursor.execute(
             """
@@ -754,7 +764,7 @@ def submit_review():
                 product_row[3],
                 product_row[1],
                 product_row[4],
-                product_row[5],
+                price_value,
                 product_row[6],
                 product_row[7],
                 product_row[8],
@@ -781,7 +791,7 @@ def submit_review():
                     "average_rating": product_row[4],
                     "rating_number": product_row[5],
                     "features": product_row[6],
-                    "price": product_row[7],
+                    "price": price_value,
                     "store": product_row[8],
                     "title_y": product_row[1],
                     "brand": product_row[9],
