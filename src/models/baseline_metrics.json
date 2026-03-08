@@ -1,0 +1,14 @@
+{
+  "baseline_model_version": 0,
+  "timestamp": "2026-03-08T04:55:53.400471Z",
+  "metrics": {
+    "pearson_correlation": 0.938,
+    "mae": 24.8865,
+    "high_risk_recall": 0.3596,
+    "high_risk_precision": 1.0,
+    "directional_accuracy": 0.62,
+    "risk_level_accuracy": 0.19,
+    "score_drift": -24.4765,
+    "time_to_detection_advantage_months": 0.0
+  }
+}

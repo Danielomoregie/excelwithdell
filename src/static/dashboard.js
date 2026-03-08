@@ -5,7 +5,9 @@
 let allProducts      = [];
 let currentSort      = { key: 'risk_score', dir: 'desc' };
 let showAll          = false;
-const TABLE_LIMIT    = 10;
+let tableLimit       = 10;
+let alertPreviewLimit = 5;
+let riskThresholds   = { critical: 75, high: 50, moderate: 25 };
 
 // Store data so charts can be re-drawn on theme switch
 let storedTrendData  = null;
@@ -338,13 +340,12 @@ async function openProfileEditModal() {
             const select = document.getElementById('editDepartment');
             if (!select) return;
             select.innerHTML = '<option value="">Select Department</option>';
-            const enabledDepartments = ['Engineering & IT', 'Marketing', 'Sales'];
             
             data.departments.forEach(dept => {
                 const option = document.createElement('option');
                 option.value = dept.department_code;
                 
-                const isEnabled = enabledDepartments.includes(dept.department_name);
+                const isEnabled = dept.is_enabled !== false;
                 
                 if (isEnabled) {
                     option.textContent = dept.department_name;
@@ -507,6 +508,16 @@ async function loadDashboard() {
         const data = await fetchJSON('/api/dashboard');
         if (!data || data.status !== 'success') return;
 
+        const ui = data.ui_defaults || {};
+        const thresholds = data.risk_thresholds || {};
+        tableLimit = Number(ui.dashboard_table_limit) || 10;
+        alertPreviewLimit = Number(ui.dashboard_alert_preview_limit) || 5;
+        riskThresholds = {
+            critical: Number(thresholds.critical) || 75,
+            high: Number(thresholds.high) || 50,
+            moderate: Number(thresholds.moderate) || 25,
+        };
+
         const s = data.summary;
         setText('kpi-products', s.products_scored);
         setText('kpi-critical', s.critical_alerts + s.high_alerts);
@@ -517,7 +528,7 @@ async function loadDashboard() {
         const alertsContainer = document.getElementById('alerts-container');
         if (alertsSection && alertsContainer && data.alerts && data.alerts.length > 0) {
             alertsSection.style.display = 'block';
-            alertsContainer.innerHTML = data.alerts.slice(0, 5).map(a => `
+            alertsContainer.innerHTML = data.alerts.slice(0, alertPreviewLimit).map(a => `
                 <div class="alert-item ${a.alert_level}">
                     <span class="alert-badge badge-${a.alert_level}">${a.alert_level}</span>
                     <span>
@@ -589,7 +600,7 @@ function filterAndRenderTable() {
     });
 
     // Paginate
-    const visible = showAll ? filtered : filtered.slice(0, TABLE_LIMIT);
+    const visible = showAll ? filtered : filtered.slice(0, tableLimit);
 
     productsTbody.innerHTML = visible.map((p, i) => {
         const score   = p.risk_score != null ? p.risk_score : '--';
@@ -620,13 +631,13 @@ function filterAndRenderTable() {
     const countLabel = tableCount;
     const total      = filtered.length;
 
-    if (total <= TABLE_LIMIT) {
+    if (total <= tableLimit) {
         btn.style.display = 'none';
     } else {
         btn.style.display = 'inline-block';
         btn.textContent   = showAll
             ? '&#8593; Show Less'
-            : `Show ${total - TABLE_LIMIT} More Products \u2193`;
+            : `Show ${total - tableLimit} More Products \u2193`;
     }
     countLabel.textContent = `Showing ${visible.length} of ${total} products`;
 
@@ -666,7 +677,7 @@ async function openProductDetail(asin) {
         };
 
         const subBars = Object.entries(p.sub_scores || {}).map(([k, v]) => {
-            const barColor = v >= 75 ? '#ef5350' : v >= 50 ? '#fb8c00' : v >= 25 ? '#f9a825' : '#43a047';
+            const barColor = scoreColor(v);
             return `
                 <div class="sub-score-bar">
                     <span class="sub-score-label">${subNames[k] || k}</span>
@@ -1011,9 +1022,9 @@ function titleCase(str) {
 
 function scoreColor(score) {
     if (score == null) return 'var(--text-muted)';
-    if (score >= 75) return '#ef5350';
-    if (score >= 50) return '#fb8c00';
-    if (score >= 25) return '#f9a825';
+    if (score >= riskThresholds.critical) return '#ef5350';
+    if (score >= riskThresholds.high) return '#fb8c00';
+    if (score >= riskThresholds.moderate) return '#f9a825';
     return '#43a047';
 }
 

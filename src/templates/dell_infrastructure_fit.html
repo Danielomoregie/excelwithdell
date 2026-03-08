@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dell Infrastructure Fit Analysis - FusionTech</title>
+    <link rel="stylesheet" href="/static/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .fit-container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .fit-hero {
+            border: 1px solid rgba(59, 130, 246, 0.22);
+            border-radius: 16px;
+            padding: 1.2rem 1.4rem;
+            margin-bottom: 1.3rem;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.35) 0%, rgba(30, 58, 138, 0.18) 100%);
+        }
+
+        .fit-hero h2 {
+            margin: 0 0 0.25rem;
+            color: #e8f1ff;
+            font-size: 1.7rem;
+        }
+
+        .fit-hero p {
+            margin: 0;
+            color: #9fb6d9;
+        }
+
+        .fit-nav {
+            display: grid;
+            grid-template-columns: 140px 1fr 140px;
+            gap: 0.75rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .fit-nav-title {
+            text-align: center;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #dbeafe;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: 12px;
+            padding: 0.75rem;
+            background: rgba(30, 58, 138, 0.2);
+        }
+
+        .fit-btn {
+            border: none;
+            border-radius: 10px;
+            padding: 0.72rem 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: white;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .fit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(59, 130, 246, 0.35);
+        }
+
+        .fit-btn.ghost {
+            background: rgba(51, 65, 85, 0.8);
+        }
+
+        .fit-layout {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .fit-card {
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 14px;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.14) 0%, rgba(15, 23, 42, 0.28) 100%);
+        }
+
+        details.fit-section {
+            border: 1px solid rgba(59, 130, 246, 0.22);
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            background: rgba(15, 23, 42, 0.24);
+        }
+
+        details.fit-section summary {
+            padding: 0.75rem 0.9rem;
+            cursor: pointer;
+            font-weight: 700;
+            color: #dbeafe;
+            list-style: none;
+        }
+
+        details.fit-section summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .section-body {
+            border-top: 1px solid rgba(59, 130, 246, 0.16);
+            padding: 0.85rem 0.9rem 1rem;
+            color: #c4d4ed;
+            font-size: 0.93rem;
+        }
+
+        .req-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(180px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .req-item {
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 10px;
+            padding: 0.55rem 0.6rem;
+            background: rgba(15, 23, 42, 0.3);
+        }
+
+        .req-item .k {
+            color: #93c5fd;
+            display: block;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.22rem;
+        }
+
+        .req-item .v {
+            color: #f8fbff;
+            font-weight: 700;
+            font-size: 0.96rem;
+        }
+
+        .fit-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.3rem;
+        }
+
+        .fit-table th,
+        .fit-table td {
+            border-bottom: 1px solid rgba(59, 130, 246, 0.16);
+            padding: 0.55rem 0.4rem;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .fit-chip {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 0.17rem 0.55rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .fit-chip.excellent { background: rgba(34, 197, 94, 0.2); color: #86efac; }
+        .fit-chip.good { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+        .fit-chip.fair { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+        .fit-chip.poor { background: rgba(239, 68, 68, 0.2); color: #fecaca; }
+
+        .score-wrap {
+            margin-top: 0.5rem;
+        }
+
+        .score-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.45rem;
+            color: #dbeafe;
+        }
+
+        .score-bar {
+            height: 14px;
+            border-radius: 999px;
+            background: rgba(30, 41, 59, 0.8);
+            overflow: hidden;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+        }
+
+        .score-fill {
+            width: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #1d4ed8 0%, #3b82f6 45%, #22c55e 100%);
+            transition: width 0.75s ease;
+        }
+
+        .radar-wrap {
+            position: relative;
+            width: 100%;
+            height: 260px;
+            margin-top: 0.6rem;
+        }
+
+        .radar-wrap canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        .rank-card {
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: 14px;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.35) 0%, rgba(30, 58, 138, 0.2) 100%);
+            margin-top: 0.8rem;
+        }
+
+        .rec-card {
+            margin-top: 0.8rem;
+            border: 1px solid rgba(34, 197, 94, 0.35);
+            background: rgba(20, 83, 45, 0.18);
+            border-radius: 12px;
+            padding: 0.8rem;
+            color: #dcfce7;
+        }
+
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.6rem;
+        }
+
+        .meta-chip {
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: 999px;
+            padding: 0.25rem 0.6rem;
+            font-size: 0.78rem;
+            color: #bfdbfe;
+            background: rgba(30, 58, 138, 0.22);
+        }
+
+        @media (max-width: 980px) {
+            .fit-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .fit-nav {
+                grid-template-columns: 1fr;
+            }
+
+            .fit-nav-title {
+                order: -1;
+            }
+
+            .req-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .radar-wrap {
+                height: 230px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <a href="/" aria-label="Go to dashboard home">
+                    <img src="/static/fusiontech_logo_compact.svg" alt="FusionTech Systems" class="header-logo">
+                </a>
+                <div class="header-text">
+                    <h1>Dell Infrastructure Fit</h1>
+                    <p class="subtitle">Enterprise Workload Mapping for 15,000 Employees</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <a class="back-link" href="/developer">Developer Console</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="fit-container">
+        <section class="fit-hero">
+            <h2>Developer Mode: Dell Infrastructure Fit Analysis</h2>
+            <p>Step through each Dell platform and compare model requirements, capabilities, and fit score.</p>
+            <div class="meta-row" id="metaRow"></div>
+        </section>
+
+        <section class="fit-nav">
+            <button class="fit-btn ghost" id="prevBtn">&lt; Previous</button>
+            <div class="fit-nav-title" id="infraTitle">Loading...</div>
+            <button class="fit-btn" id="nextBtn">Next &gt;</button>
+        </section>
+
+        <section class="fit-layout">
+            <div class="fit-card">
+                <details class="fit-section" open>
+                    <summary>Section 1 - Model Requirements</summary>
+                    <div class="section-body">
+                        <div class="req-grid" id="requirementsGrid"></div>
+                    </div>
+                </details>
+
+                <details class="fit-section" open>
+                    <summary>Section 2 - Infrastructure Capability</summary>
+                    <div class="section-body" id="capabilityBody"></div>
+                </details>
+
+                <details class="fit-section" open>
+                    <summary>Section 3 - Comparison</summary>
+                    <div class="section-body">
+                        <table class="fit-table">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Model Needs</th>
+                                    <th>Infrastructure Capability</th>
+                                    <th>Fit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparisonBody"></tbody>
+                        </table>
+                    </div>
+                </details>
+            </div>
+
+            <div class="fit-card">
+                <details class="fit-section" open>
+                    <summary>Section 4 - Fit Score</summary>
+                    <div class="section-body">
+                        <div class="score-wrap">
+                            <div class="score-line">
+                                <strong id="fitScoreText">Fit Score: -- / 100</strong>
+                                <span id="fitLevelText">--</span>
+                            </div>
+                            <div class="score-bar"><div id="scoreFill" class="score-fill"></div></div>
+                        </div>
+                        <div class="radar-wrap">
+                            <canvas id="fitRadar"></canvas>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <section class="rank-card">
+            <h3 style="margin-top:0; color:#e8f1ff;">Final Ranking</h3>
+            <table class="fit-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Infrastructure</th>
+                        <th>Fit Score</th>
+                        <th>Recommendation</th>
+                    </tr>
+                </thead>
+                <tbody id="rankingBody"></tbody>
+            </table>
+
+            <div class="rec-card" id="recommendationCard"></div>
+        </section>
+    </main>
+
+    <script>
+        const state = {
+            index: 0,
+            infrastructures: [],
+            requirements: null,
+            weights: null,
+            scores: [],
+            chart: null,
+        };
+
+        const el = {
+            prevBtn: document.getElementById('prevBtn'),
+            nextBtn: document.getElementById('nextBtn'),
+            infraTitle: document.getElementById('infraTitle'),
+            requirementsGrid: document.getElementById('requirementsGrid'),
+            capabilityBody: document.getElementById('capabilityBody'),
+            comparisonBody: document.getElementById('comparisonBody'),
+            fitScoreText: document.getElementById('fitScoreText'),
+            fitLevelText: document.getElementById('fitLevelText'),
+            scoreFill: document.getElementById('scoreFill'),
+            rankingBody: document.getElementById('rankingBody'),
+            recommendationCard: document.getElementById('recommendationCard'),
+            metaRow: document.getElementById('metaRow'),
+        };
+
+        function formatBytes(bytes) {
+            if (!bytes || bytes <= 0) return '0 B';
+            const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return `${(bytes / (1024 ** i)).toFixed(i > 1 ? 2 : 1)} ${units[i]}`;
+        }
+
+        function formatQps(qps) {
+            return qps < 1 ? qps.toFixed(3) : qps.toFixed(2);
+        }
+
+        function fitLabel(score) {
+            if (score >= 85) return { label: 'Excellent', cls: 'excellent' };
+            if (score >= 70) return { label: 'Good', cls: 'good' };
+            if (score >= 50) return { label: 'Fair', cls: 'fair' };
+            return { label: 'Poor', cls: 'poor' };
+        }
+
+        function ratioFit(need, capability) {
+            if (!need || need <= 0) return 100;
+            const ratio = capability / need;
+            return Math.max(0, Math.min(100, ratio * 100));
+        }
+
+        function computeInfrastructureScore(infra, req, weights) {
+            const computeFitRaw = ratioFit(req.compute_required_index, infra.compute_capacity.compute_index || 0);
+            const storageFit = ratioFit(req.storage_required_bytes, infra.storage_capacity.cluster_capacity_bytes || 0);
+            const throughputFit = ratioFit(req.throughput_needed_bytes_per_second, infra.throughput.throughput_bytes_per_second || 0);
+            const scalabilityFit = Math.min(100, infra.scalability.scalability_index || 0);
+            const efficiencyFit = Math.min(100, infra.efficiency_hint || 0);
+
+            const computeDomainPenalty = {
+                'PowerEdge': 1.0,
+                'PowerScale': 0.88,
+                'PowerStore': 0.72,
+                'PowerProtect': 0.58,
+            };
+
+            const computeFit = Math.min(100, computeFitRaw * (computeDomainPenalty[infra.name] || 0.75));
+
+            const fitScore =
+                computeFit * weights.compute_weight +
+                storageFit * weights.storage_weight +
+                throughputFit * weights.throughput_weight +
+                scalabilityFit * weights.scalability_weight +
+                efficiencyFit * weights.efficiency_weight;
+
+            return {
+                compute_fit: Math.round(computeFit),
+                storage_fit: Math.round(storageFit),
+                throughput_fit: Math.round(throughputFit),
+                scalability_fit: Math.round(scalabilityFit),
+                efficiency_fit: Math.round(efficiencyFit),
+                fit_score: Math.round(fitScore),
+            };
+        }
+
+        function renderMeta(dynamicStats, req) {
+            const chips = [
+                `Employees: ${req.employees.toLocaleString()}`,
+                `Annual Reviews: ${req.annual_reviews.toLocaleString()}`,
+                `Chat Turns/Day: ${req.daily_chat_turns.toLocaleString()}`,
+                `Estimated QPS: ${formatQps(req.queries_per_second)}`,
+                `LLM Cost (Balanced): $${req.monthly_llm_cost.balanced.toLocaleString()}/mo`,
+                `Dataset Growth: ${(req.dataset_growth_rate * 100).toFixed(0)}% yearly`,
+                dynamicStats.artifact_stats_available
+                    ? `Dynamic Stats: ${dynamicStats.total_reviews_analyzed.toLocaleString()} reviews analyzed`
+                    : 'Dynamic Stats: fallback assumptions',
+            ];
+            el.metaRow.innerHTML = chips.map((c) => `<span class="meta-chip">${c}</span>`).join('');
+        }
+
+        function renderRequirements(req) {
+            const projected3y = req.dataset_size_bytes * (1 + req.dataset_growth_rate) ** 3;
+            const items = [
+                ['Scaled Employees', req.employees.toLocaleString()],
+                ['Annual Reviews', req.annual_reviews.toLocaleString()],
+                ['Review Dataset (Year 1)', formatBytes(req.review_dataset_size_bytes)],
+                ['Chatbot Logs (Year 1)', formatBytes(req.chatbot_dataset_size_bytes)],
+                ['Total Dataset (Year 1)', formatBytes(req.dataset_size_bytes)],
+                ['Storage Need (5-year, growth incl.)', formatBytes(req.storage_required_bytes)],
+                ['Dashboard Queries/Day', req.avg_daily_dashboard_queries.toLocaleString()],
+                ['Chat Turns/Day', req.daily_chat_turns.toLocaleString()],
+                ['Total Requests/Day', req.daily_total_requests.toLocaleString()],
+                ['Queries Per Second', formatQps(req.queries_per_second)],
+                ['Throughput Needed', `${formatBytes(req.throughput_needed_bytes_per_second)}/s`],
+                ['Risk Inference Time', `${req.model_inference_time_ms} ms`],
+                ['Chat Inference Time', `${req.chat_inference_time_ms} ms`],
+                ['Weighted Inference Time', `${req.weighted_inference_time_ms} ms`],
+                ['Compute Estimate', `~${req.estimated_vcpu_needed} vCPU`],
+                ['Chat Tokens/Month', req.monthly_chat_tokens.toLocaleString()],
+                ['LLM Cost (Economy/Balanced/Premium)', `$${req.monthly_llm_cost.economy.toLocaleString()} / $${req.monthly_llm_cost.balanced.toLocaleString()} / $${req.monthly_llm_cost.premium.toLocaleString()} per month`],
+                ['Training Cost (Yearly)', `$${req.training_total_cost_yearly.toLocaleString()}`],
+                ['Total AI Ops Cost (Yearly, balanced)', `$${req.total_ai_ops_cost_yearly_balanced.toLocaleString()}`],
+                ['Projected Dataset (3 years)', formatBytes(projected3y)],
+            ];
+            el.requirementsGrid.innerHTML = items.map(([k, v]) => `
+                <div class="req-item">
+                    <span class="k">${k}</span>
+                    <span class="v">${v}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderCapability(infra) {
+            const c = infra.compute_capacity;
+            const s = infra.storage_capacity;
+            const t = infra.throughput;
+            const sc = infra.scalability;
+
+            const rows = [
+                `<strong>Primary Type:</strong> ${infra.primary_type}`,
+                c.max_cpus ? `<strong>Compute:</strong> up to ${c.max_cpus} CPUs, ${c.max_cores_per_cpu} cores/CPU, ${c.max_ram_tb} TB RAM, ${c.max_gpu} GPUs` : `<strong>Compute:</strong> specialized platform (not compute-first)`,
+                s.cluster_capacity_bytes ? `<strong>Storage Capacity:</strong> ${formatBytes(s.cluster_capacity_bytes)}` : '',
+                t.max_iops ? `<strong>Performance:</strong> ${t.max_iops.toLocaleString()} IOPS` : '',
+                t.max_throughput_gbps ? `<strong>Throughput:</strong> ${t.max_throughput_gbps} GB/s` : `<strong>Throughput:</strong> ${formatBytes(t.throughput_bytes_per_second)}/s`,
+                `<strong>Scalability:</strong> up to ${sc.max_nodes || 'N/A'} nodes`,
+                `<strong>Best For:</strong> ${infra.best_for.join(', ')}`,
+            ].filter(Boolean);
+
+            el.capabilityBody.innerHTML = rows.map((r) => `<div style="margin-bottom:0.45rem;">${r}</div>`).join('');
+        }
+
+        function renderComparison(infra, req, score) {
+            const rows = [
+                {
+                    metric: 'Storage',
+                    need: formatBytes(req.storage_required_bytes),
+                    cap: formatBytes(infra.storage_capacity.cluster_capacity_bytes || 0),
+                    fit: fitLabel(score.storage_fit),
+                },
+                {
+                    metric: 'Throughput',
+                    need: `${formatBytes(req.throughput_needed_bytes_per_second)}/s`,
+                    cap: `${formatBytes(infra.throughput.throughput_bytes_per_second || 0)}/s`,
+                    fit: fitLabel(score.throughput_fit),
+                },
+                {
+                    metric: 'Compute',
+                    need: `~${req.estimated_vcpu_needed} vCPU`,
+                    cap: infra.compute_capacity.max_gpu ? 'GPU-ready high-density compute' : 'Storage-focused platform',
+                    fit: fitLabel(score.compute_fit),
+                },
+                {
+                    metric: 'Scalability',
+                    need: 'Enterprise growth to 15,000 employees',
+                    cap: `Scalability index ${infra.scalability.scalability_index}/100`,
+                    fit: fitLabel(score.scalability_fit),
+                },
+            ];
+
+            el.comparisonBody.innerHTML = rows.map((r) => `
+                <tr>
+                    <td>${r.metric}</td>
+                    <td>${r.need}</td>
+                    <td>${r.cap}</td>
+                    <td><span class="fit-chip ${r.fit.cls}">${r.fit.label}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderScore(infra, score) {
+            el.fitScoreText.textContent = `Fit Score: ${score.fit_score} / 100`;
+            const level = fitLabel(score.fit_score);
+            el.fitLevelText.innerHTML = `<span class="fit-chip ${level.cls}">${level.label}</span>`;
+            requestAnimationFrame(() => {
+                el.scoreFill.style.width = `${score.fit_score}%`;
+            });
+
+            const radarData = [
+                score.compute_fit,
+                score.storage_fit,
+                score.throughput_fit,
+                score.scalability_fit,
+                score.efficiency_fit,
+            ];
+
+            if (state.chart) state.chart.destroy();
+            state.chart = new Chart(document.getElementById('fitRadar'), {
+                type: 'radar',
+                data: {
+                    labels: ['Compute', 'Storage', 'Throughput', 'Scalability', 'Efficiency'],
+                    datasets: [{
+                        label: `${infra.name} Fit Metrics`,
+                        data: radarData,
+                        borderColor: '#60a5fa',
+                        backgroundColor: 'rgba(96, 165, 250, 0.2)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#93c5fd',
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 100,
+                            ticks: { display: false },
+                            grid: { color: 'rgba(148, 163, 184, 0.25)' },
+                            pointLabels: { color: '#dbeafe' },
+                            angleLines: { color: 'rgba(148, 163, 184, 0.25)' },
+                        },
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#dbeafe' } },
+                    },
+                },
+            });
+        }
+
+        function renderRanking() {
+            const ranked = [...state.scores].sort((a, b) => b.score.fit_score - a.score.fit_score);
+            el.rankingBody.innerHTML = ranked.map((item, idx) => `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td>${item.infra.name}</td>
+                    <td><strong>${item.score.fit_score}</strong></td>
+                    <td>${recommendationLine(item.infra.name, idx)}</td>
+                </tr>
+            `).join('');
+
+            const top = ranked[0];
+            el.recommendationCard.innerHTML = `
+                <strong>Final Recommendation: ${top.infra.name} (${top.score.fit_score}/100)</strong><br>
+                ${finalRecommendationText(top.infra.name)}
+            `;
+        }
+
+        function recommendationLine(name, rank) {
+            const lines = {
+                PowerScale: 'Best for large unstructured analytics data and sustained throughput.',
+                PowerEdge: 'Best compute platform for model inference and scaling.',
+                PowerStore: 'Strong block storage, likely over-provisioned for current workload.',
+                PowerProtect: 'Best as backup/cyber-recovery layer, not primary analytics runtime.',
+            };
+            return lines[name] || (rank === 0 ? 'Top fit based on weighted scoring.' : 'Secondary fit for specific scenarios.');
+        }
+
+        function finalRecommendationText(name) {
+            if (name === 'PowerScale') {
+                return 'PowerScale leads on storage + throughput fit for review analytics growth, while still supporting scale-out enterprise operations.';
+            }
+            if (name === 'PowerEdge') {
+                return 'PowerEdge provides the strongest compute profile and operational flexibility for model-heavy dashboard workloads.';
+            }
+            if (name === 'PowerStore') {
+                return 'PowerStore is a stable transactional storage choice, but may exceed requirements relative to analytics profile.';
+            }
+            return 'PowerProtect is essential for resilience and backup strategy, but should complement a primary analytics platform.';
+        }
+
+        function renderCurrent() {
+            const infra = state.infrastructures[state.index];
+            const score = state.scores.find((s) => s.infra.name === infra.name).score;
+
+            el.infraTitle.textContent = infra.name;
+            renderRequirements(state.requirements);
+            renderCapability(infra);
+            renderComparison(infra, state.requirements, score);
+            renderScore(infra, score);
+
+            el.prevBtn.disabled = state.index === 0;
+            el.nextBtn.disabled = state.index === state.infrastructures.length - 1;
+        }
+
+        function bindEvents() {
+            el.prevBtn.addEventListener('click', () => {
+                state.index = Math.max(0, state.index - 1);
+                renderCurrent();
+            });
+
+            el.nextBtn.addEventListener('click', () => {
+                state.index = Math.min(state.infrastructures.length - 1, state.index + 1);
+                renderCurrent();
+            });
+        }
+
+        async function init() {
+            const res = await fetch('/api/developer/dell-infrastructure-fit');
+            const data = await res.json();
+
+            if (data.status !== 'success') {
+                throw new Error(data.message || 'Failed to load infrastructure fit data');
+            }
+
+            state.infrastructures = data.infrastructures;
+            state.requirements = data.requirements;
+            state.weights = data.weights;
+
+            state.scores = state.infrastructures.map((infra) => ({
+                infra,
+                score: computeInfrastructureScore(infra, state.requirements, state.weights),
+            }));
+
+            renderMeta(data.dynamic_model_stats, state.requirements);
+            renderRanking();
+            bindEvents();
+            renderCurrent();
+        }
+
+        init().catch((err) => {
+            console.error(err);
+            document.querySelector('.fit-container').innerHTML = `
+                <div class="fit-card">
+                    <h3 style="color:#fecaca; margin-top:0;">Unable to load Dell Infrastructure Fit Analysis</h3>
+                    <p style="color:#cbd5e1;">${err.message}</p>
+                    <a class="fit-btn" href="/developer" style="display:inline-block; text-decoration:none; margin-top:0.5rem;">Back to Developer Console</a>
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Mode - Pattern Lock</title>
+    <link rel="stylesheet" href="/static/dashboard.css">
+    <style>
+        .pattern-lock-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            padding: 2rem;
+        }
+
+        .pattern-lock-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        .pattern-lock-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        .pattern-grid-wrapper {
+            background: rgba(30, 58, 138, 0.15);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 80px);
+            grid-template-rows: repeat(3, 80px);
+            gap: 20px;
+            position: relative;
+        }
+
+        .pattern-dot {
+            width: 80px;
+            height: 80px;
+            border: 3px solid rgba(59, 130, 246, 0.4);
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.6);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .pattern-dot:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.7);
+            transform: scale(1.1);
+        }
+
+        .pattern-dot.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-color: #60a5fa;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+        }
+
+        .pattern-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .pattern-status {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            min-height: 30px;
+        }
+
+        .pattern-status.error {
+            color: #ef4444;
+        }
+
+        .pattern-status.success {
+            color: #10b981;
+        }
+
+        .pattern-hint {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: rgba(147, 197, 253, 0.7);
+        }
+
+        .back-button {
+            margin-top: 2rem;
+            padding: 0.75rem 2rem;
+            background: rgba(107, 114, 128, 0.4);
+            color: #e5e7eb;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(107, 114, 128, 0.6);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <a href="/" aria-label="Go to dashboard home">
+                    <img src="/static/fusiontech_logo_compact.svg" alt="FusionTech Systems" class="header-logo">
+                </a>
+                <div class="header-text">
+                    <h1>Developer Mode</h1>
+                    <p class="subtitle">Draw the pattern to unlock</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="pattern-lock-container">
+        <h2 class="pattern-lock-title">🔒 Pattern Lock</h2>
+        <p class="pattern-lock-subtitle">Draw an 'S' pattern to access Developer Mode</p>
+        
+        <div class="pattern-grid-wrapper">
+            <div class="pattern-grid" id="patternGrid">
+                <canvas class="pattern-canvas" id="patternCanvas"></canvas>
+                <div class="pattern-dot" data-row="0" data-col="0"></div>
+                <div class="pattern-dot" data-row="0" data-col="1"></div>
+                <div class="pattern-dot" data-row="0" data-col="2"></div>
+                <div class="pattern-dot" data-row="1" data-col="0"></div>
+                <div class="pattern-dot" data-row="1" data-col="1"></div>
+                <div class="pattern-dot" data-row="1" data-col="2"></div>
+                <div class="pattern-dot" data-row="2" data-col="0"></div>
+                <div class="pattern-dot" data-row="2" data-col="1"></div>
+                <div class="pattern-dot" data-row="2" data-col="2"></div>
+            </div>
+        </div>
+
+        <div class="pattern-status" id="patternStatus"></div>
+        <div class="pattern-hint">Hint: Start at top-left, move right, then diagonal down-left, then right</div>
+        
+        <button class="back-button" onclick="window.location.href='/login'">Back to Login</button>
+    </main>
+
+    <script>
+        const patternGrid = document.getElementById('patternGrid');
+        const canvas = document.getElementById('patternCanvas');
+        const ctx = canvas.getContext('2d');
+        const patternStatus = document.getElementById('patternStatus');
+        const dots = document.querySelectorAll('.pattern-dot');
+        
+        // Set canvas size
+        const gridRect = patternGrid.getBoundingClientRect();
+        canvas.width = gridRect.width;
+        canvas.height = gridRect.height;
+        
+        let pattern = [];
+        let isDrawing = false;
+        let currentPos = { x: 0, y: 0 };
+        
+        // The correct 'S' pattern: [0,0] -> [0,1] -> [0,2] -> [1,1] -> [2,0] -> [2,1] -> [2,2]
+        const correctPattern = ['0-0', '0-1', '0-2', '1-1', '2-0', '2-1', '2-2'];
+        
+        // Mouse/touch event handlers
+        patternGrid.addEventListener('mousedown', startPattern);
+        patternGrid.addEventListener('mousemove', continuePattern);
+        patternGrid.addEventListener('mouseup', endPattern);
+        patternGrid.addEventListener('touchstart', startPattern);
+        patternGrid.addEventListener('touchmove', continuePattern);
+        patternGrid.addEventListener('touchend', endPattern);
+        
+        function startPattern(e) {
+            e.preventDefault();
+            isDrawing = true;
+            pattern = [];
+            clearCanvas();
+            dots.forEach(dot => dot.classList.remove('active'));
+            patternStatus.textContent = '';
+            patternStatus.className = 'pattern-status';
+            
+            const target = e.target;
+            if (target.classList.contains('pattern-dot')) {
+                addDotToPattern(target);
+            }
+        }
+        
+        function continuePattern(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            
+            const point = e.touches ? e.touches[0] : e;
+            const element = document.elementFromPoint(point.clientX, point.clientY);
+            
+            if (element && element.classList.contains('pattern-dot') && !element.classList.contains('active')) {
+                addDotToPattern(element);
+            }
+            
+            // Update current position for line drawing
+            const gridRect = patternGrid.getBoundingClientRect();
+            currentPos.x = point.clientX - gridRect.left;
+            currentPos.y = point.clientY - gridRect.top;
+            drawPattern();
+        }
+        
+        function endPattern() {
+            if (!isDrawing) return;
+            isDrawing = false;
+            
+            // Check if pattern matches
+            if (arraysEqual(pattern, correctPattern)) {
+                patternStatus.textContent = '✓ Pattern Correct! Unlocking...';
+                patternStatus.className = 'pattern-status success';
+                
+                // Send unlock request
+                fetch('/api/dev-unlock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(resp => resp.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        setTimeout(() => {
+                            window.location.href = data.redirect || '/developer';
+                        }, 500);
+                    }
+                });
+            } else {
+                patternStatus.textContent = '✗ Incorrect Pattern. Try Again.';
+                patternStatus.className = 'pattern-status error';
+                setTimeout(resetPattern, 1500);
+            }
+        }
+        
+        function addDotToPattern(dot) {
+            const row = dot.dataset.row;
+            const col = dot.dataset.col;
+            const key = `${row}-${col}`;
+            
+            if (!pattern.includes(key)) {
+                pattern.push(key);
+                dot.classList.add('active');
+                drawPattern();
+            }
+        }
+        
+        function drawPattern() {
+            clearCanvas();
+            
+            if (pattern.length < 1) return;
+            
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            ctx.beginPath();
+            
+            pattern.forEach((key, index) => {
+                const [row, col] = key.split('-').map(Number);
+                const dot = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                const dotRect = dot.getBoundingClientRect();
+                const gridRect = patternGrid.getBoundingClientRect();
+                
+                const x = dotRect.left - gridRect.left + dotRect.width / 2;
+                const y = dotRect.top - gridRect.top + dotRect.height / 2;
+                
+                if (index === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            
+            // Draw line to current position if still drawing
+            if (isDrawing && pattern.length > 0) {
+                ctx.lineTo(currentPos.x, currentPos.y);
+            }
+            
+            ctx.stroke();
+        }
+        
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        function resetPattern() {
+            pattern = [];
+            clearCanvas();
+            dots.forEach(dot => dot.classList.remove('active'));
+            patternStatus.textContent = '';
+            patternStatus.className = 'pattern-status';
+        }
+        
+        function arraysEqual(a, b) {
+            if (a.length !== b.length) return false;
+            return a.every((val, idx) => val === b[idx]);
+        }
+    </script>
+</body>
+</html>

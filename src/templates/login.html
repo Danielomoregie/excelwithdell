@@ -141,7 +141,7 @@
         }
 
         /* Hide containers by default */
-        .login-container, .review-container {
+        .login-container, .review-container, .developer-container {
             display: none;
             background: #ffffff;
             border-radius: 12px;
@@ -161,7 +161,7 @@
         }
 
         /* Show active container */
-        .login-container.active, .review-container.active {
+        .login-container.active, .review-container.active, .developer-container.active {
             display: block;
         }
 
@@ -415,6 +415,135 @@
             position: relative;
             max-width: min(1600px, 96vw);
             padding: 34px 42px;
+        }
+
+        /* ===== DEVELOPER CONTAINER STYLES ===== */
+        .developer-container {
+            background: #ffffff;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            position: relative;
+            max-width: 550px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .passkey-box {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 3.5rem 3rem;
+            text-align: center;
+        }
+
+        .passkey-icon {
+            font-size: 4.5rem;
+            margin-bottom: 1.5rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+
+        .passkey-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .passkey-subtitle {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 2.5rem;
+        }
+
+        .passkey-input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .passkey-input {
+            width: 100%;
+            padding: 1.2rem 1.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            color: #0f172a;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: 0.3em;
+            transition: all 0.3s ease;
+        }
+
+        .passkey-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .passkey-input::placeholder {
+            letter-spacing: normal;
+            color: #94a3b8;
+        }
+
+        .passkey-submit {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .passkey-submit:hover {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(59, 130, 246, 0.5);
+        }
+
+        .passkey-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .passkey-error {
+            color: #ef4444;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            font-weight: 600;
+            display: none;
+        }
+
+        .passkey-error.show {
+            display: block;
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .passkey-back {
+            margin-top: 1.5rem;
+            color: #64748b;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .passkey-back:hover {
+            color: #3b82f6;
         }
 
         .review-container::before {
@@ -775,7 +904,7 @@
                 padding: 30px 15px;
             }
 
-            .login-container, .review-container {
+            .login-container, .review-container, .developer-container {
                 max-width: 100%;
                 padding: 40px 30px;
             }
@@ -820,7 +949,7 @@
                 padding: 20px 15px;
             }
 
-            .login-container, .review-container {
+            .login-container, .review-container, .developer-container {
                 padding: 35px 25px;
                 max-width: 100%;
             }
@@ -892,7 +1021,7 @@
                 padding: 20px 10px;
             }
 
-            .login-container, .review-container {
+            .login-container, .review-container, .developer-container {
                 padding: 25px 20px;
                 border-radius: 8px;
             }
@@ -956,7 +1085,7 @@
         }
 
         @media (min-width: 1920px) {
-            .login-container, .review-container {
+            .login-container, .review-container, .developer-container {
                 max-width: 480px;
                 padding: 60px 50px;
             }
@@ -964,6 +1093,10 @@
             .review-container {
                 max-width: min(1600px, 96vw);
                 padding: 34px 42px;
+            }
+
+            .developer-container {
+                max-width: 550px;
             }
 
             .login-container {
@@ -1174,6 +1307,38 @@
                 </div>
             </div>
         </div>
+
+        <!-- Developer Container -->
+        <div class="developer-container" id="developerContainer">
+            <div class="passkey-box">
+                <div class="passkey-icon">🔐</div>
+                <h2 class="passkey-title">Developer Access</h2>
+                <p class="passkey-subtitle">Enter passkey to unlock developer console</p>
+                
+                <form id="passkeyForm" onsubmit="return false;">
+                    <div class="passkey-input-group">
+                        <input 
+                            type="password" 
+                            id="passkeyInput" 
+                            class="passkey-input" 
+                            placeholder="Enter passkey"
+                            autocomplete="off"
+                            maxlength="20"
+                        >
+                    </div>
+                    <button type="submit" class="passkey-submit" id="passkeySubmit">
+                        Unlock Console
+                    </button>
+                    <div class="passkey-error" id="passkeyError">
+                        ✗ Incorrect passkey. Please try again.
+                    </div>
+                </form>
+                
+                <div class="passkey-back" id="backToSignIn">
+                    ← Back to Sign In
+                </div>
+            </div>
+        </div>
     </div>
     
     <script>
@@ -1184,6 +1349,7 @@
             const navTabs = document.querySelectorAll('.nav-tab');
             const loginContainer = document.getElementById('loginContainer');
             const reviewContainer = document.getElementById('reviewContainer');
+            const developerContainer = document.getElementById('developerContainer');
             const reviewProductInput = document.getElementById('reviewProduct');
             const reviewProductSuggestions = document.getElementById('reviewProductSuggestions');
 
@@ -1227,16 +1393,31 @@
                         showLoginForm();
                         loginContainer.classList.add('active');
                         reviewContainer.classList.remove('active');
+                        developerContainer.classList.remove('active');
                     } else if (tabName === 'review') {
                         loginContainer.classList.remove('active');
                         reviewContainer.classList.add('active');
+                        developerContainer.classList.remove('active');
                     } else if (tabName === 'developer') {
-                        // Developer Mode - do nothing for now
                         loginContainer.classList.remove('active');
                         reviewContainer.classList.remove('active');
+                        developerContainer.classList.add('active');
+                        // Focus on passkey input
+                        setTimeout(() => document.getElementById('passkeyInput').focus(), 100);
                     }
                 });
             });
+
+            // Check URL parameter for auto-tab selection
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            if (tabParam === 'developer') {
+                // Auto-click the developer tab
+                const developerTab = document.querySelector('.nav-tab[data-tab="developer"]');
+                if (developerTab) {
+                    developerTab.click();
+                }
+            }
         });
 
         // =========================
@@ -1972,6 +2153,78 @@ function step(currentTime) {
 
             start();
         })();
+
+        // =========================
+        // DEVELOPER PASSKEY LOGIC
+        // =========================
+        const passkeyInput = document.getElementById('passkeyInput');
+        const passkeyForm = document.getElementById('passkeyForm');
+        const passkeyError = document.getElementById('passkeyError');
+        const passkeySubmit = document.getElementById('passkeySubmit');
+        const backToSignIn = document.getElementById('backToSignIn');
+
+        // Handle form submit
+        passkeyForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            validatePasskey();
+        });
+
+        // Handle enter key
+        passkeyInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                validatePasskey();
+            }
+        });
+
+        // Back to Sign In
+        backToSignIn.addEventListener('click', function() {
+            document.querySelector('.nav-tab[data-tab="signin"]').click();
+        });
+
+        function validatePasskey() {
+            const passkey = passkeyInput.value.trim();
+            
+            if (!passkey) return;
+
+            passkeySubmit.disabled = true;
+            passkeySubmit.textContent = 'Validating...';
+            passkeyError.classList.remove('show');
+
+            fetch('/api/dev-unlock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ passkey: passkey })
+            })
+            .then(resp => resp.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    passkeySubmit.textContent = '✓ Access Granted';
+                    passkeySubmit.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                    setTimeout(() => {
+                        window.location.href = '/developer';
+                    }, 500);
+                } else {
+                    showPasskeyError();
+                }
+            })
+            .catch(err => {
+                showPasskeyError();
+            });
+        }
+
+        function showPasskeyError() {
+            passkeyError.classList.add('show');
+            passkeyInput.value = '';
+            passkeyInput.focus();
+            passkeySubmit.disabled = false;
+            passkeySubmit.textContent = 'Unlock Console';
+            
+            // Remove error message after 3 seconds
+            setTimeout(() => {
+                passkeyError.classList.remove('show');
+            }, 3000);
+        }
     </script>
 </body>
 </html>

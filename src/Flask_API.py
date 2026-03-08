@@ -1,5 +1,6 @@
 import os
 import pickle
+import json
 import pandas as pd
 import re
 import math
@@ -34,7 +35,14 @@ app = Flask(
 # Secret key for session management
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
 
-ARTIFACTS_PATH = os.path.join(os.path.dirname(__file__), "models", "Risk_Model_Artifacts.pkl")
+MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
+CURRENT_PRODUCTION_MODEL_PATH = os.path.join(MODELS_DIR, "current_production_model.pkl")
+LEGACY_ARTIFACTS_PATH = os.path.join(MODELS_DIR, "Risk_Model_Artifacts.pkl")
+ARTIFACTS_PATH = CURRENT_PRODUCTION_MODEL_PATH
+MODEL_REGISTRY_PATH = os.path.join(MODELS_DIR, "model_registry.json")
+BASELINE_METRICS_PATH = os.path.join(MODELS_DIR, "baseline_metrics.json")
+VALIDATION_REPORT_PATH = os.path.join(MODELS_DIR, "Validation_Report.json")
+EVALUATION_DATASET_PATH = os.path.join(MODELS_DIR, "evaluation_reviews.csv")
 
 # Global artifacts (loaded on startup)
 artifacts = None
@@ -46,6 +54,16 @@ def require_profile(f):
     def decorated_function(*args, **kwargs):
         if 'user_email' not in session:
             return redirect(url_for('login_page'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def require_dev_unlock(f):
+    """Decorator to require developer mode unlock before accessing route."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('dev_unlocked', False):
+            return redirect(url_for('login_page') + '?tab=developer')
         return f(*args, **kwargs)
     return decorated_function
 
@@ -78,13 +96,33 @@ def filter_by_department(data, user):
 
 def load_artifacts():
     global artifacts
-    if not os.path.exists(ARTIFACTS_PATH):
+    path_to_load = ARTIFACTS_PATH if os.path.exists(ARTIFACTS_PATH) else LEGACY_ARTIFACTS_PATH
+    if not os.path.exists(path_to_load):
         raise FileNotFoundError(
-            f"Model artifacts not found at {ARTIFACTS_PATH}. Run Train_Model.py first."
+            f"Model artifacts not found at {path_to_load}. Run Train_Model.py first."
         )
-    with open(ARTIFACTS_PATH, "rb") as f:
+    with open(path_to_load, "rb") as f:
         artifacts = pickle.load(f)
-    print(f"Loaded model artifacts ({len(artifacts['risk_results'])} products)")
+    print(f"Loaded model artifacts from {path_to_load} ({len(artifacts['risk_results'])} products)")
+
+
+def get_model_metadata():
+    """Return model metadata from artifacts when available."""
+    if isinstance(artifacts, dict):
+        metadata = artifacts.get("model_metadata", {})
+        if isinstance(metadata, dict):
+            return metadata
+    return {}
+
+
+def _load_json_file(path, default):
+    if not os.path.exists(path):
+        return default
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return default
 
 
 # ==============================
@@ -110,6 +148,53 @@ def raw_dataset_page():
 def product_risk_page():
     user = get_current_user()
     return render_template("Product_Risk.html", user=user)
+
+
+@app.route("/dev-lock")
+def dev_lock_page():
+    user = get_current_user()
+    return render_template("pattern_lock.html", user=user)
+
+
+@app.route("/developer")
+def developer_page():
+    # Show developer page with passkey prompt (handled client-side)
+    user = get_current_user()
+    return render_template("developer.html", user=user)
+
+
+@app.route("/developer/dell-infrastructure-fit")
+@require_dev_unlock
+def developer_dell_infrastructure_fit_page():
+    user = get_current_user()
+    return render_template("dell_infrastructure_fit.html", user=user)
+
+
+@app.route("/api/dev-unlock", methods=['POST'])
+def dev_unlock():
+    data = request.get_json() or {}
+    passkey = data.get('passkey', '')
+    
+    # Verify passkey
+    if passkey != 'a1b2c3d4':
+        return jsonify({"status": "error", "message": "Invalid passkey"}), 403
+    
+    # Set session flag when passkey is correct
+    session['dev_unlocked'] = True
+    session.modified = True
+    
+    # Check if user is logged in
+    if 'user_email' in session:
+        return jsonify({"status": "success", "redirect": "/developer"})
+    else:
+        return jsonify({"status": "success", "redirect": "/developer"})
+
+
+@app.route("/api/dev-check-unlock")
+def dev_check_unlock():
+    """Check if developer mode is already unlocked in session"""
+    unlocked = session.get('dev_unlocked', False)
+    return jsonify({"unlocked": unlocked})
 
 
 RAW_DATASET_ALLOWED_TABLES = [
@@ -515,10 +600,20 @@ def list_departments():
     conn = get_connection()
     departments = get_departments(conn)
     close_connection(conn)
+
+    metadata = get_model_metadata()
+    ui_defaults = metadata.get("ui_defaults", {}) if isinstance(metadata.get("ui_defaults", {}), dict) else {}
+    enabled_departments = set(ui_defaults.get("enabled_departments", ["Engineering & IT", "Marketing", "Sales"]))
+
+    normalized_departments = []
+    for dept in departments:
+        row = dict(dept)
+        row["is_enabled"] = row.get("department_name") in enabled_departments
+        normalized_departments.append(row)
     
     return jsonify({
         "status": "success",
-        "departments": departments
+        "departments": normalized_departments
     })
 
 
@@ -810,7 +905,11 @@ def submit_review():
 @app.route("/logout")
 def logout():
     """Log out current user."""
+    return_to = request.args.get('return', '')
     session.clear()
+    
+    if return_to == 'developer':
+        return redirect(url_for('login_page') + '?tab=developer')
     return redirect(url_for('login_page'))
 
 
@@ -822,6 +921,10 @@ def logout():
 @require_profile
 def api_dashboard():
     user = get_current_user()
+    metadata = get_model_metadata()
+    ui_defaults = metadata.get("ui_defaults", {}) if isinstance(metadata.get("ui_defaults", {}), dict) else {}
+    risk_thresholds = metadata.get("risk_thresholds", {}) if isinstance(metadata.get("risk_thresholds", {}), dict) else {}
+    dashboard_alert_limit = int(ui_defaults.get("dashboard_alert_limit", 10))
     
     risk = artifacts['risk_results']
     portfolio = artifacts['portfolio_impact']
@@ -853,7 +956,17 @@ def api_dashboard():
                 sum(r['risk_score'] for r in scored) / len(scored), 1
             ) if scored else 0,
         },
-        "alerts": alerts[:10],
+        "alerts": alerts[:dashboard_alert_limit],
+        "ui_defaults": {
+            "dashboard_table_limit": int(ui_defaults.get("dashboard_table_limit", 10)),
+            "dashboard_alert_limit": dashboard_alert_limit,
+            "dashboard_alert_preview_limit": int(ui_defaults.get("dashboard_alert_preview_limit", 5)),
+        },
+        "risk_thresholds": {
+            "critical": float(risk_thresholds.get("critical", 75)),
+            "high": float(risk_thresholds.get("high", 50)),
+            "moderate": float(risk_thresholds.get("moderate", 25)),
+        },
     })
 
 
@@ -1052,6 +1165,12 @@ def api_chatbot():
     # Build response
     risk_score = data['risk_score']
     alert = data['alert_level']
+    metadata = get_model_metadata()
+    chatbot_thresholds = metadata.get("chatbot_response_thresholds", {}) if isinstance(metadata.get("chatbot_response_thresholds", {}), dict) else {}
+    critical_threshold = float(chatbot_thresholds.get("critical", 75))
+    high_threshold = float(chatbot_thresholds.get("high", 50))
+    moderate_threshold = float(chatbot_thresholds.get("moderate", 25))
+
     themes = [t[0] for t in data.get('top_themes', [])][:3]
     themes_str = ", ".join(themes) if themes else "none detected"
     impact = data.get('revenue_impact', {})
@@ -1064,7 +1183,7 @@ def api_chatbot():
             f"The {data['product_name']} has insufficient review data for risk scoring "
             f"({review_count} reviews found). More data is needed for reliable analysis."
         )
-    elif risk_score >= 75:
+    elif risk_score >= critical_threshold:
         response = (
             f"CRITICAL ALERT: The {data['product_name']} currently has a risk score of "
             f"{risk_score}/100 ({alert}). This product requires immediate attention. "
@@ -1073,7 +1192,7 @@ def api_chatbot():
             f"Based on {review_count} reviews analyzed. "
             f"Recommended action: Escalate to product team immediately."
         )
-    elif risk_score >= 50:
+    elif risk_score >= high_threshold:
         response = (
             f"The {data['product_name']} has a risk score of {risk_score}/100 ({alert}). "
             f"Top complaint themes: {themes_str}. Average rating: {avg_rating}. "
@@ -1081,7 +1200,7 @@ def api_chatbot():
             f"Based on {review_count} reviews analyzed. "
             f"Recommended action: Investigate top complaint themes and monitor trends."
         )
-    elif risk_score >= 25:
+    elif risk_score >= moderate_threshold:
         response = (
             f"The {data['product_name']} has a moderate risk score of {risk_score}/100 ({alert}). "
             f"Some complaint themes detected: {themes_str}. Average rating: {avg_rating}. "
@@ -1100,6 +1219,509 @@ def api_chatbot():
         "product_matched": asin,
         "risk_score": risk_score,
         "alert_level": alert,
+    })
+
+
+@app.route("/api/developer/dell-infrastructure-fit")
+@require_dev_unlock
+def api_developer_dell_infrastructure_fit():
+    """Return enterprise-scaled requirements + Dell infrastructure baseline capabilities."""
+    metadata = get_model_metadata()
+    dev_infra = metadata.get("dev_infrastructure", {}) if isinstance(metadata.get("dev_infrastructure", {}), dict) else {}
+    assumptions = dev_infra.get("assumptions", {}) if isinstance(dev_infra.get("assumptions", {}), dict) else {}
+
+    # Model-configured assumptions first; defaults are fallback for older artifacts.
+    employees = int(assumptions.get("employees", 15000))
+    avg_reviews_per_employee_per_year = int(assumptions.get("avg_reviews_per_employee_per_year", 20))
+    default_avg_review_size_bytes = int(assumptions.get("default_avg_review_size_bytes", 2048))
+    model_inference_time_ms = float(assumptions.get("model_inference_time_ms", 200))
+    avg_daily_dashboard_queries = int(assumptions.get("avg_daily_dashboard_queries", 20000))
+    dataset_growth_rate = float(assumptions.get("dataset_growth_rate", 0.15))
+    retention_years = int(assumptions.get("retention_years", 5))
+
+    # Pull dynamic signals from model artifacts when available
+    artifact_stats_available = False
+    total_reviews_analyzed = 0
+    products_scored = 0
+    detected_avg_review_size_bytes = default_avg_review_size_bytes
+
+    if artifacts and isinstance(artifacts, dict):
+        enriched_df = artifacts.get("enriched_df")
+        risk_results = artifacts.get("risk_results", {})
+        products_scored = len(risk_results) if isinstance(risk_results, dict) else 0
+
+        if isinstance(enriched_df, pd.DataFrame) and not enriched_df.empty:
+            artifact_stats_available = True
+            total_reviews_analyzed = len(enriched_df)
+
+            text_col = None
+            if "text" in enriched_df.columns:
+                text_col = "text"
+            elif "clean_text" in enriched_df.columns:
+                text_col = "clean_text"
+
+            title_col = "title_x" if "title_x" in enriched_df.columns else None
+
+            if text_col:
+                text_lengths = enriched_df[text_col].fillna("").astype(str).str.len()
+                title_lengths = (
+                    enriched_df[title_col].fillna("").astype(str).str.len()
+                    if title_col else 0
+                )
+                avg_chars = float((text_lengths + title_lengths).mean())
+                # Approximate byte size using UTF-8 typical 1.2x overhead for mixed chars.
+                detected_avg_review_size_bytes = max(
+                    256,
+                    int(avg_chars * 1.2)
+                )
+
+    # Enterprise-scaled requirements (reviews + chatbot + ops storage)
+    annual_reviews = employees * avg_reviews_per_employee_per_year
+    review_dataset_size_bytes = annual_reviews * detected_avg_review_size_bytes
+
+    # Chatbot workload assumptions for enterprise usage
+    active_chat_user_ratio = float(assumptions.get("active_chat_user_ratio", 0.30))
+    chat_sessions_per_active_user_per_day = float(assumptions.get("chat_sessions_per_active_user_per_day", 1.2))
+    avg_turns_per_session = float(assumptions.get("avg_turns_per_session", 3.5))
+    avg_chat_prompt_tokens = int(assumptions.get("avg_chat_prompt_tokens", 900))
+    avg_chat_completion_tokens = int(assumptions.get("avg_chat_completion_tokens", 300))
+    avg_chars_per_token = float(assumptions.get("avg_chars_per_token", 4))
+    chat_inference_time_ms = float(assumptions.get("chat_inference_time_ms", 900))
+
+    daily_active_chat_users = int(round(employees * active_chat_user_ratio))
+    daily_chat_turns = int(round(
+        daily_active_chat_users * chat_sessions_per_active_user_per_day * avg_turns_per_session
+    ))
+
+    tokens_per_chat_turn = avg_chat_prompt_tokens + avg_chat_completion_tokens
+    daily_chat_tokens = daily_chat_turns * tokens_per_chat_turn
+    annual_chat_tokens = daily_chat_tokens * 365
+
+    # Approximate payload size for each chatbot turn (prompt + response + metadata envelope)
+    avg_chat_payload_bytes_per_turn = int(tokens_per_chat_turn * avg_chars_per_token * 1.15)
+    annual_chat_log_size_bytes = daily_chat_turns * avg_chat_payload_bytes_per_turn * 365
+
+    # Additional platform storage components
+    feature_engineering_overhead_bytes = int(
+        review_dataset_size_bytes * float(assumptions.get("feature_engineering_overhead_ratio", 0.35))
+    )
+    vector_index_bytes = int(
+        annual_chat_log_size_bytes * float(assumptions.get("vector_index_ratio", 0.25))
+    )
+    model_artifacts_bytes = int(assumptions.get("model_artifacts_bytes", 8 * 1024**3))
+    observability_and_monitoring_bytes = int(
+        assumptions.get("observability_and_monitoring_bytes", 25 * 1024**3)
+    )
+
+    year1_total_dataset_size_bytes = (
+        review_dataset_size_bytes
+        + annual_chat_log_size_bytes
+        + feature_engineering_overhead_bytes
+        + vector_index_bytes
+        + model_artifacts_bytes
+        + observability_and_monitoring_bytes
+    )
+
+    # 5-year retained storage with annual growth compounding
+    growth_multiplier = (
+        (((1 + dataset_growth_rate) ** retention_years) - 1) / dataset_growth_rate
+        if dataset_growth_rate > 0 else retention_years
+    )
+    storage_required_bytes = int(year1_total_dataset_size_bytes * growth_multiplier)
+
+    daily_total_requests = avg_daily_dashboard_queries + daily_chat_turns
+    queries_per_second = daily_total_requests / (24 * 3600)
+
+    weighted_payload_bytes = (
+        (avg_daily_dashboard_queries * detected_avg_review_size_bytes)
+        + (daily_chat_turns * avg_chat_payload_bytes_per_turn)
+    ) / max(daily_total_requests, 1)
+    throughput_needed_bytes_per_second = queries_per_second * weighted_payload_bytes
+
+    weighted_inference_time_ms = (
+        (avg_daily_dashboard_queries * model_inference_time_ms)
+        + (daily_chat_turns * chat_inference_time_ms)
+    ) / max(daily_total_requests, 1)
+
+    # Little's Law style concurrency approximation for API + chatbot mix
+    estimated_concurrent_inference = queries_per_second * (weighted_inference_time_ms / 1000)
+    estimated_vcpu_needed = max(8, int(math.ceil(estimated_concurrent_inference * 10)))
+    compute_required_index = max(1, estimated_vcpu_needed * 12)
+
+    # Cost estimates (transparent assumptions; update rates when vendor prices change)
+    llm_cost_per_million_tokens = assumptions.get("llm_cost_per_million_tokens", {
+        "economy": 0.80,
+        "balanced": 2.50,
+        "premium": 8.00,
+    })
+    monthly_chat_tokens = annual_chat_tokens / 12
+    monthly_llm_cost = {
+        k: round((monthly_chat_tokens / 1_000_000) * v, 2)
+        for k, v in llm_cost_per_million_tokens.items()
+    }
+    yearly_llm_cost = {
+        k: round((annual_chat_tokens / 1_000_000) * v, 2)
+        for k, v in llm_cost_per_million_tokens.items()
+    }
+
+    training_runs_per_year = float(assumptions.get("training_runs_per_year", 52))
+    cpu_hours_per_run = float(assumptions.get("cpu_hours_per_run", 3.0))
+    gpu_hours_per_run = float(assumptions.get("gpu_hours_per_run", 0.8))
+    cpu_cost_per_hour = float(assumptions.get("cpu_cost_per_hour", 1.40))
+    gpu_cost_per_hour = float(assumptions.get("gpu_cost_per_hour", 4.50))
+    training_compute_cost_yearly = training_runs_per_year * (
+        cpu_hours_per_run * cpu_cost_per_hour
+        + gpu_hours_per_run * gpu_cost_per_hour
+    )
+    mlops_overhead_pct = float(assumptions.get("mlops_overhead_pct", 0.35))
+    training_total_cost_yearly = round(training_compute_cost_yearly * (1 + mlops_overhead_pct), 2)
+    total_ai_ops_cost_yearly_balanced = round(
+        yearly_llm_cost["balanced"] + training_total_cost_yearly,
+        2
+    )
+
+    # Dell baseline capability objects (values normalized for scoring calculations)
+    infrastructures = [
+        {
+            "name": "PowerEdge",
+            "primary_type": "Compute / Servers",
+            "compute_capacity": {
+                "max_cpus": 2,
+                "max_cores_per_cpu": 144,
+                "max_ram_tb": 8,
+                "max_gpu": 8,
+                "compute_index": 1000,
+            },
+            "storage_capacity": {
+                "internal_nvme_tb": 245,
+                "cluster_capacity_bytes": 245 * 1024**4,
+            },
+            "throughput": {
+                "note": "Optimized for compute-heavy workloads",
+                "throughput_bytes_per_second": 12 * 1024**3,
+            },
+            "scalability": {
+                "max_nodes": 1000,
+                "scalability_index": 98,
+            },
+            "best_for": [
+                "AI/ML inference",
+                "virtualization",
+                "containerized applications",
+                "compute-heavy workloads",
+            ],
+            "efficiency_hint": 88,
+        },
+        {
+            "name": "PowerStore",
+            "primary_type": "Block Storage Array",
+            "compute_capacity": {
+                "compute_index": 230,
+                "max_cpus": None,
+                "max_cores_per_cpu": None,
+                "max_ram_tb": None,
+                "max_gpu": None,
+            },
+            "storage_capacity": {
+                "cluster_capacity_pb": 8,
+                "cluster_capacity_bytes": 8 * 1024**5,
+                "typical_data_reduction": "4:1",
+            },
+            "throughput": {
+                "max_iops": 4_000_000,
+                "latency": "sub-ms",
+                "throughput_bytes_per_second": 8 * 1024**3,
+            },
+            "scalability": {
+                "max_nodes": 64,
+                "scalability_index": 82,
+            },
+            "best_for": [
+                "databases",
+                "virtual machines",
+                "transactional systems",
+            ],
+            "efficiency_hint": 76,
+        },
+        {
+            "name": "PowerScale",
+            "primary_type": "Scale-Out NAS",
+            "compute_capacity": {
+                "compute_index": 340,
+                "max_cpus": None,
+                "max_cores_per_cpu": None,
+                "max_ram_tb": None,
+                "max_gpu": None,
+            },
+            "storage_capacity": {
+                "max_nodes": 252,
+                "cluster_capacity_pb": 186,
+                "cluster_capacity_bytes": 186 * 1024**5,
+            },
+            "throughput": {
+                "max_throughput_gbps": 945,
+                "max_iops": 15_800_000,
+                "throughput_bytes_per_second": 945 * 1024**3,
+            },
+            "scalability": {
+                "max_nodes": 252,
+                "scalability_index": 95,
+            },
+            "best_for": [
+                "AI datasets",
+                "unstructured data",
+                "analytics pipelines",
+                "large file repositories",
+            ],
+            "efficiency_hint": 92,
+        },
+        {
+            "name": "PowerProtect",
+            "primary_type": "Backup / Cyber Recovery",
+            "compute_capacity": {
+                "compute_index": 160,
+                "max_cpus": None,
+                "max_cores_per_cpu": None,
+                "max_ram_tb": None,
+                "max_gpu": None,
+            },
+            "storage_capacity": {
+                "logical_capacity_pb": 50,
+                "cluster_capacity_bytes": 50 * 1024**5,
+                "dedupe": "up to 65:1",
+            },
+            "throughput": {
+                "backup_tb_per_hour": 94,
+                "throughput_bytes_per_second": (94 * 1024**4) / 3600,
+            },
+            "scalability": {
+                "max_nodes": 80,
+                "scalability_index": 74,
+            },
+            "best_for": [
+                "backup",
+                "ransomware protection",
+                "archival storage",
+            ],
+            "efficiency_hint": 55,
+        },
+    ]
+
+    metadata_infrastructures = dev_infra.get("infrastructures") if isinstance(dev_infra.get("infrastructures"), list) else None
+    if metadata_infrastructures:
+        infrastructures = metadata_infrastructures
+
+    metadata_weights = dev_infra.get("weights", {}) if isinstance(dev_infra.get("weights", {}), dict) else {}
+
+    return jsonify({
+        "status": "success",
+        "requirements": {
+            "employees": employees,
+            "annual_reviews": annual_reviews,
+            "avg_review_size_bytes": detected_avg_review_size_bytes,
+            "retention_years": retention_years,
+            "dataset_size_bytes": year1_total_dataset_size_bytes,
+            "review_dataset_size_bytes": review_dataset_size_bytes,
+            "chatbot_dataset_size_bytes": annual_chat_log_size_bytes,
+            "feature_engineering_overhead_bytes": feature_engineering_overhead_bytes,
+            "vector_index_bytes": vector_index_bytes,
+            "observability_and_monitoring_bytes": observability_and_monitoring_bytes,
+            "storage_required_bytes": storage_required_bytes,
+            "avg_daily_dashboard_queries": avg_daily_dashboard_queries,
+            "daily_chat_turns": daily_chat_turns,
+            "daily_total_requests": daily_total_requests,
+            "queries_per_second": queries_per_second,
+            "throughput_needed_bytes_per_second": throughput_needed_bytes_per_second,
+            "model_inference_time_ms": model_inference_time_ms,
+            "chat_inference_time_ms": chat_inference_time_ms,
+            "weighted_inference_time_ms": round(weighted_inference_time_ms, 1),
+            "estimated_vcpu_needed": estimated_vcpu_needed,
+            "compute_required_index": compute_required_index,
+            "dataset_growth_rate": dataset_growth_rate,
+            "annual_chat_tokens": annual_chat_tokens,
+            "monthly_chat_tokens": int(monthly_chat_tokens),
+            "monthly_llm_cost": monthly_llm_cost,
+            "yearly_llm_cost": yearly_llm_cost,
+            "training_total_cost_yearly": training_total_cost_yearly,
+            "total_ai_ops_cost_yearly_balanced": total_ai_ops_cost_yearly_balanced,
+        },
+        "weights": {
+            "compute_weight": float(metadata_weights.get("compute_weight", 0.30)),
+            "storage_weight": float(metadata_weights.get("storage_weight", 0.25)),
+            "throughput_weight": float(metadata_weights.get("throughput_weight", 0.20)),
+            "scalability_weight": float(metadata_weights.get("scalability_weight", 0.15)),
+            "efficiency_weight": float(metadata_weights.get("efficiency_weight", 0.10)),
+        },
+        "dynamic_model_stats": {
+            "artifact_stats_available": artifact_stats_available,
+            "total_reviews_analyzed": total_reviews_analyzed,
+            "products_scored": products_scored,
+        },
+        "assumptions": {
+            "active_chat_user_ratio": active_chat_user_ratio,
+            "chat_sessions_per_active_user_per_day": chat_sessions_per_active_user_per_day,
+            "avg_turns_per_session": avg_turns_per_session,
+            "avg_chat_prompt_tokens": avg_chat_prompt_tokens,
+            "avg_chat_completion_tokens": avg_chat_completion_tokens,
+            "llm_cost_per_million_tokens": llm_cost_per_million_tokens,
+            "training_runs_per_year": training_runs_per_year,
+            "cpu_hours_per_run": cpu_hours_per_run,
+            "gpu_hours_per_run": gpu_hours_per_run,
+            "cpu_cost_per_hour": cpu_cost_per_hour,
+            "gpu_cost_per_hour": gpu_cost_per_hour,
+            "mlops_overhead_pct": mlops_overhead_pct,
+        },
+        "infrastructures": infrastructures,
+    })
+
+
+@app.route("/api/developer/model-training-results")
+@require_dev_unlock
+def api_developer_model_training_results():
+    registry = _load_json_file(MODEL_REGISTRY_PATH, [])
+    baseline = _load_json_file(BASELINE_METRICS_PATH, {})
+    validation = _load_json_file(VALIDATION_REPORT_PATH, {})
+
+    if not isinstance(registry, list):
+        registry = []
+
+    latest = registry[-1] if registry else None
+    latest_deployed = next((r for r in reversed(registry) if r.get("deployed")), None)
+
+    version_rows = []
+    for row in registry:
+        metrics = row.get("metrics", {}) if isinstance(row.get("metrics", {}), dict) else {}
+        version_rows.append(
+            {
+                "run_id": row.get("run_id"),
+                "run_number": row.get("run_number"),
+                "candidate_model_version": row.get("candidate_model_version"),
+                "deployed_model_version": row.get("deployed_model_version"),
+                "deployed": bool(row.get("deployed")),
+                "timestamp": row.get("timestamp"),
+                "high_risk_threshold": row.get("high_risk_threshold"),
+                "pearson_correlation": metrics.get("pearson_correlation"),
+                "directional_accuracy": metrics.get("directional_accuracy"),
+                "high_risk_recall": metrics.get("high_risk_recall"),
+                "high_risk_precision": metrics.get("high_risk_precision"),
+                "mae": metrics.get("mae"),
+                "composite_score": row.get("composite_score"),
+            }
+        )
+
+    progression = {
+        "labels": [f"Run {r.get('run_number')}" for r in version_rows],
+        "pearson": [r.get("pearson_correlation") for r in version_rows],
+        "directional_accuracy": [r.get("directional_accuracy") for r in version_rows],
+        "high_risk_recall": [r.get("high_risk_recall") for r in version_rows],
+        "high_risk_precision": [r.get("high_risk_precision") for r in version_rows],
+        "mae": [r.get("mae") for r in version_rows],
+    }
+
+    baseline_metrics = baseline.get("metrics", {}) if isinstance(baseline.get("metrics", {}), dict) else {}
+    latest_metrics = latest.get("metrics", {}) if latest and isinstance(latest.get("metrics", {}), dict) else {}
+
+    improvements = {}
+    for metric in ["pearson_correlation", "directional_accuracy", "high_risk_recall", "high_risk_precision"]:
+        b = baseline_metrics.get(metric)
+        l = latest_metrics.get(metric)
+        if b is not None and l is not None:
+            improvements[metric] = round(float(l) - float(b), 4)
+
+    eval_dataset_rows = 0
+    if os.path.exists(EVALUATION_DATASET_PATH):
+        try:
+            eval_dataset_rows = int(len(pd.read_csv(EVALUATION_DATASET_PATH)))
+        except Exception:
+            eval_dataset_rows = 0
+
+    return jsonify(
+        {
+            "status": "success",
+            "current_production_model_path": CURRENT_PRODUCTION_MODEL_PATH,
+            "latest_validation": validation,
+            "latest_run": latest,
+            "latest_deployed_run": latest_deployed,
+            "baseline": baseline,
+            "improvements_vs_baseline": improvements,
+            "version_table": version_rows,
+            "progression": progression,
+            "distribution": validation.get("distribution", {}),
+            "evaluation_dataset": {
+                "path": EVALUATION_DATASET_PATH,
+                "rows": eval_dataset_rows,
+            },
+        }
+    )
+
+
+@app.route("/api/developer/evaluation-reviews")
+@require_dev_unlock
+def api_developer_evaluation_reviews():
+    if not os.path.exists(EVALUATION_DATASET_PATH):
+        return jsonify({"status": "error", "message": "evaluation_reviews dataset not found. Run training first."}), 404
+
+    try:
+        limit = max(1, min(int(request.args.get("limit", 100)), 500))
+    except ValueError:
+        limit = 100
+    try:
+        offset = max(0, int(request.args.get("offset", 0)))
+    except ValueError:
+        offset = 0
+
+    df = pd.read_csv(EVALUATION_DATASET_PATH)
+    total = len(df)
+    subset = df.iloc[offset: offset + limit].fillna("")
+
+    return jsonify({
+        "status": "success",
+        "total_rows": total,
+        "offset": offset,
+        "limit": limit,
+        "rows": subset.to_dict(orient="records"),
+    })
+
+
+@app.route("/api/developer/evaluation-reviews", methods=["PUT"])
+@require_dev_unlock
+def api_developer_evaluation_reviews_update():
+    body = request.get_json() or {}
+    updates = body.get("updates", [])
+
+    if not isinstance(updates, list) or not updates:
+        return jsonify({"status": "error", "message": "updates list required"}), 400
+
+    if not os.path.exists(EVALUATION_DATASET_PATH):
+        return jsonify({"status": "error", "message": "evaluation_reviews dataset not found."}), 404
+
+    df = pd.read_csv(EVALUATION_DATASET_PATH)
+    if "review_id" not in df.columns:
+        return jsonify({"status": "error", "message": "review_id column missing in evaluation dataset."}), 500
+
+    changed = 0
+    editable = {"labeled_issue", "labeled_severity_score", "labeled_risk_level"}
+
+    for u in updates:
+        rid = str(u.get("review_id", "")).strip()
+        if not rid:
+            continue
+
+        idx = df.index[df["review_id"].astype(str) == rid]
+        if len(idx) == 0:
+            continue
+
+        row_index = idx[0]
+        for field in editable:
+            if field in u:
+                df.at[row_index, field] = u[field]
+        changed += 1
+
+    df.to_csv(EVALUATION_DATASET_PATH, index=False)
+
+    return jsonify({
+        "status": "success",
+        "updated_rows": changed,
     })
 
 

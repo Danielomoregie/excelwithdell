@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Mode - FusionTech</title>
+    <link rel="stylesheet" href="/static/dashboard.css">
+    <style>
+        .dev-shell {
+            position: relative;
+        }
+
+        .dev-shell::before,
+        .dev-shell::after {
+            content: "";
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            filter: blur(45px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .dev-shell::before {
+            top: -30px;
+            right: 5%;
+            background: rgba(56, 189, 248, 0.18);
+        }
+
+        .dev-shell::after {
+            bottom: 5%;
+            left: 4%;
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .back-link {
+            font-size: 1.2rem !important;
+            font-weight: 600 !important;
+            padding: 0.6rem 1.2rem !important;
+        }
+
+        .dev-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2.4rem 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .dev-header {
+            text-align: center;
+            margin-bottom: 2.2rem;
+            padding: 1.4rem 1.2rem;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.35) 0%, rgba(30, 58, 138, 0.18) 100%);
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+        }
+
+        .dev-tag {
+            display: inline-block;
+            margin-bottom: 0.65rem;
+            padding: 0.28rem 0.72rem;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #fee2e2;
+            border: 1px solid rgba(248, 113, 113, 0.58);
+            background: linear-gradient(135deg, rgba(153, 27, 27, 0.44) 0%, rgba(69, 10, 10, 0.24) 100%);
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+            animation: chipPulseRed 2.6s ease-in-out infinite;
+        }
+
+        .dev-title {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.4rem;
+            letter-spacing: 0.01em;
+        }
+
+        .dev-subtitle {
+            font-size: 1.02rem;
+            color: #60a5fa;
+            font-weight: 700;
+        }
+
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .option-card {
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.16) 0%, rgba(15, 23, 42, 0.3) 100%);
+            border: 2px solid rgba(59, 130, 246, 0.25);
+            border-radius: 14px;
+            padding: 1.3rem;
+            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            animation: riseIn 0.35s ease both;
+        }
+
+        .option-card:nth-child(2) {
+            animation-delay: 0.06s;
+        }
+
+        .option-card:nth-child(3) {
+            animation-delay: 0.12s;
+        }
+
+        .option-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(130deg, rgba(148, 163, 184, 0) 20%, rgba(191, 219, 254, 0.12) 50%, rgba(148, 163, 184, 0) 80%);
+            transform: translateX(-110%);
+            transition: transform 0.45s ease;
+            pointer-events: none;
+        }
+
+        .option-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
+            border-color: rgba(96, 165, 250, 0.6);
+        }
+
+        .option-card:hover::after {
+            transform: translateX(110%);
+        }
+
+        .option-head {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 0.55rem;
+        }
+
+        .option-code {
+            display: inline-block;
+            font-family: 'Courier New', monospace;
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #93c5fd;
+            margin-bottom: 0.1rem;
+            line-height: 1;
+        }
+
+        .option-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.45rem;
+        }
+
+        .option-desc {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .option-cta {
+            margin-top: 0.85rem;
+            font-size: 0.82rem;
+            font-family: 'Courier New', monospace;
+            color: #93c5fd;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .section-view {
+            display: none;
+            margin-top: 1.4rem;
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.18) 0%, rgba(15, 23, 42, 0.35) 100%);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 14px;
+            padding: 1.4rem;
+        }
+
+        .section-view.active {
+            display: block;
+        }
+
+        .section-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .section-meta {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 0.92rem;
+        }
+
+        .section-points {
+            margin: 0;
+            padding-left: 1.2rem;
+            color: var(--text-secondary);
+        }
+
+        .section-points li {
+            margin-bottom: 0.42rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 0.8rem;
+            margin: 0.9rem 0 1.1rem;
+        }
+
+        .metric-card {
+            border: 1px solid rgba(96, 165, 250, 0.28);
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 0.75rem 0.85rem;
+        }
+
+        .metric-card .label {
+            color: var(--text-secondary);
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .metric-card .value {
+            color: #bfdbfe;
+            font-size: 1.24rem;
+            font-weight: 800;
+            margin-top: 0.2rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 0.9rem;
+            margin-top: 0.9rem;
+        }
+
+        .chart-card {
+            border: 1px solid rgba(96, 165, 250, 0.24);
+            border-radius: 10px;
+            padding: 0.7rem;
+            background: rgba(2, 6, 23, 0.45);
+        }
+
+        .chart-title {
+            color: #dbeafe;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .table-wrap {
+            margin-top: 1rem;
+            overflow-x: auto;
+            border: 1px solid rgba(96, 165, 250, 0.24);
+            border-radius: 10px;
+        }
+
+        .results-table {
+            width: 100%;
+            min-width: 860px;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        .results-table th,
+        .results-table td {
+            border-bottom: 1px solid rgba(96, 165, 250, 0.15);
+            padding: 0.5rem 0.55rem;
+            color: #dbeafe;
+            text-align: left;
+        }
+
+        .results-table th {
+            background: rgba(30, 58, 138, 0.34);
+            font-weight: 700;
+        }
+
+        .badge {
+            display: inline-block;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            padding: 0.2rem 0.5rem;
+            font-weight: 700;
+        }
+
+        .badge.yes {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.45);
+        }
+
+        .badge.no {
+            background: rgba(239, 68, 68, 0.18);
+            color: #fecaca;
+            border: 1px solid rgba(239, 68, 68, 0.45);
+        }
+
+        .delta.up { color: #86efac; }
+        .delta.down { color: #fca5a5; }
+
+        .dev-button {
+            padding: 0.65rem 1.1rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.25s ease;
+        }
+
+        .dev-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 18px rgba(59, 130, 246, 0.45);
+        }
+
+        .dev-button.secondary {
+            background: rgba(107, 114, 128, 0.45);
+        }
+
+        @keyframes riseIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes chipPulseRed {
+            0%, 100% {
+                box-shadow: 0 0 0 rgba(239, 68, 68, 0), 0 0 0 rgba(239, 68, 68, 0);
+                border-color: rgba(248, 113, 113, 0.55);
+                color: #fee2e2;
+            }
+            50% {
+                box-shadow: 0 0 12px rgba(239, 68, 68, 0.44), 0 0 24px rgba(239, 68, 68, 0.2);
+                border-color: rgba(254, 202, 202, 0.96);
+                color: #fff1f2;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .dev-tag {
+                animation: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dev-container {
+                padding: 1.2rem;
+            }
+
+            .dev-title {
+                font-size: 1.85rem;
+            }
+
+            .dev-header {
+                padding: 1.1rem 1rem;
+            }
+
+            .section-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <a href="/" aria-label="Go to dashboard home">
+                    <img src="/static/fusiontech_logo_compact.svg" alt="FusionTech Systems" class="header-logo">
+                </a>
+                <div class="header-text">
+                    <h1>Developer Mode</h1>
+                    <p class="subtitle">Feature Control Center</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <a class="back-link" href="/logout?return=developer">Log Out</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="dev-container dev-shell">
+        <div class="dev-header">
+            <span class="dev-tag">Developer Workspace</span>
+            <h2 class="dev-title">Developer Console</h2>
+            <p class="dev-subtitle">Interact with the Architecture Behind the Magic</p>
+        </div>
+
+        <section id="optionsView" class="option-grid">
+            <article class="option-card" onclick="openSection('training')">
+                <div class="option-head">
+                    <span class="option-code">01</span>
+                </div>
+                <h3 class="option-title">Model Training Results</h3>
+                <p class="option-desc">Inspect model versions, baseline comparisons, validation metrics, and deployment decisions from the latest training runs.</p>
+                <div class="option-cta">Open Section -></div>
+            </article>
+
+            <article class="option-card" onclick="window.location.href='/developer/dell-infrastructure-fit'">
+                <div class="option-head">
+                    <span class="option-code">02</span>
+                </div>
+                <h3 class="option-title">Dell Infrastructure Fit Analysis</h3>
+                <p class="option-desc">Use case-study-driven product fit analysis against dashboard usage profile and efficiency expectations.</p>
+                <div class="option-cta">Open Analysis Page -></div>
+            </article>
+
+            <article class="option-card" onclick="openSection('replay')">
+                <div class="option-head">
+                    <span class="option-code">03</span>
+                </div>
+                <h3 class="option-title">Replay Analysis</h3>
+                <p class="option-desc">Replay usage scenarios to compare how each infrastructure option performs under repeated workloads.</p>
+                <div class="option-cta">Open Section -></div>
+            </article>
+        </section>
+
+        <section id="trainingSection" class="section-view">
+            <div class="section-top">
+                <h3 class="section-title">Model Training Results</h3>
+                <button class="dev-button secondary" onclick="closeSections()">Back To Options</button>
+            </div>
+            <p class="section-meta">Versioned model evaluation using human-annotation benchmark labels from the 20% testing set. Candidate models deploy only if they outperform the current production model.</p>
+
+            <div class="metrics-grid">
+                <div class="metric-card"><div class="label">Latest Run</div><div id="metricRun" class="value">--</div></div>
+                <div class="metric-card"><div class="label">Prod Model Version</div><div id="metricProdVersion" class="value">--</div></div>
+                <div class="metric-card"><div class="label">Pearson Correlation</div><div id="metricCorr" class="value">--</div></div>
+                <div class="metric-card"><div class="label">Directional Accuracy</div><div id="metricDir" class="value">--</div></div>
+                <div class="metric-card"><div class="label">High-Risk Recall</div><div id="metricRecall" class="value">--</div></div>
+                <div class="metric-card"><div class="label">High-Risk Precision</div><div id="metricPrecision" class="value">--</div></div>
+                <div class="metric-card"><div class="label">MAE</div><div id="metricMae" class="value">--</div></div>
+                <div class="metric-card"><div class="label">Eval Reviews</div><div id="metricEvalRows" class="value">--</div></div>
+            </div>
+
+            <div id="improvementSummary" class="section-meta">Baseline deltas will appear here.</div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title">Model Accuracy Progression</div>
+                    <canvas id="chartAccuracyProgress"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Correlation Improvement Over Runs</div>
+                    <canvas id="chartCorrelation"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Recall vs Precision</div>
+                    <canvas id="chartRecallPrecision"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Predicted vs Labeled Score Distribution</div>
+                    <canvas id="chartDistribution"></canvas>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Run</th>
+                            <th>Candidate Version</th>
+                            <th>Threshold</th>
+                            <th>Pearson</th>
+                            <th>Recall</th>
+                            <th>Precision</th>
+                            <th>Directional</th>
+                            <th>MAE</th>
+                            <th>Deployed</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="versionTableBody">
+                        <tr><td colspan="9" style="color:var(--text-secondary);">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="infrastructureSection" class="section-view">
+            <div class="section-top">
+                <h3 class="section-title">Dell Infrastructure Fit Analysis</h3>
+                <button class="dev-button secondary" onclick="closeSections()">Back To Options</button>
+            </div>
+            <p class="section-meta">Anchored to `Official_Case_Documents/EwD_2026_FusionTech Case Study.pdf` and Part 2 recommendation scope.</p>
+            <ul class="section-points">
+                <li>Profile dashboard usage signals to compare infrastructure fit.</li>
+                <li>Score all 4 product options against efficiency criteria.</li>
+                <li>Output ranked recommendation once product details are supplied.</li>
+            </ul>
+        </section>
+
+        <section id="replaySection" class="section-view">
+            <div class="section-top">
+                <h3 class="section-title">Replay Analysis</h3>
+                <button class="dev-button secondary" onclick="closeSections()">Back To Options</button>
+            </div>
+            <p class="section-meta">Scenario replay workspace for evaluating dashboard efficiency per infrastructure option.</p>
+            <ul class="section-points">
+                <li>Load recorded dashboard interaction snapshots.</li>
+                <li>Re-run workload patterns against each candidate product.</li>
+                <li>Report throughput, latency, and stability deltas.</li>
+            </ul>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const optionsView = document.getElementById('optionsView');
+        const sections = {
+            training: document.getElementById('trainingSection'),
+            infrastructure: document.getElementById('infrastructureSection'),
+            replay: document.getElementById('replaySection')
+        };
+
+        let chartAccuracyProgress = null;
+        let chartCorrelation = null;
+        let chartRecallPrecision = null;
+        let chartDistribution = null;
+
+        const metricEls = {
+            run: document.getElementById('metricRun'),
+            prodVersion: document.getElementById('metricProdVersion'),
+            corr: document.getElementById('metricCorr'),
+            dir: document.getElementById('metricDir'),
+            recall: document.getElementById('metricRecall'),
+            precision: document.getElementById('metricPrecision'),
+            mae: document.getElementById('metricMae'),
+            evalRows: document.getElementById('metricEvalRows'),
+            improvementSummary: document.getElementById('improvementSummary'),
+            tableBody: document.getElementById('versionTableBody'),
+        };
+
+        function fmtPct(v) {
+            if (v === null || v === undefined) return '--';
+            return `${(Number(v) * 100).toFixed(1)}%`;
+        }
+
+        function fmtNum(v, digits = 3) {
+            if (v === null || v === undefined || Number.isNaN(Number(v))) return '--';
+            return Number(v).toFixed(digits);
+        }
+
+        function buildImprovementText(improvements) {
+            if (!improvements || Object.keys(improvements).length === 0) {
+                return 'No baseline comparison available yet. Baseline will be set on first deployed model.';
+            }
+            const pieces = [];
+            for (const [k, v] of Object.entries(improvements)) {
+                const sign = Number(v) > 0 ? '+' : '';
+                pieces.push(`${k}: ${sign}${fmtNum(v, 4)}`);
+            }
+            return `Delta vs baseline -> ${pieces.join(' | ')}`;
+        }
+
+        function renderVersionTable(rows) {
+            if (!metricEls.tableBody) return;
+            if (!rows || rows.length === 0) {
+                metricEls.tableBody.innerHTML = '<tr><td colspan="10" style="color:var(--text-secondary);">No training runs logged yet.</td></tr>';
+                return;
+            }
+            metricEls.tableBody.innerHTML = rows.map((r) => {
+                const deployedClass = r.deployed ? 'yes' : 'no';
+                const deployedText = r.deployed ? 'yes' : 'no';
+                return `<tr>
+                    <td>${r.run_number ?? '--'}</td>
+                    <td>${r.candidate_model_version ?? '--'}</td>
+                    <td>${r.high_risk_threshold ?? '--'}</td>
+                    <td>${fmtNum(r.pearson_correlation, 4)}</td>
+                    <td>${fmtPct(r.high_risk_recall)}</td>
+                    <td>${fmtPct(r.high_risk_precision)}</td>
+                    <td>${fmtPct(r.directional_accuracy)}</td>
+                    <td>${fmtNum(r.mae, 3)}</td>
+                    <td><span class="badge ${deployedClass}">${deployedText}</span></td>
+                    <td>${(r.timestamp || '').replace('T', ' ').replace('Z', '')}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function destroyCharts() {
+            [chartAccuracyProgress, chartCorrelation, chartRecallPrecision, chartDistribution].forEach((c) => {
+                if (c) c.destroy();
+            });
+            chartAccuracyProgress = null;
+            chartCorrelation = null;
+            chartRecallPrecision = null;
+            chartDistribution = null;
+        }
+
+        function renderCharts(payload) {
+            destroyCharts();
+            const progression = payload.progression || {};
+            const labels = progression.labels || [];
+
+            const ctxA = document.getElementById('chartAccuracyProgress')?.getContext('2d');
+            if (ctxA) {
+                chartAccuracyProgress = new Chart(ctxA, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: 'Directional Accuracy', data: (progression.directional_accuracy || []).map(v => (v ?? 0) * 100), borderColor: '#60a5fa', tension: 0.3 },
+                            { label: 'High-Risk Recall', data: (progression.high_risk_recall || []).map(v => (v ?? 0) * 100), borderColor: '#34d399', tension: 0.3 },
+                        ],
+                    },
+                    options: { responsive: true, maintainAspectRatio: true },
+                });
+            }
+
+            const ctxB = document.getElementById('chartCorrelation')?.getContext('2d');
+            if (ctxB) {
+                chartCorrelation = new Chart(ctxB, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{ label: 'Pearson Correlation', data: progression.pearson || [], backgroundColor: 'rgba(96,165,250,0.6)' }],
+                    },
+                    options: { responsive: true, maintainAspectRatio: true },
+                });
+            }
+
+            const ctxC = document.getElementById('chartRecallPrecision')?.getContext('2d');
+            if (ctxC) {
+                const points = (payload.version_table || []).map((r) => ({ x: (r.high_risk_recall ?? 0) * 100, y: (r.high_risk_precision ?? 0) * 100 }));
+                chartRecallPrecision = new Chart(ctxC, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{ label: 'Runs', data: points, backgroundColor: '#f59e0b' }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            x: { title: { display: true, text: 'Recall (%)' } },
+                            y: { title: { display: true, text: 'Precision (%)' } },
+                        },
+                    },
+                });
+            }
+
+            const ctxD = document.getElementById('chartDistribution')?.getContext('2d');
+            if (ctxD) {
+                const dist = payload.distribution || {};
+                const predicted = dist.predicted_scores || [];
+                const labeled = dist.labeled_scores || [];
+                const n = Math.min(predicted.length, labeled.length, 120);
+                chartDistribution = new Chart(ctxD, {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({ length: n }, (_, i) => i + 1),
+                        datasets: [
+                            { label: 'Predicted', data: predicted.slice(0, n), borderColor: '#f43f5e', tension: 0.22 },
+                            { label: 'Labeled', data: labeled.slice(0, n), borderColor: '#22c55e', tension: 0.22 },
+                        ],
+                    },
+                    options: { responsive: true, maintainAspectRatio: true },
+                });
+            }
+        }
+
+        async function loadTrainingResults() {
+            try {
+                const res = await fetch('/api/developer/model-training-results');
+                const data = await res.json();
+                if (!data || data.status !== 'success') return;
+
+                const latest = data.latest_run || {};
+                const latestMetrics = latest.metrics || {};
+                const latestValidation = data.latest_validation || {};
+
+                metricEls.run.textContent = latest.run_number ?? '--';
+                metricEls.prodVersion.textContent = (data.latest_deployed_run || {}).deployed_model_version ?? '--';
+                metricEls.corr.textContent = fmtNum(latestMetrics.pearson_correlation, 4);
+                metricEls.dir.textContent = fmtPct(latestMetrics.directional_accuracy);
+                metricEls.recall.textContent = fmtPct(latestMetrics.high_risk_recall);
+                metricEls.precision.textContent = fmtPct(latestMetrics.high_risk_precision);
+                metricEls.mae.textContent = fmtNum(latestMetrics.mae, 3);
+                metricEls.evalRows.textContent = String(latestValidation.evaluated_reviews ?? data.evaluation_dataset?.rows ?? '--');
+
+                metricEls.improvementSummary.textContent = buildImprovementText(data.improvements_vs_baseline || {});
+                renderVersionTable(data.version_table || []);
+                renderCharts(data);
+            } catch (e) {
+                metricEls.improvementSummary.textContent = 'Failed to load model training results.';
+            }
+        }
+
+        function openSection(key) {
+            optionsView.style.display = 'none';
+            Object.values(sections).forEach((section) => section.classList.remove('active'));
+            if (sections[key]) {
+                sections[key].classList.add('active');
+                if (key === 'training') {
+                    loadTrainingResults();
+                }
+            }
+        }
+
+        function closeSections() {
+            Object.values(sections).forEach((section) => section.classList.remove('active'));
+            optionsView.style.display = 'grid';
+        }
+    </script>
+
+    <script>
+        fetch('/api/dev-check-unlock')
+            .then((r) => r.json())
+            .then((data) => {
+                if (!data.unlocked) {
+                    window.location.href = '/login';
+                }
+            })
+            .catch(() => {
+                window.location.href = '/login';
+            });
+    </script>
+</body>
+</html>

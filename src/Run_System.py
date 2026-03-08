@@ -3,7 +3,8 @@ import sys
 import subprocess
 
 MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
-ARTIFACTS_PATH = os.path.join(MODELS_DIR, "Risk_Model_Artifacts.pkl")
+ARTIFACTS_PATH = os.path.join(MODELS_DIR, "current_production_model.pkl")
+LEGACY_ARTIFACTS_PATH = os.path.join(MODELS_DIR, "Risk_Model_Artifacts.pkl")
 
 def ensure_dependencies():
     """Install required Python packages if not already installed."""
@@ -50,14 +51,15 @@ def main():
     ensure_dependencies()
 
     # Step 1: Check if model artifacts exist
-    if not os.path.exists(ARTIFACTS_PATH):
+    artifact_path = ARTIFACTS_PATH if os.path.exists(ARTIFACTS_PATH) else LEGACY_ARTIFACTS_PATH
+    if not os.path.exists(artifact_path):
         print("\n  No trained model found. Running training pipeline...")
         print("  (This only needs to happen once)\n")
         from Train_Model import main as train
         train()
     else:
-        size_mb = os.path.getsize(ARTIFACTS_PATH) / (1024 * 1024)
-        print(f"\n  Model artifacts found ({size_mb:.1f} MB). Skipping training.")
+        size_mb = os.path.getsize(artifact_path) / (1024 * 1024)
+        print(f"\n  Model artifacts found at {artifact_path} ({size_mb:.1f} MB). Skipping training.")
 
     # Step 2: Check OpenAI configuration
     print("\n  Checking OpenAI configuration...")
