@@ -1591,6 +1591,16 @@ def api_developer_model_training_results():
     version_rows = []
     for row in registry:
         metrics = row.get("metrics", {}) if isinstance(row.get("metrics", {}), dict) else {}
+        optimal_metrics = row.get("optimal_threshold_metrics", {}) if isinstance(row.get("optimal_threshold_metrics", {}), dict) else {}
+        operating_threshold = row.get("operating_high_risk_threshold")
+        if operating_threshold is None:
+            operating_threshold = optimal_metrics.get("optimal_threshold", row.get("high_risk_threshold"))
+
+        operating_recall = optimal_metrics.get("optimal_recall", metrics.get("high_risk_recall"))
+        operating_precision = optimal_metrics.get("optimal_precision", metrics.get("high_risk_precision"))
+        operating_f1 = optimal_metrics.get("optimal_f1_score", metrics.get("optimal_f1_score"))
+        operating_roc_auc = optimal_metrics.get("roc_auc_score", metrics.get("roc_auc"))
+
         version_rows.append(
             {
                 "run_id": row.get("run_id"),
@@ -1600,11 +1610,21 @@ def api_developer_model_training_results():
                 "deployed": bool(row.get("deployed")),
                 "timestamp": row.get("timestamp"),
                 "high_risk_threshold": row.get("high_risk_threshold"),
+                "operating_high_risk_threshold": operating_threshold,
                 "pearson_correlation": metrics.get("pearson_correlation"),
                 "directional_accuracy": metrics.get("directional_accuracy"),
                 "high_risk_recall": metrics.get("high_risk_recall"),
                 "high_risk_precision": metrics.get("high_risk_precision"),
                 "mae": metrics.get("mae"),
+                "roc_auc": metrics.get("roc_auc"),
+                "optimal_f1": optimal_metrics.get("optimal_f1_score", metrics.get("optimal_f1_score")),
+                "optimal_threshold": optimal_metrics.get("optimal_threshold", metrics.get("optimal_threshold")),
+                "optimal_recall": optimal_metrics.get("optimal_recall", metrics.get("optimal_recall")),
+                "optimal_precision": optimal_metrics.get("optimal_precision", metrics.get("optimal_precision")),
+                "operating_recall": operating_recall,
+                "operating_precision": operating_precision,
+                "operating_f1": operating_f1,
+                "operating_roc_auc": operating_roc_auc,
                 "composite_score": row.get("composite_score"),
             }
         )
@@ -1615,7 +1635,11 @@ def api_developer_model_training_results():
         "directional_accuracy": [r.get("directional_accuracy") for r in version_rows],
         "high_risk_recall": [r.get("high_risk_recall") for r in version_rows],
         "high_risk_precision": [r.get("high_risk_precision") for r in version_rows],
+        "operating_recall": [r.get("operating_recall") for r in version_rows],
+        "operating_precision": [r.get("operating_precision") for r in version_rows],
         "mae": [r.get("mae") for r in version_rows],
+        "optimal_f1": [r.get("optimal_f1") for r in version_rows],
+        "roc_auc": [r.get("roc_auc") for r in version_rows],
     }
 
     baseline_metrics = baseline.get("metrics", {}) if isinstance(baseline.get("metrics", {}), dict) else {}
@@ -1634,6 +1658,26 @@ def api_developer_model_training_results():
             eval_dataset_rows = int(len(pd.read_csv(EVALUATION_DATASET_PATH)))
         except Exception:
             eval_dataset_rows = 0
+
+    # Extract operating metrics for latest_run if it exists
+    if latest:
+        latest_optimal = latest.get("optimal_threshold_metrics", {}) if isinstance(latest.get("optimal_threshold_metrics", {}), dict) else {}
+        latest_metrics_dict = latest.get("metrics", {}) if isinstance(latest.get("metrics", {}), dict) else {}
+        latest["operating_high_risk_threshold"] = latest.get("operating_high_risk_threshold") or latest_optimal.get("optimal_threshold") or latest.get("high_risk_threshold")
+        latest["operating_recall"] = latest_optimal.get("optimal_recall") or latest_metrics_dict.get("high_risk_recall")
+        latest["operating_precision"] = latest_optimal.get("optimal_precision") or latest_metrics_dict.get("high_risk_precision")
+        latest["operating_f1"] = latest_optimal.get("optimal_f1_score") or latest_metrics_dict.get("optimal_f1_score")
+        latest["operating_roc_auc"] = latest_optimal.get("roc_auc_score") or latest_metrics_dict.get("roc_auc")
+
+    # Extract operating metrics for latest_deployed_run if it exists
+    if latest_deployed:
+        deployed_optimal = latest_deployed.get("optimal_threshold_metrics", {}) if isinstance(latest_deployed.get("optimal_threshold_metrics", {}), dict) else {}
+        deployed_metrics_dict = latest_deployed.get("metrics", {}) if isinstance(latest_deployed.get("metrics", {}), dict) else {}
+        latest_deployed["operating_high_risk_threshold"] = latest_deployed.get("operating_high_risk_threshold") or deployed_optimal.get("optimal_threshold") or latest_deployed.get("high_risk_threshold")
+        latest_deployed["operating_recall"] = deployed_optimal.get("optimal_recall") or deployed_metrics_dict.get("high_risk_recall")
+        latest_deployed["operating_precision"] = deployed_optimal.get("optimal_precision") or deployed_metrics_dict.get("high_risk_precision")
+        latest_deployed["operating_f1"] = deployed_optimal.get("optimal_f1_score") or deployed_metrics_dict.get("optimal_f1_score")
+        latest_deployed["operating_roc_auc"] = deployed_optimal.get("roc_auc_score") or deployed_metrics_dict.get("roc_auc")
 
     return jsonify(
         {

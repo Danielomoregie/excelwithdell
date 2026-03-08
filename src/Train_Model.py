@@ -356,12 +356,23 @@ def main():
     )
 
     print("       Validation metrics:")
-    print(f"       High-Risk Threshold: {HIGH_RISK_THRESHOLD} (adjust in Model_Evaluation_And_Versioning.py)")
+    print(f"       High-Risk Threshold (initial): {HIGH_RISK_THRESHOLD}")
     print(f"       Pearson: {evaluation_report.get('pearson_correlation', 0)}")
     print(f"       MAE: {evaluation_report.get('mae', 0)}")
     print(f"       Directional Accuracy: {evaluation_report.get('directional_accuracy', 0)}")
     print(f"       High-Risk Recall: {evaluation_report.get('high_risk_recall', 0)}")
     print(f"       High-Risk Precision: {evaluation_report.get('high_risk_precision', 0)}")
+    
+    # Show optimal threshold metrics
+    optimal_metrics = evaluation_report.get("optimal_threshold_metrics", {})
+    if optimal_metrics.get("optimal_threshold"):
+        print(f"\n       Optimal Threshold Analysis (F1-based):")
+        print(f"       Optimal Threshold: {optimal_metrics.get('optimal_threshold')}")
+        print(f"       Optimal F1 Score: {optimal_metrics.get('optimal_f1_score')}")
+        print(f"       Optimal Recall: {optimal_metrics.get('optimal_recall')}")
+        print(f"       Optimal Precision: {optimal_metrics.get('optimal_precision')}")
+        if optimal_metrics.get("roc_auc_score"):
+            print(f"       ROC AUC: {optimal_metrics.get('roc_auc_score')}")
 
     print("\n[8/8] Version tracking + deployment gate...")
     deploy_summary = register_and_maybe_deploy(artifacts, evaluation_report)

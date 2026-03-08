@@ -7,12 +7,15 @@ from Theme_Extractor import extract_themes, classify_review_themes
 # ==============================
 
 WEIGHTS = {
-    "negative_sentiment_ratio": 0.25,
-    "sentiment_velocity": 0.15,
-    "rating_decline": 0.20,
-    "low_rating_spike": 0.15,
-    "complaint_concentration": 0.10,
-    "community_validated": 0.15,
+    "negative_sentiment_ratio": 0.20,
+    "sentiment_velocity": 0.13,
+    "rating_decline": 0.19,
+    "low_rating_spike": 0.10,
+    "complaint_concentration": 0.06,
+    "community_validated": 0.11,
+    "rolling_negative_trend": 0.10,
+    "rating_drop_velocity": 0.06,
+    "review_spike_detection": 0.05,
 }
 
 ALERT_THRESHOLDS = {
@@ -22,6 +25,11 @@ ALERT_THRESHOLDS = {
 }
 
 MIN_REVIEWS = 3  # Minimum reviews to compute risk score
+
+# Temporal weighting: recent reviews more important than old ones
+# Full weight for reviews in last 2 years, exponential decay beyond
+TEMPORAL_DECAY_DAYS = 730  # 2 years in days
+TEMPORAL_DECAY_RATE = 0.5  # Half-life of 2 years; older reviews decay exponentially
 
 # Use light Bayesian smoothing and confidence calibration so products
 # with sparse reviews do not swing to extreme scores too easily.
@@ -35,15 +43,61 @@ BASELINE_RISK_SCORE = 35.0
 # SUB-SCORE CALCULATIONS
 # ==============================
 
+def _apply_temporal_decay(product_df):
+    """
+    Weight recent reviews more heavily than old ones.
+    Returns dataframe with added 'temporal_weight' column.
+    Reviews from last 2 years get full weight, older ones decayed exponentially.
+    """
+    if 'date' not in product_df.columns or product_df.empty:
+        return product_df.copy()
+    
+    df = product_df.copy()
+    df['date'] = pd.to_datetime(df['date'], errors='coerce')
+    
+    # Remove rows with invalid dates
+    df = df[pd.notna(df['date'])]
+    if df.empty:
+        product_df['temporal_weight'] = 1.0
+        return product_df
+    
+    max_date = df['date'].max()
+    if pd.isna(max_date):
+        product_df['temporal_weight'] = 1.0
+        return product_df
+    
+    # Calculate age in days
+    df['age_days'] = (max_date - df['date']).dt.days
+    
+    # Apply exponential decay: weight = 2^(-age_days / half_life)
+    # At half_life (730 days), weight = 0.5
+    # At 730 days, weight = 0.5; at 1460 days, weight = 0.25, etc.
+    df['temporal_weight'] = np.power(TEMPORAL_DECAY_RATE, df['age_days'] / TEMPORAL_DECAY_DAYS)
+    
+    return df
+
+
+# ==============================
+# SUB-SCORE CALCULATIONS
+# ==============================
+
 def _negative_sentiment_ratio(product_df, global_negative_ratio):
-    """Sub-score 1: % of reviews that are negative."""
-    total = len(product_df)
-    if total == 0:
+    """Sub-score 1: % of reviews that are negative (weighted by temporal recency)."""
+    if product_df.empty:
         return 0
-    neg_count = (product_df['sentiment_label'] == 'negative').sum()
+    
+    # Apply temporal decay to weight recent reviews more heavily
+    df_weighted = _apply_temporal_decay(product_df)
+    
+    weighted_total = df_weighted['temporal_weight'].sum()
+    if weighted_total == 0:
+        return 0
+    
+    neg_mask = df_weighted['sentiment_label'] == 'negative'
+    weighted_neg_count = df_weighted[neg_mask]['temporal_weight'].sum()
 
     prior_neg = global_negative_ratio * NEGATIVE_RATIO_PRIOR_STRENGTH
-    smoothed_ratio = (neg_count + prior_neg) / (total + NEGATIVE_RATIO_PRIOR_STRENGTH)
+    smoothed_ratio = (weighted_neg_count + prior_neg) / (weighted_total + NEGATIVE_RATIO_PRIOR_STRENGTH)
     return smoothed_ratio * 100
 
 
@@ -196,6 +250,93 @@ def _score_confidence(review_count):
     return min(np.log1p(review_count) / np.log1p(CONFIDENCE_FULL_AT_REVIEWS), 1.0)
 
 
+def _rolling_negative_trend(product_df):
+    """
+    Sub-score 7: Detect if negative review ratio is accelerating.
+    Compares recent rolling window to historical rolling window.
+    Returns 0-100 score.
+    """
+    if 'date' not in product_df.columns or len(product_df) < 8:
+        return 0.0
+    
+    dated = product_df.copy()
+    dated = dated[pd.notna(dated['date'])].sort_values('date')
+    if len(dated) < 8:
+        return 0.0
+    
+    # Split into 2-month rolling windows
+    dated['year_month'] = dated['date'].dt.to_period('M')
+    monthly_stats = []
+    
+    for period, group in dated.groupby('year_month'):
+        neg_ratio = (group['sentiment_label'] == 'negative').mean()
+        monthly_stats.append(neg_ratio)
+    
+    if len(monthly_stats) < 4:
+        return 0.0
+    
+    # Compare recent half to historical half
+    midpoint = len(monthly_stats) // 2
+    hist_avg = np.mean(monthly_stats[:midpoint])
+    recent_avg = np.mean(monthly_stats[midpoint:])
+    
+    acceleration = (recent_avg - hist_avg) / (hist_avg + 0.01)  # Avoid division by zero
+    # Clamp [0, 3], scale to 0-100
+    return min(max(acceleration * 33, 0), 100)
+
+
+def _rating_drop_velocity(product_df):
+    """
+    Sub-score 8: Detect if product ratings are DROPPING (not just low).
+    High for products going downhill, neutral for stable products.
+    Returns 0-100 score.
+    """
+    if 'date' not in product_df.columns or len(product_df) < 6:
+        return 0.0
+    
+    dated = product_df.copy()
+    dated = dated[pd.notna(dated['date'])].sort_values('date')
+    if len(dated) < 6:
+        return 0.0
+    
+    # Split into two halves by time
+    midpoint = len(dated) // 2
+    hist_avg = dated.iloc[:midpoint]['rating'].astype(float).mean()
+    recent_avg = dated.iloc[midpoint:]['rating'].astype(float).mean()
+    
+    drop = hist_avg - recent_avg
+    # Clamp [0, 3], scale to 0-100
+    return min(max(drop * 33, 0), 100)
+
+
+def _review_spike_detection(product_df):
+    """
+    Sub-score 9: Detect sudden spike in review volume (often precedes risk).
+    Returns 0-100 score.
+    """
+    if 'date' not in product_df.columns or len(product_df) < 8:
+        return 0.0
+    
+    dated = product_df.copy()
+    dated = dated[pd.notna(dated['date'])].sort_values('date')
+    if len(dated) < 8:
+        return 0.0
+    
+    # Count reviews per month
+    dated['year_month'] = dated['date'].dt.to_period('M')
+    monthly_counts = [len(group) for _, group in dated.groupby('year_month')]
+    
+    if len(monthly_counts) < 3:
+        return 0.0
+    
+    avg_count = np.mean(monthly_counts)
+    recent_count = monthly_counts[-1]
+    
+    spike_ratio = recent_count / (avg_count + 1)  # Avoid division by zero
+    # Clamp [0, 5], subtract 1, scale to 0-100
+    return min(max((spike_ratio - 1) * 20, 0), 100)
+
+
 # ==============================
 # COMPOSITE RISK SCORE
 # ==============================
@@ -248,6 +389,9 @@ def compute_product_risk_scores(enriched_df):
             'low_rating_spike': round(_low_rating_spike(group), 2),
             'complaint_concentration': round(_complaint_concentration(group), 2),
             'community_validated': round(_community_validated(group, global_avg_helpful_neg), 2),
+            'rolling_negative_trend': round(_rolling_negative_trend(group), 2),
+            'rating_drop_velocity': round(_rating_drop_velocity(group), 2),
+            'review_spike_detection': round(_review_spike_detection(group), 2),
         }
 
         raw_risk_score = sum(sub_scores[k] * WEIGHTS[k] for k in WEIGHTS)

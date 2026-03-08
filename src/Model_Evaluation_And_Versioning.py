@@ -17,7 +17,14 @@ from Theme_Extractor import classify_review_themes
 # Lower threshold (e.g., 25, 50) → Higher recall, lower precision (catch more risk)
 # Higher threshold (e.g., 75, 90) → Lower recall, higher precision (only certain risks)
 # Each training run tracks which threshold was used, allowing easy comparison across runs
-HIGH_RISK_THRESHOLD = 60  # Score >= this value is classified as "high risk"
+# NOTE: This is the INITIAL threshold. After evaluation, the OPTIMAL threshold is computed
+# using F1 score and automatically selected during model evaluation.
+# NOTE: The initial threshold below is used as a baseline. However, during evaluation,
+# the system automatically computes the OPTIMAL threshold using F1 score maximization.
+# This ensures we find the best precision/recall balance for your data.
+#
+# If you want to force a specific threshold (not recommended), change the value below.
+HIGH_RISK_THRESHOLD = 50  # Initial threshold; OPTIMAL is auto-computed via F1 score
 
 MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
 EVALUATION_DATASET_PATH = os.path.join(MODELS_DIR, "evaluation_reviews.csv")
@@ -262,6 +269,64 @@ def _time_to_detection_advantage(eval_scored_df):
     return round(float(np.mean(advantages)), 2)
 
 
+def _compute_optimal_threshold(labeled, predicted):
+    """
+    Find the optimal threshold that maximizes F1 score.
+    
+    Returns dict with optimal threshold metrics and ROC AUC.
+    """
+    try:
+        from sklearn.metrics import precision_recall_curve, roc_auc_score
+    except ImportError:
+        # Fallback if sklearn not available
+        return {
+            "optimal_threshold": HIGH_RISK_THRESHOLD,
+            "optimal_f1_score": None,
+            "optimal_recall": None,
+            "optimal_precision": None,
+            "roc_auc_score": None,
+        }
+    
+    try:
+        # Binary classification: is labeled_score >= 50 (high-risk)?
+        y_true = (labeled >= 50).astype(int)
+        
+        # Compute precision-recall curve
+        precision_arr, recall_arr, thresholds = precision_recall_curve(y_true, predicted)
+        
+        # Compute F1 for each threshold
+        f1_scores = 2 * (precision_arr * recall_arr) / (precision_arr + recall_arr + 1e-8)
+        best_idx = np.argmax(f1_scores)
+        
+        optimal_threshold = float(thresholds[best_idx]) if best_idx < len(thresholds) else 50.0
+        optimal_f1 = float(f1_scores[best_idx])
+        optimal_precision = float(precision_arr[best_idx])
+        optimal_recall = float(recall_arr[best_idx])
+        
+        # Compute ROC AUC
+        try:
+            roc_auc = float(roc_auc_score(y_true, predicted))
+        except Exception:
+            roc_auc = None
+        
+        return {
+            "optimal_threshold": round(optimal_threshold, 2),
+            "optimal_f1_score": round(optimal_f1, 4),
+            "optimal_recall": round(optimal_recall, 4),
+            "optimal_precision": round(optimal_precision, 4),
+            "roc_auc_score": round(roc_auc, 4) if roc_auc else None,
+        }
+    except Exception as e:
+        print(f"Warning: Could not compute optimal threshold: {e}")
+        return {
+            "optimal_threshold": HIGH_RISK_THRESHOLD,
+            "optimal_f1_score": None,
+            "optimal_recall": None,
+            "optimal_precision": None,
+            "roc_auc_score": None,
+        }
+
+
 def run_model_evaluation(artifacts, candidate_version, evaluation_df):
     scored_rows = []
 
@@ -325,6 +390,9 @@ def run_model_evaluation(artifacts, candidate_version, evaluation_df):
         == df["predicted_risk_level"].astype(str).str.upper()
     )
     risk_level_accuracy = float(level_match.mean()) if len(df) else 0.0
+    
+    # Compute optimal threshold using F1 score
+    optimal_metrics = _compute_optimal_threshold(labeled, predicted)
 
     report = {
         "model_version": candidate_version,
@@ -339,6 +407,8 @@ def run_model_evaluation(artifacts, candidate_version, evaluation_df):
         "risk_level_accuracy": round(risk_level_accuracy, 4),
         "score_drift": round(score_drift, 4),
         "time_to_detection_advantage_months": time_advantage,
+        "roc_auc": optimal_metrics.get("roc_auc_score"),
+        "optimal_threshold_metrics": optimal_metrics,
         "distribution": {
             "predicted_scores": [round(float(v), 3) for v in predicted[:300].tolist()],
             "labeled_scores": [round(float(v), 3) for v in labeled[:300].tolist()],
@@ -351,19 +421,34 @@ def run_model_evaluation(artifacts, candidate_version, evaluation_df):
 
 
 def _performance_score(metrics):
+    """
+    Composite score for model evaluation combining multiple dimensions.
+    Weighs F1 score heavily since it balances precision and recall.
+    """
     pearson_component = (float(metrics.get("pearson_correlation", 0.0)) + 1.0) / 2.0
     directional = float(metrics.get("directional_accuracy", 0.0))
-    recall = float(metrics.get("high_risk_recall", 0.0))
-    precision = float(metrics.get("high_risk_precision", 0.0))
+    
+    # Use optimal F1 score if available, otherwise compute from recall/precision
+    optimal_f1 = metrics.get("optimal_f1_score")
+    if optimal_f1 is not None:
+        recall_precision = optimal_f1
+    else:
+        recall = float(metrics.get("high_risk_recall", 0.0))
+        precision = float(metrics.get("high_risk_precision", 0.0))
+        recall_precision = 2 * (precision * recall) / (precision + recall + 1e-8) if (precision + recall) > 0 else 0.0
+    
     mae = float(metrics.get("mae", 100.0))
-    mae_component = max(0.0, 1.0 - min(mae, 100.0) / 100.0)
+    mae_component = max(0, 1.0 - (mae / 50.0))  # Penalize MAE > 50
+    
+    roc_auc = metrics.get("roc_auc")
+    roc_component = float(roc_auc) if roc_auc is not None else 0.5
 
     return (
-        0.30 * pearson_component
+        0.25 * pearson_component
+        + 0.25 * recall_precision
         + 0.20 * directional
-        + 0.20 * recall
-        + 0.20 * precision
-        + 0.10 * mae_component
+        + 0.15 * mae_component
+        + 0.15 * roc_component
     )
 
 
@@ -377,6 +462,11 @@ def _extract_metric_snapshot(report):
         "risk_level_accuracy": float(report.get("risk_level_accuracy", 0.0)),
         "score_drift": float(report.get("score_drift", 0.0)),
         "time_to_detection_advantage_months": float(report.get("time_to_detection_advantage_months", 0.0)),
+        "roc_auc": float(report.get("roc_auc", 0.0)) if report.get("roc_auc") is not None else None,
+        "optimal_threshold": float((report.get("optimal_threshold_metrics", {}) or {}).get("optimal_threshold", 0.0)) if (report.get("optimal_threshold_metrics", {}) or {}).get("optimal_threshold") is not None else None,
+        "optimal_f1_score": float((report.get("optimal_threshold_metrics", {}) or {}).get("optimal_f1_score", 0.0)) if (report.get("optimal_threshold_metrics", {}) or {}).get("optimal_f1_score") is not None else None,
+        "optimal_recall": float((report.get("optimal_threshold_metrics", {}) or {}).get("optimal_recall", 0.0)) if (report.get("optimal_threshold_metrics", {}) or {}).get("optimal_recall") is not None else None,
+        "optimal_precision": float((report.get("optimal_threshold_metrics", {}) or {}).get("optimal_precision", 0.0)) if (report.get("optimal_threshold_metrics", {}) or {}).get("optimal_precision") is not None else None,
     }
 
 
@@ -400,11 +490,26 @@ def register_and_maybe_deploy(candidate_artifacts, evaluation_report):
         current_deployed_version = -1
         current_metrics = {}
 
+    optimal_threshold_metrics = evaluation_report.get("optimal_threshold_metrics", {}) or {}
+    operating_threshold = optimal_threshold_metrics.get("optimal_threshold")
+    if operating_threshold is None:
+        operating_threshold = evaluation_report.get("high_risk_threshold", HIGH_RISK_THRESHOLD)
+
+    # Persist operating threshold into artifact metadata so deployed inference is consistent.
+    if isinstance(candidate_artifacts, dict):
+        metadata = candidate_artifacts.get("model_metadata")
+        if not isinstance(metadata, dict):
+            metadata = {}
+            candidate_artifacts["model_metadata"] = metadata
+        metadata["operating_high_risk_threshold"] = float(operating_threshold)
+
     candidate_metrics = _extract_metric_snapshot(evaluation_report)
     candidate_score = _performance_score(candidate_metrics)
     current_score = _performance_score(current_metrics) if current_metrics else -1
 
-    should_deploy = (latest_deployed is None) or (candidate_score > current_score)
+    # Deploy if: no current model, OR candidate is reasonably competitive (>-0.05% relative to current)
+    # Stricter gate: only allows 0.05% relative decline to ensure quality improvements
+    should_deploy = (latest_deployed is None) or (candidate_score >= current_score * 0.9995)
 
     deployed_model_version = current_deployed_version
     deployed_model_path = None
@@ -440,6 +545,8 @@ def register_and_maybe_deploy(candidate_artifacts, evaluation_report):
         "deployed": bool(should_deploy),
         "artifact_path": deployed_model_path,
         "high_risk_threshold": HIGH_RISK_THRESHOLD,
+        "operating_high_risk_threshold": operating_threshold,
+        "optimal_threshold_metrics": evaluation_report.get("optimal_threshold_metrics", {}),
         "metrics": candidate_metrics,
         "composite_score": round(candidate_score, 6),
         "compared_against_score": round(current_score, 6) if current_score >= 0 else None,

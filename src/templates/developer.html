@@ -43,15 +43,15 @@
         .dev-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2.4rem 2rem;
+            padding: 1.2rem 2rem 1.5rem;
             position: relative;
             z-index: 1;
         }
 
         .dev-header {
             text-align: center;
-            margin-bottom: 2.2rem;
-            padding: 1.4rem 1.2rem;
+            margin-bottom: 1.2rem;
+            padding: 1rem 1rem;
             border: 1px solid rgba(59, 130, 246, 0.2);
             border-radius: 16px;
             background: linear-gradient(135deg, rgba(15, 23, 42, 0.35) 0%, rgba(30, 58, 138, 0.18) 100%);
@@ -60,10 +60,10 @@
 
         .dev-tag {
             display: inline-block;
-            margin-bottom: 0.65rem;
-            padding: 0.28rem 0.72rem;
+            margin-bottom: 0.4rem;
+            padding: 0.25rem 0.65rem;
             border-radius: 999px;
-            font-size: 0.72rem;
+            font-size: 0.68rem;
             letter-spacing: 0.08em;
             text-transform: uppercase;
             color: #fee2e2;
@@ -75,102 +75,165 @@
         }
 
         .dev-title {
-            font-size: 2.4rem;
+            font-size: 1.8rem;
             font-weight: 700;
             color: var(--text-primary);
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.3rem;
             letter-spacing: 0.01em;
         }
 
         .dev-subtitle {
-            font-size: 1.02rem;
+            font-size: 0.95rem;
             color: #60a5fa;
             font-weight: 700;
         }
 
         .option-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 1100px;
+            margin: 0 auto;
         }
 
         .option-card {
-            background: linear-gradient(135deg, rgba(30, 58, 138, 0.16) 0%, rgba(15, 23, 42, 0.3) 100%);
-            border: 2px solid rgba(59, 130, 246, 0.25);
-            border-radius: 14px;
-            padding: 1.3rem;
-            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.22) 0%, rgba(15, 23, 42, 0.4) 100%);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 18px;
+            padding: 1.2rem 2rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            animation: riseIn 0.35s ease both;
+            animation: slideInLeft 0.5s ease both;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .option-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: linear-gradient(180deg, #3b82f6 0%, #60a5fa 50%, #93c5fd 100%);
+            transform: scaleY(0);
+            transform-origin: bottom;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .option-card:nth-child(2) {
-            animation-delay: 0.06s;
+            animation-delay: 0.1s;
         }
 
         .option-card:nth-child(3) {
-            animation-delay: 0.12s;
+            animation-delay: 0.2s;
         }
 
         .option-card::after {
             content: "";
             position: absolute;
             inset: 0;
-            background: linear-gradient(130deg, rgba(148, 163, 184, 0) 20%, rgba(191, 219, 254, 0.12) 50%, rgba(148, 163, 184, 0) 80%);
-            transform: translateX(-110%);
-            transition: transform 0.45s ease;
+            background: linear-gradient(130deg, 
+                rgba(59, 130, 246, 0) 0%, 
+                rgba(96, 165, 250, 0.15) 50%, 
+                rgba(59, 130, 246, 0) 100%);
+            transform: translateX(-120%);
+            transition: transform 0.6s ease;
             pointer-events: none;
         }
 
         .option-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
-            border-color: rgba(96, 165, 250, 0.6);
+            transform: translateX(8px);
+            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.25), 0 0 0 1px rgba(96, 165, 250, 0.5);
+            border-color: rgba(96, 165, 250, 0.7);
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.28) 0%, rgba(15, 23, 42, 0.45) 100%);
+        }
+
+        .option-card:hover::before {
+            transform: scaleY(1);
+            transform-origin: top;
         }
 
         .option-card:hover::after {
-            transform: translateX(110%);
+            transform: translateX(120%);
         }
 
         .option-head {
             display: flex;
             align-items: center;
-            justify-content: flex-start;
-            margin-bottom: 0.55rem;
+            justify-content: space-between;
+            margin-bottom: 0.6rem;
         }
 
         .option-code {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             font-family: 'Courier New', monospace;
-            font-size: 1.35rem;
-            font-weight: 800;
-            color: #93c5fd;
-            margin-bottom: 0.1rem;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #60a5fa;
+            background: rgba(59, 130, 246, 0.15);
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
             line-height: 1;
+            transition: all 0.3s ease;
+        }
+
+        .option-card:hover .option-code {
+            color: #93c5fd;
+            background: rgba(59, 130, 246, 0.25);
+            border-color: rgba(96, 165, 250, 0.5);
+            transform: scale(1.1) rotate(-5deg);
         }
 
         .option-title {
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 0.45rem;
+            color: #e0f2fe;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.01em;
         }
 
         .option-desc {
-            color: var(--text-secondary);
+            color: #60a5fa;
             font-size: 0.92rem;
             line-height: 1.5;
+            margin-bottom: 0.6rem;
+            font-weight: 700;
         }
 
         .option-cta {
-            margin-top: 0.85rem;
-            font-size: 0.82rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
             font-family: 'Courier New', monospace;
-            color: #93c5fd;
-            letter-spacing: 0.04em;
+            color: #60a5fa;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .option-card:hover .option-cta {
+            color: #93c5fd;
+            transform: translateX(5px);
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .section-view {
@@ -201,9 +264,72 @@
         }
 
         .section-meta {
-            color: var(--text-secondary);
+            color: #60a5fa;
             margin-bottom: 1rem;
             font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(96, 165, 250, 0.4);
+            color: rgba(96, 165, 250, 0.6);
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+            cursor: help;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .info-icon:hover {
+            border-color: rgba(96, 165, 250, 0.8);
+            color: #60a5fa;
+            background: rgba(96, 165, 250, 0.1);
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            background: rgba(30, 58, 138, 0.95);
+            color: #93c5fd;
+            text-align: center;
+            border-radius: 8px;
+            padding: 0.6rem 0.8rem;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: normal;
+            width: 280px;
+            font-size: 0.85rem;
+            font-weight: 400;
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            pointer-events: none;
+        }
+
+        .tooltip-text::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px 5px 0;
+            border-style: solid;
+            border-color: rgba(30, 58, 138, 0.95) transparent transparent transparent;
+        }
+
+        .info-icon:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
         }
 
         .section-points {
@@ -390,7 +516,7 @@
     <header class="header">
         <div class="header-content">
             <div class="header-left">
-                <a href="/" aria-label="Go to dashboard home">
+                <a href="/developer" aria-label="Go to developer console home">
                     <img src="/static/fusiontech_logo_compact.svg" alt="FusionTech Systems" class="header-logo">
                 </a>
                 <div class="header-text">
@@ -416,9 +542,9 @@
                 <div class="option-head">
                     <span class="option-code">01</span>
                 </div>
-                <h3 class="option-title">Model Training Results</h3>
-                <p class="option-desc">Inspect model versions, baseline comparisons, validation metrics, and deployment decisions from the latest training runs.</p>
-                <div class="option-cta">Open Section -></div>
+                <h3 class="option-title">Model Training & Testing Results</h3>
+                <p class="option-desc">Inspect model versions, validation metrics, and deployment decisions from the latest training runs.</p>
+                <div class="option-cta">Open Section →</div>
             </article>
 
             <article class="option-card" onclick="window.location.href='/developer/dell-infrastructure-fit'">
@@ -427,7 +553,7 @@
                 </div>
                 <h3 class="option-title">Dell Infrastructure Fit Analysis</h3>
                 <p class="option-desc">Use case-study-driven product fit analysis against dashboard usage profile and efficiency expectations.</p>
-                <div class="option-cta">Open Analysis Page -></div>
+                <div class="option-cta">Open Analysis Page →</div>
             </article>
 
             <article class="option-card" onclick="openSection('replay')">
@@ -436,29 +562,32 @@
                 </div>
                 <h3 class="option-title">Replay Analysis</h3>
                 <p class="option-desc">Replay usage scenarios to compare how each infrastructure option performs under repeated workloads.</p>
-                <div class="option-cta">Open Section -></div>
+                <div class="option-cta">Open Section →</div>
             </article>
         </section>
 
         <section id="trainingSection" class="section-view">
             <div class="section-top">
-                <h3 class="section-title">Model Training Results</h3>
+                <h3 class="section-title">
+                    Model Training & Testing Results
+                    <span class="info-icon">
+                        ?
+                        <span class="tooltip-text">Versioned model evaluation using human-annotation benchmark labels from the 20% testing set. Candidate models deploy only if they outperform the current production model.</span>
+                    </span>
+                </h3>
                 <button class="dev-button secondary" onclick="closeSections()">Back To Options</button>
             </div>
-            <p class="section-meta">Versioned model evaluation using human-annotation benchmark labels from the 20% testing set. Candidate models deploy only if they outperform the current production model.</p>
 
             <div class="metrics-grid">
                 <div class="metric-card"><div class="label">Latest Run</div><div id="metricRun" class="value">--</div></div>
                 <div class="metric-card"><div class="label">Prod Model Version</div><div id="metricProdVersion" class="value">--</div></div>
                 <div class="metric-card"><div class="label">Pearson Correlation</div><div id="metricCorr" class="value">--</div></div>
                 <div class="metric-card"><div class="label">Directional Accuracy</div><div id="metricDir" class="value">--</div></div>
-                <div class="metric-card"><div class="label">High-Risk Recall</div><div id="metricRecall" class="value">--</div></div>
-                <div class="metric-card"><div class="label">High-Risk Precision</div><div id="metricPrecision" class="value">--</div></div>
+                <div class="metric-card"><div class="label">Recall (operating)</div><div id="metricRecall" class="value">--</div></div>
+                <div class="metric-card"><div class="label">Precision (operating)</div><div id="metricPrecision" class="value">--</div></div>
                 <div class="metric-card"><div class="label">MAE</div><div id="metricMae" class="value">--</div></div>
                 <div class="metric-card"><div class="label">Eval Reviews</div><div id="metricEvalRows" class="value">--</div></div>
             </div>
-
-            <div id="improvementSummary" class="section-meta">Baseline deltas will appear here.</div>
 
             <div class="charts-grid">
                 <div class="chart-card">
@@ -466,15 +595,7 @@
                     <canvas id="chartAccuracyProgress"></canvas>
                 </div>
                 <div class="chart-card">
-                    <div class="chart-title">Correlation Improvement Over Runs</div>
-                    <canvas id="chartCorrelation"></canvas>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-title">Recall vs Precision</div>
-                    <canvas id="chartRecallPrecision"></canvas>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-title">Predicted vs Labeled Score Distribution</div>
+                    <div class="chart-title">Cumulative Accuracy (Most Recent Model)</div>
                     <canvas id="chartDistribution"></canvas>
                 </div>
             </div>
@@ -484,19 +605,17 @@
                     <thead>
                         <tr>
                             <th>Run</th>
-                            <th>Candidate Version</th>
-                            <th>Threshold</th>
                             <th>Pearson</th>
                             <th>Recall</th>
                             <th>Precision</th>
-                            <th>Directional</th>
-                            <th>MAE</th>
+                            <th>F1</th>
+                            <th>ROC AUC</th>
                             <th>Deployed</th>
-                            <th>Timestamp</th>
+                            <th>Developer Timestamp</th>
                         </tr>
                     </thead>
                     <tbody id="versionTableBody">
-                        <tr><td colspan="9" style="color:var(--text-secondary);">Loading...</td></tr>
+                        <tr><td colspan="8" style="color:var(--text-secondary);">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -539,8 +658,6 @@
         };
 
         let chartAccuracyProgress = null;
-        let chartCorrelation = null;
-        let chartRecallPrecision = null;
         let chartDistribution = null;
 
         const metricEls = {
@@ -552,7 +669,6 @@
             precision: document.getElementById('metricPrecision'),
             mae: document.getElementById('metricMae'),
             evalRows: document.getElementById('metricEvalRows'),
-            improvementSummary: document.getElementById('improvementSummary'),
             tableBody: document.getElementById('versionTableBody'),
         };
 
@@ -566,36 +682,23 @@
             return Number(v).toFixed(digits);
         }
 
-        function buildImprovementText(improvements) {
-            if (!improvements || Object.keys(improvements).length === 0) {
-                return 'No baseline comparison available yet. Baseline will be set on first deployed model.';
-            }
-            const pieces = [];
-            for (const [k, v] of Object.entries(improvements)) {
-                const sign = Number(v) > 0 ? '+' : '';
-                pieces.push(`${k}: ${sign}${fmtNum(v, 4)}`);
-            }
-            return `Delta vs baseline -> ${pieces.join(' | ')}`;
-        }
-
         function renderVersionTable(rows) {
             if (!metricEls.tableBody) return;
             if (!rows || rows.length === 0) {
-                metricEls.tableBody.innerHTML = '<tr><td colspan="10" style="color:var(--text-secondary);">No training runs logged yet.</td></tr>';
+                metricEls.tableBody.innerHTML = '<tr><td colspan="9" style="color:var(--text-secondary);">No training runs logged yet.</td></tr>';
                 return;
             }
-            metricEls.tableBody.innerHTML = rows.map((r) => {
+            const orderedRows = [...rows].reverse();
+            metricEls.tableBody.innerHTML = orderedRows.map((r) => {
                 const deployedClass = r.deployed ? 'yes' : 'no';
                 const deployedText = r.deployed ? 'yes' : 'no';
                 return `<tr>
                     <td>${r.run_number ?? '--'}</td>
-                    <td>${r.candidate_model_version ?? '--'}</td>
-                    <td>${r.high_risk_threshold ?? '--'}</td>
                     <td>${fmtNum(r.pearson_correlation, 4)}</td>
-                    <td>${fmtPct(r.high_risk_recall)}</td>
-                    <td>${fmtPct(r.high_risk_precision)}</td>
-                    <td>${fmtPct(r.directional_accuracy)}</td>
-                    <td>${fmtNum(r.mae, 3)}</td>
+                    <td>${fmtPct(r.operating_recall)}</td>
+                    <td>${fmtPct(r.operating_precision)}</td>
+                    <td>${fmtNum(r.operating_f1, 4)}</td>
+                    <td>${fmtNum(r.operating_roc_auc, 4)}</td>
                     <td><span class="badge ${deployedClass}">${deployedText}</span></td>
                     <td>${(r.timestamp || '').replace('T', ' ').replace('Z', '')}</td>
                 </tr>`;
@@ -603,16 +706,14 @@
         }
 
         function destroyCharts() {
-            [chartAccuracyProgress, chartCorrelation, chartRecallPrecision, chartDistribution].forEach((c) => {
+            [chartAccuracyProgress, chartDistribution].forEach((c) => {
                 if (c) c.destroy();
             });
             chartAccuracyProgress = null;
-            chartCorrelation = null;
-            chartRecallPrecision = null;
             chartDistribution = null;
         }
 
-        function renderCharts(payload) {
+        function renderCharts(payload, operatingThreshold = 50) {
             destroyCharts();
             const progression = payload.progression || {};
             const labels = progression.labels || [];
@@ -625,41 +726,10 @@
                         labels,
                         datasets: [
                             { label: 'Directional Accuracy', data: (progression.directional_accuracy || []).map(v => (v ?? 0) * 100), borderColor: '#60a5fa', tension: 0.3 },
-                            { label: 'High-Risk Recall', data: (progression.high_risk_recall || []).map(v => (v ?? 0) * 100), borderColor: '#34d399', tension: 0.3 },
+                            { label: 'Recall (Operating)', data: (progression.operating_recall || []).map(v => (v ?? 0) * 100), borderColor: '#34d399', tension: 0.3 },
                         ],
                     },
                     options: { responsive: true, maintainAspectRatio: true },
-                });
-            }
-
-            const ctxB = document.getElementById('chartCorrelation')?.getContext('2d');
-            if (ctxB) {
-                chartCorrelation = new Chart(ctxB, {
-                    type: 'bar',
-                    data: {
-                        labels,
-                        datasets: [{ label: 'Pearson Correlation', data: progression.pearson || [], backgroundColor: 'rgba(96,165,250,0.6)' }],
-                    },
-                    options: { responsive: true, maintainAspectRatio: true },
-                });
-            }
-
-            const ctxC = document.getElementById('chartRecallPrecision')?.getContext('2d');
-            if (ctxC) {
-                const points = (payload.version_table || []).map((r) => ({ x: (r.high_risk_recall ?? 0) * 100, y: (r.high_risk_precision ?? 0) * 100 }));
-                chartRecallPrecision = new Chart(ctxC, {
-                    type: 'scatter',
-                    data: {
-                        datasets: [{ label: 'Runs', data: points, backgroundColor: '#f59e0b' }],
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        scales: {
-                            x: { title: { display: true, text: 'Recall (%)' } },
-                            y: { title: { display: true, text: 'Precision (%)' } },
-                        },
-                    },
                 });
             }
 
@@ -669,16 +739,48 @@
                 const predicted = dist.predicted_scores || [];
                 const labeled = dist.labeled_scores || [];
                 const n = Math.min(predicted.length, labeled.length, 120);
+                const predictedThresholded = predicted.slice(0, n).map((v) => (Number(v) >= Number(operatingThreshold) ? 100 : 0));
+                const labeledThresholded = labeled.slice(0, n).map((v) => (Number(v) >= Number(operatingThreshold) ? 100 : 0));
+
+                const matchFlags = predictedThresholded.map((p, i) => (p === labeledThresholded[i] ? 1 : 0));
+
+                let runningCorrect = 0;
+                const cumulativeAccuracy = matchFlags.map((v, i) => {
+                    runningCorrect += v;
+                    return Number(((runningCorrect / (i + 1)) * 100).toFixed(2));
+                });
+
                 chartDistribution = new Chart(ctxD, {
                     type: 'line',
                     data: {
                         labels: Array.from({ length: n }, (_, i) => i + 1),
                         datasets: [
-                            { label: 'Predicted', data: predicted.slice(0, n), borderColor: '#f43f5e', tension: 0.22 },
-                            { label: 'Labeled', data: labeled.slice(0, n), borderColor: '#22c55e', tension: 0.22 },
+                            {
+                                label: 'Cumulative Accuracy',
+                                data: cumulativeAccuracy,
+                                borderColor: '#f59e0b',
+                                tension: 0.25,
+                                pointRadius: 0,
+                                borderWidth: 2,
+                                borderDash: [6, 4],
+                                yAxisID: 'yAccuracy',
+                            },
                         ],
                     },
-                    options: { responsive: true, maintainAspectRatio: true },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            yAccuracy: {
+                                type: 'linear',
+                                position: 'left',
+                                min: 0,
+                                max: 100,
+                                title: { display: true, text: 'Accuracy %' },
+                                grid: { color: 'rgba(148,163,184,0.12)' },
+                            },
+                        },
+                    },
                 });
             }
         }
@@ -697,16 +799,18 @@
                 metricEls.prodVersion.textContent = (data.latest_deployed_run || {}).deployed_model_version ?? '--';
                 metricEls.corr.textContent = fmtNum(latestMetrics.pearson_correlation, 4);
                 metricEls.dir.textContent = fmtPct(latestMetrics.directional_accuracy);
-                metricEls.recall.textContent = fmtPct(latestMetrics.high_risk_recall);
-                metricEls.precision.textContent = fmtPct(latestMetrics.high_risk_precision);
+                metricEls.recall.textContent = fmtPct(latest.operating_recall);
+                metricEls.precision.textContent = fmtPct(latest.operating_precision);
                 metricEls.mae.textContent = fmtNum(latestMetrics.mae, 3);
                 metricEls.evalRows.textContent = String(latestValidation.evaluated_reviews ?? data.evaluation_dataset?.rows ?? '--');
-
-                metricEls.improvementSummary.textContent = buildImprovementText(data.improvements_vs_baseline || {});
                 renderVersionTable(data.version_table || []);
-                renderCharts(data);
+                const thresholdForChart = latest.operating_high_risk_threshold
+                    ?? latestValidation?.optimal_threshold_metrics?.optimal_threshold
+                    ?? latest.high_risk_threshold
+                    ?? 50;
+                renderCharts(data, thresholdForChart);
             } catch (e) {
-                metricEls.improvementSummary.textContent = 'Failed to load model training results.';
+                // Keep page stable even if API load fails.
             }
         }
 

@@ -16,7 +16,7 @@ let storedThemeData  = null;
 let sentimentChart, volumeChart, themesChart, revenueChart;
 
 // ============================================================
-//  BOOT
+//  DASHBOARD LOADING
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', () => {
