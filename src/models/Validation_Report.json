@@ -1,6 +1,6 @@
 {
-  "model_version": 4,
-  "timestamp": "2026-03-08T06:22:08.018669Z",
+  "model_version": 5,
+  "timestamp": "2026-03-12T10:55:01.911035Z",
   "evaluated_reviews": 300,
   "high_risk_threshold": 50,
   "pearson_correlation": 0.9329,

@@ -438,5 +438,40 @@
     },
     "composite_score": 0.82303,
     "compared_against_score": 0.82303
+  },
+  {
+    "run_id": "run_16",
+    "run_number": 16,
+    "timestamp": "2026-03-12T10:55:02.040681Z",
+    "candidate_model_version": 5,
+    "deployed_model_version": 5,
+    "deployed": true,
+    "artifact_path": "C:\\Users\\mayan\\OneDrive\\Documents\\GitHub\\excelwithdell\\src\\models\\model_5.pkl",
+    "high_risk_threshold": 50,
+    "operating_high_risk_threshold": 26.64,
+    "optimal_threshold_metrics": {
+      "optimal_threshold": 26.64,
+      "optimal_f1_score": 0.9488,
+      "optimal_recall": 0.9888,
+      "optimal_precision": 0.9119,
+      "roc_auc_score": 0.9816
+    },
+    "metrics": {
+      "pearson_correlation": 0.9329,
+      "mae": 25.2274,
+      "high_risk_recall": 0.3483,
+      "high_risk_precision": 1.0,
+      "directional_accuracy": 0.6133,
+      "risk_level_accuracy": 0.1833,
+      "score_drift": -24.8512,
+      "time_to_detection_advantage_months": 0.0,
+      "roc_auc": 0.9816,
+      "optimal_threshold": 26.64,
+      "optimal_f1_score": 0.9488,
+      "optimal_recall": 0.9888,
+      "optimal_precision": 0.9119
+    },
+    "composite_score": 0.82303,
+    "compared_against_score": 0.82303
   }
 ]

@@ -270,7 +270,7 @@
             </div>
 
             <div id="replayChartPanel" class="chart-card" style="margin-bottom:1rem;display:none;">
-                <div class="chart-title">Replay Crisis Timeline (Fating vs Risk Score)</div>
+                <div class="chart-title">Replay Crisis Timeline (Rating vs Risk Score)</div>
                 <canvas id="replayCrisisChart" height="110"></canvas>
             </div>
 
@@ -452,7 +452,7 @@
             setText('pmT2', formatDateRoundUp(product.t2_manual_detect));
             setText('pmT3', formatDateRoundUp(product.t3_crisis_bottom));
             setText('pmT4', formatDateToMonthYear(product.t4_recovery));
-            setText('pmLead', product.lead_time_months != null ? `${Math.ceil(product.lead_time_months)} mo` : '--');
+            setText('pmLead', product.lead_time_months != null ? `${Math.floor(product.lead_time_months)} mo` : '--');
 
             renderReplayChart(product);
         }
@@ -489,6 +489,56 @@
             const tRecoveryLocal = product.t4_plot_idx != null ? (Number(product.t4_plot_idx) - windowStart) : null;
             const tStartLocal = product.t1_plot_idx != null ? (Number(product.t1_plot_idx) - windowStart) : null;
 
+                // Dynamically stack annotation labels by actual intersection height (pixel y)
+                // so higher intersection gets higher label
+                let chartScales = null;
+                function getYPos(idx, dataset, axis) {
+                    if (idx == null || isNaN(idx)) return null;
+                    // Linear interpolate if needed
+                    const lo = Math.floor(idx), hi = Math.ceil(idx);
+                    let val;
+                    if (lo === hi) {
+                        val = dataset[lo];
+                    } else {
+                        const frac = idx - lo;
+                        val = dataset[lo] + frac * (dataset[hi] - dataset[lo]);
+                    }
+                    // Use Chart.js scale to get pixel
+                    if (!chartScales) {
+                        // temp chart for scale conversion
+                        const tmp = new Chart(ctx, {
+                            type: 'line',
+                            data: { labels, datasets: [
+                                { data: rolling, yAxisID: 'yRating' },
+                                { data: risk, yAxisID: 'yRisk' }
+                            ] },
+                            options: { scales: {
+                                yRating: { min: 1, max: 5 },
+                                yRisk: { min: 0, max: 100 }
+                            }, animation: false, plugins: {} }
+                        });
+                        chartScales = tmp.scales;
+                        tmp.destroy();
+                    }
+                    const scale = chartScales[axis];
+                    return scale ? scale.getPixelForValue(val) : null;
+                }
+
+                const eventDefs = [
+                    { key: 'tModel', idx: tModelLocal, dataset: risk, axis: 'yRisk' },
+                    { key: 'tManual', idx: tManualLocal, dataset: rolling, axis: 'yRating' },
+                    { key: 'tBottom', idx: tBottomLocal, dataset: rolling, axis: 'yRating' },
+                    { key: 'tRecovery', idx: tRecoveryLocal, dataset: rolling, axis: 'yRating' },
+                ];
+                const eventPix = eventDefs.map(e => ({
+                    ...e,
+                    pix: getYPos(e.idx, e.dataset, e.axis)
+                })).filter(e => e.pix != null);
+                eventPix.sort((a, b) => a.pix - b.pix); // lower pixel = higher on chart
+                const yBase = 6, yStep = 22;
+                const yMap = {};
+                eventPix.forEach((e, i) => { yMap[e.key] = yBase + i * yStep; });
+
             replayChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -521,14 +571,14 @@
                                     borderColor: 'rgba(250,204,21,0.95)',
                                     borderWidth: 3,
                                     label: {
-                                        display: tModelLocal != null && tModelLocal >= 0 && tModelLocal < labels.length,
-                                        content: 'T_model',
-                                        position: 'end',
-                                        yAdjust: 6,
-                                        color: '#fef08a',
-                                        backgroundColor: 'rgba(15,23,42,0.88)',
-                                        font: { size: 11, weight: '700' },
-                                        padding: 6,
+                                            display: tModelLocal != null && tModelLocal >= 0 && tModelLocal < labels.length,
+                                            content: 'T1 Model',
+                                            position: 'end',
+                                            yAdjust: yMap.tModel ?? 6,
+                                            color: '#fef08a',
+                                            backgroundColor: 'rgba(15,23,42,0.88)',
+                                            font: { size: 11, weight: '700' },
+                                            padding: 6,
                                     },
                                 },
                                 tManualLine: {
@@ -538,14 +588,14 @@
                                     borderColor: 'rgba(168,85,247,0.95)',
                                     borderWidth: 3,
                                     label: {
-                                        display: tManualLocal != null && tManualLocal >= 0 && tManualLocal < labels.length,
-                                        content: 'T2 Manual',
-                                        position: 'end',
-                                        yAdjust: 6,
-                                        color: '#e9d5ff',
-                                        backgroundColor: 'rgba(15,23,42,0.88)',
-                                        font: { size: 11, weight: '700' },
-                                        padding: 6,
+                                            display: tManualLocal != null && tManualLocal >= 0 && tManualLocal < labels.length,
+                                            content: 'T2 Manual',
+                                            position: 'end',
+                                            yAdjust: yMap.tManual ?? 6,
+                                            color: '#e9d5ff',
+                                            backgroundColor: 'rgba(15,23,42,0.88)',
+                                            font: { size: 11, weight: '700' },
+                                            padding: 6,
                                     },
                                 },
                                 tBottomLine: {
@@ -555,14 +605,14 @@
                                     borderColor: 'rgba(239,68,68,0.95)',
                                     borderWidth: 3,
                                     label: {
-                                        display: tBottomLocal != null && tBottomLocal >= 0 && tBottomLocal < labels.length,
-                                        content: 'T3 Bottom',
-                                        position: 'end',
-                                        yAdjust: 6,
-                                        color: '#fecaca',
-                                        backgroundColor: 'rgba(15,23,42,0.88)',
-                                        font: { size: 11, weight: '700' },
-                                        padding: 6,
+                                            display: tBottomLocal != null && tBottomLocal >= 0 && tBottomLocal < labels.length,
+                                            content: 'T3 Bottom',
+                                            position: 'end',
+                                            yAdjust: yMap.tBottom ?? 6,
+                                            color: '#fecaca',
+                                            backgroundColor: 'rgba(15,23,42,0.88)',
+                                            font: { size: 11, weight: '700' },
+                                            padding: 6,
                                     },
                                 },
                                 tRecoveryLine: {
@@ -572,14 +622,14 @@
                                     borderColor: 'rgba(34,197,94,0.95)',
                                     borderWidth: 3,
                                     label: {
-                                        display: tRecoveryLocal != null && tRecoveryLocal >= 0 && tRecoveryLocal < labels.length,
-                                        content: 'T4 Recovery',
-                                        position: 'end',
-                                        yAdjust: 6,
-                                        color: '#bbf7d0',
-                                        backgroundColor: 'rgba(15,23,42,0.88)',
-                                        font: { size: 11, weight: '700' },
-                                        padding: 6,
+                                            display: tRecoveryLocal != null && tRecoveryLocal >= 0 && tRecoveryLocal < labels.length,
+                                            content: 'T4 Recovery',
+                                            position: 'end',
+                                            yAdjust: yMap.tRecovery ?? 6,
+                                            color: '#bbf7d0',
+                                            backgroundColor: 'rgba(15,23,42,0.88)',
+                                            font: { size: 11, weight: '700' },
+                                            padding: 6,
                                     },
                                 },
                                 thresholdLine: {
