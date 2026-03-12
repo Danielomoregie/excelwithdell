@@ -12,7 +12,7 @@ from psycopg2 import sql
 
 from Sentiment_Analyzer import analyze_sentiment, clean_review_text
 from Theme_Extractor import classify_review_themes, COMPLAINT_CATEGORIES
-from Risk_Score_Engine import _get_alert_level
+from Risk_Score_Engine import _get_alert_level, compute_product_risk_scores, ALERT_THRESHOLDS
 from Revenue_Impact_Calculator import (
     calculate_revenue_impact, calculate_portfolio_impact, format_currency
 )
@@ -1697,6 +1697,307 @@ def api_developer_model_training_results():
             },
         }
     )
+
+
+@app.route("/api/developer/replay-analysis")
+@require_dev_unlock
+def api_developer_replay_analysis():
+    enriched_df = artifacts.get("enriched_df") if artifacts else None
+    if enriched_df is None or (hasattr(enriched_df, "empty") and enriched_df.empty):
+        return jsonify({"status": "error", "message": "Enriched dataset not available. Train the model first."})
+
+    df = enriched_df.copy()
+    if "date" not in df.columns or "asin" not in df.columns or "rating" not in df.columns:
+        return jsonify({"status": "error", "message": "Required columns missing (date, asin, rating)."})
+
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    df = df.dropna(subset=["date", "asin", "rating"])
+
+    registry = _load_json_file(MODEL_REGISTRY_PATH, [])
+    validation = _load_json_file(VALIDATION_REPORT_PATH, {})
+
+    latest_deployed = None
+    if isinstance(registry, list) and registry:
+        latest_deployed = next((r for r in reversed(registry) if r.get("deployed")), None)
+    latest_record = registry[-1] if isinstance(registry, list) and registry else {}
+
+    operating_threshold = None
+    for rec in [latest_deployed, latest_record]:
+        if not isinstance(rec, dict):
+            continue
+        operating_threshold = rec.get("operating_high_risk_threshold")
+        if operating_threshold is None and isinstance(rec.get("optimal_threshold_metrics"), dict):
+            operating_threshold = rec.get("optimal_threshold_metrics", {}).get("optimal_threshold")
+        if operating_threshold is not None:
+            break
+    if operating_threshold is None and isinstance(validation, dict) and isinstance(validation.get("optimal_threshold_metrics"), dict):
+        operating_threshold = validation.get("optimal_threshold_metrics", {}).get("optimal_threshold")
+
+    high_threshold = float(operating_threshold if operating_threshold is not None else ALERT_THRESHOLDS.get("high", 50))
+
+    REPLAY_SHIFT_YEARS = 8
+    ROLLING_WINDOW = 3
+    CRISIS_DROP_THRESHOLD = 0.3
+    CRISIS_RECOVERY_EPS = 0.1
+    MIN_REVIEWS = 8
+    MIN_MONTHS = 6
+    MAX_MODEL_LEAD_MONTHS = 4
+
+    def _format_period_exact(idx_exact, month_list):
+        if idx_exact is None or not month_list:
+            return None
+        idx_exact = max(0.0, min(float(idx_exact), float(len(month_list) - 1)))
+        base = int(math.floor(idx_exact))
+        frac = idx_exact - base
+        extra_days = int(round(frac * 30))
+        base_period = month_list[base]
+        return str(base_period) if extra_days <= 0 else f"{base_period} +{extra_days}d"
+
+    df["replay_date"] = df["date"] + pd.DateOffset(years=REPLAY_SHIFT_YEARS)
+    df["replay_month"] = df["replay_date"].dt.to_period("M")
+
+    all_asins = sorted(df["asin"].dropna().astype(str).unique())
+    results = []
+
+    for asin in all_asins:
+        asin_df = df[df["asin"].astype(str) == asin].copy()
+        if len(asin_df) < MIN_REVIEWS:
+            continue
+
+        product_name = "Unknown"
+        for col in ["title_y", "title", "product_title", "name"]:
+            if col in asin_df.columns:
+                values = asin_df[col].dropna()
+                if not values.empty:
+                    product_name = str(values.iloc[0])
+                    break
+
+        monthly = (
+            asin_df.groupby("replay_month")
+            .agg(avg_rating=("rating", "mean"), review_count=("rating", "count"))
+            .sort_index()
+        )
+        if monthly.empty:
+            continue
+
+        # Standardize to monthly bins and fill missing months by carry-forward.
+        full_index = pd.period_range(monthly.index.min(), monthly.index.max(), freq="M")
+        monthly = monthly.reindex(full_index)
+        monthly["review_count"] = monthly["review_count"].fillna(0).astype(int)
+        monthly["avg_rating"] = monthly["avg_rating"].ffill().bfill()
+
+        months = list(monthly.index)
+        avg_ratings = [float(v) for v in monthly["avg_rating"].tolist()]
+        n = len(months)
+        if n < MIN_MONTHS:
+            continue
+
+        rolling_ratings = []
+        for i in range(n):
+            s = max(0, i - ROLLING_WINDOW + 1)
+            w = avg_ratings[s:i + 1]
+            rolling_ratings.append(sum(w) / len(w))
+
+        baseline_end = max(3, min(n // 5, 6))
+        baseline = sum(rolling_ratings[:baseline_end]) / baseline_end
+
+        # Crisis start: first sustained decline (2 steps) plus drop from baseline.
+        t1_idx = None
+        t1_idx_exact = None
+        for i in range(max(baseline_end, 2), n):
+            downtrend = rolling_ratings[i] < rolling_ratings[i - 1] and rolling_ratings[i - 1] < rolling_ratings[i - 2]
+            dropped = rolling_ratings[i] <= (baseline - CRISIS_DROP_THRESHOLD)
+            if downtrend and dropped:
+                t1_idx = i - 1
+                target_drop = baseline - CRISIS_DROP_THRESHOLD
+                prev_val = float(rolling_ratings[i - 1])
+                curr_val = float(rolling_ratings[i])
+                if prev_val > target_drop and curr_val <= target_drop and curr_val != prev_val:
+                    frac = (target_drop - prev_val) / (curr_val - prev_val)
+                    frac = max(0.0, min(1.0, float(frac)))
+                    t1_idx_exact = (i - 1) + frac
+                else:
+                    t1_idx_exact = float(i - 1)
+                break
+        if t1_idx is None:
+            results.append({"asin": asin, "product_name": product_name, "has_crisis": False})
+            continue
+
+        # Crisis bottom and manual detection per deterministic rule.
+        sub = rolling_ratings[t1_idx:]
+        t3_idx = t1_idx + sub.index(min(sub))
+        if t3_idx <= 0:
+            results.append({"asin": asin, "product_name": product_name, "has_crisis": False})
+            continue
+
+        t3_idx_exact = float(t3_idx)
+        if 1 <= t3_idx <= (n - 2):
+            y_prev = float(rolling_ratings[t3_idx - 1])
+            y_mid = float(rolling_ratings[t3_idx])
+            y_next = float(rolling_ratings[t3_idx + 1])
+            denom = (y_prev - (2.0 * y_mid) + y_next)
+            if abs(denom) > 1e-9:
+                delta = 0.5 * (y_prev - y_next) / denom
+                delta = max(-0.5, min(0.5, float(delta)))
+                t3_idx_exact = float(t3_idx + delta)
+
+        # Manual detection is fixed exactly 1 month before exact crisis bottom.
+        t2_idx_exact = max(0.0, t3_idx_exact - 1.0)
+        t2_idx = int(math.floor(t2_idx_exact))
+
+        # Recovery is computed after T_model is known.
+        t4_idx = None
+
+        # Model detection from replayed monthly cumulative history.
+        replay_asin_df = asin_df.copy()
+        replay_asin_df["date"] = replay_asin_df["replay_date"]
+        replay_asin_df["replay_month"] = replay_asin_df["date"].dt.to_period("M")
+
+        risk_scores = [None] * n
+        crossing_events = []
+        for i, period in enumerate(months):
+            cumulative = replay_asin_df[replay_asin_df["replay_month"] <= period]
+            if len(cumulative) < 3:
+                continue
+            try:
+                scores = compute_product_risk_scores(cumulative)
+                obj = scores.get(asin) or scores.get(str(asin))
+                if isinstance(obj, dict) and obj.get("risk_score") is not None:
+                    score = round(float(obj.get("risk_score")), 2)
+                    risk_scores[i] = score
+                    if score >= high_threshold:
+                        if i > 0 and risk_scores[i - 1] is not None and float(risk_scores[i - 1]) < high_threshold:
+                            prev = float(risk_scores[i - 1])
+                            curr = float(score)
+                            frac = (high_threshold - prev) / (curr - prev) if curr != prev else 1.0
+                            frac = max(0.0, min(1.0, float(frac)))
+                            crossing_idx_exact = (i - 1) + frac
+                        else:
+                            crossing_idx_exact = float(i)
+                        crossing_events.append({
+                            "idx": i,
+                            "idx_exact": crossing_idx_exact,
+                            "period": months[i],
+                        })
+            except Exception:
+                pass
+
+        # Constrain model detection to be near manual detection:
+        # T_model must be between T1 and T2, and no more than 4 months before T2.
+        t_model_idx = None
+        t_model_idx_exact = None
+        t_model_period = None
+        for ev in crossing_events:
+            i = ev["idx"]
+            idx_exact = float(ev["idx_exact"])
+            lead_vs_manual = t2_idx_exact - idx_exact
+            if idx_exact < float(t1_idx_exact):
+                continue
+            if idx_exact > t2_idx_exact:
+                continue
+            if lead_vs_manual < 0 or lead_vs_manual > MAX_MODEL_LEAD_MONTHS:
+                continue
+            t_model_idx = i
+            t_model_idx_exact = idx_exact
+            t_model_period = ev["period"]
+            break
+
+        lead_time = None
+        if t_model_idx_exact is not None:
+            lead_time = round(float(t2_idx_exact - t_model_idx_exact), 2)
+
+        t_model_label = _format_period_exact(t_model_idx_exact, months)
+
+        # T4 recovery rule:
+        # first month after T3 where rolling avg >= 0.8 * max(rolling avg in 3 months before T_model)
+        model_ref_idx = int(math.floor(t_model_idx_exact)) if t_model_idx_exact is not None else int(math.floor(t3_idx_exact))
+        model_ref_idx = max(0, min(model_ref_idx, n - 1))
+        pre_end = max(1, model_ref_idx)
+        pre_start = max(0, pre_end - 3)
+        pre_model_slice = rolling_ratings[pre_start:pre_end]
+        if not pre_model_slice:
+            pre_model_slice = rolling_ratings[:max(1, min(3, n))]
+
+        recovery_target = 0.8 * max(pre_model_slice)
+        t4_idx = n - 1
+        t4_idx_exact = float(t4_idx)
+        for i in range(t3_idx + 1, n):
+            if rolling_ratings[i] >= recovery_target:
+                t4_idx = i
+                if i > 0:
+                    prev_val = float(rolling_ratings[i - 1])
+                    curr_val = float(rolling_ratings[i])
+                    if prev_val < recovery_target and curr_val != prev_val:
+                        frac = (recovery_target - prev_val) / (curr_val - prev_val)
+                        frac = max(0.0, min(1.0, float(frac)))
+                        t4_idx_exact = (i - 1) + frac
+                    else:
+                        t4_idx_exact = float(i)
+                else:
+                    t4_idx_exact = float(i)
+                break
+
+        if t4_idx_exact <= t3_idx_exact:
+            results.append({"asin": asin, "product_name": product_name, "has_crisis": False})
+            continue
+
+        crisis_duration = round(float(t4_idx_exact - float(t1_idx_exact)), 2)
+        detection_quality = round(lead_time / crisis_duration, 3) if lead_time is not None and crisis_duration > 0 else None
+
+        t1_label = _format_period_exact(t1_idx_exact, months)
+        t2_label = _format_period_exact(t2_idx_exact, months)
+        t3_label = _format_period_exact(t3_idx_exact, months)
+        t4_label = _format_period_exact(t4_idx_exact, months)
+
+        results.append({
+            "asin": asin,
+            "product_name": product_name,
+            "has_crisis": True,
+            "t1_crisis_start": t1_label,
+            "t2_manual_detect": t2_label,
+            "t3_crisis_bottom": t3_label,
+            "t4_recovery": t4_label,
+            "t_model": t_model_label,
+            "t1_idx": t1_idx,
+            "t2_idx": t2_idx,
+            "t3_idx": t3_idx,
+            "t4_idx": t4_idx,
+            "t1_plot_idx": t1_idx_exact,
+            "t2_plot_idx": t2_idx_exact,
+            "t3_plot_idx": t3_idx_exact,
+            "t4_plot_idx": t4_idx_exact,
+            "t_model_idx": t_model_idx,
+            "t_model_plot_idx": t_model_idx_exact,
+            "lead_time_months": lead_time,
+            "crisis_duration_months": crisis_duration,
+            "detection_quality_score": detection_quality,
+            "model_detected_early": bool(lead_time > 0) if lead_time is not None else None,
+            "timeline_labels": [str(m) for m in months],
+            "rolling_ratings": [round(v, 3) for v in rolling_ratings],
+            "risk_scores": risk_scores,
+            "review_counts": [int(v) for v in monthly["review_count"].tolist()],
+            "baseline_rating": round(baseline, 3),
+            "recovery_target_rating": round(recovery_target, 3),
+        })
+
+    with_crisis = [p for p in results if p.get("has_crisis")]
+    flagged = [p for p in with_crisis if p.get("t_model") is not None]
+    early = [p for p in flagged if p.get("model_detected_early")]
+    leads = [p.get("lead_time_months") for p in early if p.get("lead_time_months") is not None]
+
+    return jsonify({
+        "status": "success",
+        "summary": {
+            "replay_shift_years": REPLAY_SHIFT_YEARS,
+            "high_threshold": high_threshold,
+            "products_analyzed": len(results),
+            "products_with_crisis": len(with_crisis),
+            "products_flagged": len(flagged),
+            "products_model_early": len(early),
+            "avg_lead_time_months": round(sum(leads) / len(leads), 2) if leads else None,
+        },
+        "products": results,
+    })
 
 
 @app.route("/api/developer/evaluation-reviews")

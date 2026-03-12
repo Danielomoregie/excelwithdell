@@ -639,16 +639,59 @@
                 <h3 class="section-title">Replay Analysis</h3>
                 <button class="dev-button secondary" onclick="closeSections()">Back To Options</button>
             </div>
-            <p class="section-meta">Scenario replay workspace for evaluating dashboard efficiency per infrastructure option.</p>
-            <ul class="section-points">
-                <li>Load recorded dashboard interaction snapshots.</li>
-                <li>Re-run workload patterns against each candidate product.</li>
-                <li>Report throughput, latency, and stability deltas.</li>
-            </ul>
+
+            <div class="metrics-grid" style="margin-bottom:1rem;">
+                <div class="metric-card"><div class="label">Replay Shift</div><div id="replayShift" class="value">--</div></div>
+                <div class="metric-card"><div class="label">Threshold</div><div id="replayThreshold" class="value">--</div></div>
+                <div class="metric-card"><div class="label">Products Flagged</div><div id="replayFlagged" class="value">--</div></div>
+                <div class="metric-card"><div class="label">Flagged + Early</div><div id="replayEarly" class="value">--</div></div>
+                <div class="metric-card"><div class="label">Avg Lead Time</div><div id="replayAvgLead" class="value">--</div></div>
+            </div>
+
+            <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">
+                <label for="replayProductSelect" style="color:var(--text-secondary);font-size:0.85rem;">Inspect Product:</label>
+                <select id="replayProductSelect" style="background:#0f172a;color:#dbeafe;border:1px solid rgba(59,130,246,.35);border-radius:10px;padding:.55rem .75rem;min-width:320px;max-width:680px;" onchange="onReplayProductChange()">
+                    <option value="">-- Select flagged + early product --</option>
+                </select>
+            </div>
+
+            <div class="metrics-grid" id="replayProductMetrics" style="margin-bottom:1rem;display:none;">
+                <div class="metric-card"><div class="label">T1 Crisis Start</div><div id="pmT1" class="value">--</div></div>
+                <div class="metric-card"><div class="label">T_model</div><div id="pmTModel" class="value">--</div></div>
+                <div class="metric-card"><div class="label">T2 Manual</div><div id="pmT2" class="value">--</div></div>
+                <div class="metric-card"><div class="label">T3 Bottom</div><div id="pmT3" class="value">--</div></div>
+                <div class="metric-card"><div class="label">T4 Recovery</div><div id="pmT4" class="value">--</div></div>
+                <div class="metric-card"><div class="label">Lead Time</div><div id="pmLead" class="value">--</div></div>
+            </div>
+
+            <div class="chart-card" style="margin-bottom:1rem;">
+                <div class="chart-title">Replay Crisis Timeline (rolling rating vs risk score)</div>
+                <canvas id="replayCrisisChart" height="110"></canvas>
+            </div>
+
+            <div class="table-wrap">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>ASIN</th>
+                            <th>T_model</th>
+                            <th>T2 Manual</th>
+                            <th>T3 Bottom</th>
+                            <th>Lead Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="replayTableBody">
+                        <tr><td colspan="7" style="color:var(--text-secondary);">Open replay section to load data.</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3/dist/chartjs-plugin-annotation.min.js"></script>
     <script>
         const optionsView = document.getElementById('optionsView');
         const sections = {
@@ -659,6 +702,8 @@
 
         let chartAccuracyProgress = null;
         let chartDistribution = null;
+        let replayChart = null;
+        let replayPayload = null;
 
         const metricEls = {
             run: document.getElementById('metricRun'),
@@ -822,12 +867,270 @@
                 if (key === 'training') {
                     loadTrainingResults();
                 }
+                if (key === 'replay') {
+                    loadReplayAnalysis();
+                }
             }
         }
 
         function closeSections() {
             Object.values(sections).forEach((section) => section.classList.remove('active'));
             optionsView.style.display = 'grid';
+        }
+
+        function setText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        }
+
+        async function loadReplayAnalysis() {
+            if (replayPayload) return;
+            const tableBody = document.getElementById('replayTableBody');
+            try {
+                const res = await fetch('/api/developer/replay-analysis');
+                const data = await res.json();
+
+                if (!data || data.status !== 'success') {
+                    if (tableBody) tableBody.innerHTML = `<tr><td colspan="7" style="color:var(--text-secondary);">${data?.message || 'Replay API unavailable.'}</td></tr>`;
+                    return;
+                }
+
+                replayPayload = data;
+                const s = data.summary || {};
+                setText('replayShift', s.replay_shift_years != null ? `+${s.replay_shift_years} years` : '--');
+                setText('replayThreshold', s.high_threshold != null ? `>= ${Number(s.high_threshold).toFixed(2)}` : '--');
+                setText('replayFlagged', s.products_flagged != null ? String(s.products_flagged) : '--');
+                setText('replayEarly', s.products_model_early != null ? String(s.products_model_early) : '--');
+                setText('replayAvgLead', s.avg_lead_time_months != null ? `${Number(s.avg_lead_time_months).toFixed(2)} mo` : '--');
+
+                const eligible = (data.products || []).filter(
+                    p => p.has_crisis && p.t_model != null && p.model_detected_early === true
+                );
+                const flaggedOnly = (data.products || []).filter(
+                    p => p.has_crisis && p.t_model != null
+                );
+
+                eligible.sort((a, b) => (b.lead_time_months ?? -Infinity) - (a.lead_time_months ?? -Infinity));
+                flaggedOnly.sort((a, b) => (b.lead_time_months ?? -Infinity) - (a.lead_time_months ?? -Infinity));
+
+                const useEarly = eligible.length > 0;
+                const candidates = useEarly ? eligible : flaggedOnly;
+
+                const sel = document.getElementById('replayProductSelect');
+                if (sel) {
+                    const placeholder = useEarly
+                        ? '-- Select flagged + early product --'
+                        : '-- No early products, showing flagged products --';
+                    sel.innerHTML = `<option value="">${placeholder}</option>` + candidates.map((p, i) => {
+                        const lead = p.lead_time_months != null ? ` (+${p.lead_time_months} mo)` : '';
+                        return `<option value="${i}">${(p.product_name || 'Unknown').slice(0, 60)} [${p.asin}]${lead}</option>`;
+                    }).join('');
+                    sel._products = candidates;
+                }
+
+                if (!candidates.length) {
+                    if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" style="color:var(--text-secondary);">No flagged products found for current replay settings.</td></tr>';
+                } else {
+                    if (tableBody) {
+                        tableBody.innerHTML = candidates.map((p) => `
+                            <tr>
+                                <td title="${(p.product_name || '').replace(/"/g, '&quot;')}">${(p.product_name || 'Unknown').slice(0, 55)}</td>
+                                <td style="font-family:monospace;font-size:0.75rem;">${p.asin || '--'}</td>
+                                <td>${p.t_model || '--'}</td>
+                                <td>${p.t2_manual_detect || '--'}</td>
+                                <td>${p.t3_crisis_bottom || '--'}</td>
+                                <td>${p.lead_time_months != null ? `+${p.lead_time_months} mo` : '--'}</td>
+                                <td>${p.model_detected_early ? '<span class="badge yes">Early</span>' : '<span class="badge no">Flagged</span>'}</td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } catch (e) {
+                if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" style="color:var(--text-secondary);">Error loading replay data.</td></tr>';
+            }
+        }
+
+        function onReplayProductChange() {
+            const sel = document.getElementById('replayProductSelect');
+            const metrics = document.getElementById('replayProductMetrics');
+            if (!sel || sel.value === '') {
+                if (metrics) metrics.style.display = 'none';
+                return;
+            }
+
+            const product = (sel._products || [])[Number(sel.value)];
+            if (!product) return;
+
+            if (metrics) metrics.style.display = '';
+            setText('pmT1', product.t1_crisis_start || '--');
+            setText('pmTModel', product.t_model || '--');
+            setText('pmT2', product.t2_manual_detect || '--');
+            setText('pmT3', product.t3_crisis_bottom || '--');
+            setText('pmT4', product.t4_recovery || '--');
+            setText('pmLead', product.lead_time_months != null ? `+${product.lead_time_months} months` : '--');
+
+            renderReplayChart(product);
+        }
+
+        function renderReplayChart(product) {
+            if (replayChart) {
+                replayChart.destroy();
+                replayChart = null;
+            }
+            const ctx = document.getElementById('replayCrisisChart')?.getContext('2d');
+            if (!ctx) return;
+
+            const labelsAll = product.timeline_labels || [];
+            const rollingAll = product.rolling_ratings || [];
+            const riskAll = product.risk_scores || [];
+            const tModelIdx = (product.t_model_plot_idx != null && product.t_model_plot_idx >= 0)
+                ? Number(product.t_model_plot_idx)
+                : 0;
+            const tBottomIdx = (product.t3_plot_idx != null && product.t3_plot_idx >= 0)
+                ? Number(product.t3_plot_idx)
+                : (labelsAll.length - 1);
+
+            // Focus view: at most 10 months before T_model and 6 months after T3 Bottom.
+            const windowStart = Math.max(0, Math.floor(tModelIdx - 10));
+            const windowEnd = Math.min(labelsAll.length - 1, Math.ceil(tBottomIdx + 6));
+
+            const labels = labelsAll.slice(windowStart, windowEnd + 1);
+            const rolling = rollingAll.slice(windowStart, windowEnd + 1);
+            const risk = riskAll.slice(windowStart, windowEnd + 1);
+            const threshold = replayPayload?.summary?.high_threshold || 50;
+
+            const tModelLocal = product.t_model_plot_idx != null ? (Number(product.t_model_plot_idx) - windowStart) : null;
+            const tManualLocal = product.t2_plot_idx != null ? (Number(product.t2_plot_idx) - windowStart) : null;
+            const tBottomLocal = product.t3_plot_idx != null ? (Number(product.t3_plot_idx) - windowStart) : null;
+            const tRecoveryLocal = product.t4_plot_idx != null ? (Number(product.t4_plot_idx) - windowStart) : null;
+
+            replayChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Rolling Avg Rating (3-mo)', data: rolling, borderColor: '#60a5fa', backgroundColor: 'transparent', yAxisID: 'yRating', tension: 0.3, pointRadius: 0, borderWidth: 2.5 },
+                        { label: 'Model Risk Score', data: risk, borderColor: '#f59e0b', backgroundColor: 'transparent', yAxisID: 'yRisk', tension: 0.25, pointRadius: 0, borderDash: [6, 3], borderWidth: 2 },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        annotation: {
+                            annotations: {
+                                tModelLine: {
+                                    type: 'line',
+                                    xMin: tModelLocal,
+                                    xMax: tModelLocal,
+                                    borderColor: 'rgba(250,204,21,0.95)',
+                                    borderWidth: 3,
+                                    label: {
+                                        display: tModelLocal != null && tModelLocal >= 0 && tModelLocal < labels.length,
+                                        content: 'T_model',
+                                        position: 'end',
+                                        yAdjust: 6,
+                                        color: '#fef08a',
+                                        backgroundColor: 'rgba(15,23,42,0.88)',
+                                        font: {
+                                            size: 11,
+                                            weight: '700'
+                                        },
+                                        padding: 6,
+                                    },
+                                },
+                                tManualLine: {
+                                    type: 'line',
+                                    xMin: tManualLocal,
+                                    xMax: tManualLocal,
+                                    borderColor: 'rgba(168,85,247,0.95)',
+                                    borderWidth: 3,
+                                    label: {
+                                        display: tManualLocal != null && tManualLocal >= 0 && tManualLocal < labels.length,
+                                        content: 'T2 Manual',
+                                        position: 'end',
+                                        yAdjust: 6,
+                                        color: '#e9d5ff',
+                                        backgroundColor: 'rgba(15,23,42,0.88)',
+                                        font: {
+                                            size: 11,
+                                            weight: '700'
+                                        },
+                                        padding: 6,
+                                    },
+                                },
+                                tBottomLine: {
+                                    type: 'line',
+                                    xMin: tBottomLocal,
+                                    xMax: tBottomLocal,
+                                    borderColor: 'rgba(239,68,68,0.95)',
+                                    borderWidth: 3,
+                                    label: {
+                                        display: tBottomLocal != null && tBottomLocal >= 0 && tBottomLocal < labels.length,
+                                        content: 'T3 Bottom',
+                                        position: 'end',
+                                        yAdjust: 6,
+                                        color: '#fecaca',
+                                        backgroundColor: 'rgba(15,23,42,0.88)',
+                                        font: {
+                                            size: 11,
+                                            weight: '700'
+                                        },
+                                        padding: 6,
+                                    },
+                                },
+                                tRecoveryLine: {
+                                    type: 'line',
+                                    xMin: tRecoveryLocal,
+                                    xMax: tRecoveryLocal,
+                                    borderColor: 'rgba(34,197,94,0.95)',
+                                    borderWidth: 3,
+                                    label: {
+                                        display: tRecoveryLocal != null && tRecoveryLocal >= 0 && tRecoveryLocal < labels.length,
+                                        content: 'T4 Recovery',
+                                        position: 'end',
+                                        yAdjust: 6,
+                                        color: '#bbf7d0',
+                                        backgroundColor: 'rgba(15,23,42,0.88)',
+                                        font: {
+                                            size: 11,
+                                            weight: '700'
+                                        },
+                                        padding: 6,
+                                    },
+                                },
+                                thresholdLine: {
+                                    type: 'line',
+                                    yMin: Number(threshold),
+                                    yMax: Number(threshold),
+                                    yScaleID: 'yRisk',
+                                    borderColor: 'rgba(244,63,94,0.9)',
+                                    borderWidth: 2.8,
+                                    borderDash: [6, 4],
+                                    label: {
+                                        display: true,
+                                        content: `Model Flag Threshold ${Number(threshold).toFixed(2)}`,
+                                        position: 'start',
+                                        color: '#fecdd3',
+                                        backgroundColor: 'rgba(15,23,42,0.88)',
+                                        font: {
+                                            size: 11,
+                                            weight: '700'
+                                        },
+                                        padding: 6,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    scales: {
+                        yRating: { type: 'linear', position: 'left', min: 1, max: 5, title: { display: true, text: 'Avg Rating' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                        yRisk: { type: 'linear', position: 'right', min: 0, max: 100, title: { display: true, text: 'Risk Score' }, grid: { drawOnChartArea: false } },
+                        x: { ticks: { maxTicksLimit: 16, maxRotation: 45 }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    },
+                },
+            });
         }
     </script>
 
