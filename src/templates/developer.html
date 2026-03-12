@@ -391,6 +391,66 @@
             margin-bottom: 0.5rem;
         }
 
+        .replay-select-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+            padding: 0.7rem 0.8rem;
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.32);
+        }
+
+        .replay-select-row label {
+            color: #bfdbfe;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .replay-product-select {
+            background: #0f172a;
+            color: #dbeafe;
+            border: 1px solid rgba(59, 130, 246, 0.45);
+            border-radius: 10px;
+            padding: 0.72rem 0.9rem;
+            min-width: 420px;
+            max-width: 760px;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .replay-product-select:focus {
+            outline: none;
+            border-color: rgba(96, 165, 250, 0.9);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .replay-lead-banner {
+            margin-top: 0.8rem;
+            width: 100%;
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            border-radius: 10px;
+            padding: 0.65rem 0.8rem;
+            background: rgba(20, 83, 45, 0.22);
+        }
+
+        .replay-lead-banner .label {
+            color: #86efac;
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 700;
+        }
+
+        .replay-lead-banner .value {
+            color: #22c55e;
+            font-size: 1.24rem;
+            font-weight: 800;
+            margin-top: 0.2rem;
+        }
+
         .table-wrap {
             margin-top: 1rem;
             overflow-x: auto;
@@ -509,6 +569,11 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
+
+            .replay-product-select {
+                min-width: 100%;
+                max-width: 100%;
+            }
         }
     </style>
 </head>
@@ -556,13 +621,13 @@
                 <div class="option-cta">Open Analysis Page →</div>
             </article>
 
-            <article class="option-card" onclick="openSection('replay')">
+            <article class="option-card" onclick="window.location.href='/developer/replay-analysis'">
                 <div class="option-head">
                     <span class="option-code">03</span>
                 </div>
                 <h3 class="option-title">Replay Analysis</h3>
                 <p class="option-desc">Replay usage scenarios to compare how each infrastructure option performs under repeated workloads.</p>
-                <div class="option-cta">Open Section →</div>
+                <div class="option-cta">Open Analysis Page →</div>
             </article>
         </section>
 
@@ -642,50 +707,61 @@
 
             <div class="metrics-grid" style="margin-bottom:1rem;">
                 <div class="metric-card"><div class="label">Replay Shift</div><div id="replayShift" class="value">--</div></div>
-                <div class="metric-card"><div class="label">Threshold</div><div id="replayThreshold" class="value">--</div></div>
-                <div class="metric-card"><div class="label">Products Flagged</div><div id="replayFlagged" class="value">--</div></div>
-                <div class="metric-card"><div class="label">Flagged + Early</div><div id="replayEarly" class="value">--</div></div>
+                <div class="metric-card"><div class="label">Products w/ Crises</div><div id="replayFlagged" class="value">--</div></div>
                 <div class="metric-card"><div class="label">Avg Lead Time</div><div id="replayAvgLead" class="value">--</div></div>
             </div>
 
-            <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">
-                <label for="replayProductSelect" style="color:var(--text-secondary);font-size:0.85rem;">Inspect Product:</label>
-                <select id="replayProductSelect" style="background:#0f172a;color:#dbeafe;border:1px solid rgba(59,130,246,.35);border-radius:10px;padding:.55rem .75rem;min-width:320px;max-width:680px;" onchange="onReplayProductChange()">
-                    <option value="">-- Select flagged + early product --</option>
+            <div class="replay-select-row">
+                <label for="replayProductSelect">Analyze Product Rerun:</label>
+                <select id="replayProductSelect" class="replay-product-select" onchange="onReplayProductChange()">
+                    <option value="">Select Product</option>
                 </select>
             </div>
 
             <div class="metrics-grid" id="replayProductMetrics" style="margin-bottom:1rem;display:none;">
-                <div class="metric-card"><div class="label">T1 Crisis Start</div><div id="pmT1" class="value">--</div></div>
-                <div class="metric-card"><div class="label">T_model</div><div id="pmTModel" class="value">--</div></div>
-                <div class="metric-card"><div class="label">T2 Manual</div><div id="pmT2" class="value">--</div></div>
-                <div class="metric-card"><div class="label">T3 Bottom</div><div id="pmT3" class="value">--</div></div>
-                <div class="metric-card"><div class="label">T4 Recovery</div><div id="pmT4" class="value">--</div></div>
-                <div class="metric-card"><div class="label">Lead Time</div><div id="pmLead" class="value">--</div></div>
+                <div class="metric-card"><div class="label">CRISIS START</div><div id="pmT1" class="value">--</div></div>
+                <div class="metric-card"><div class="label">FLAGGED BY MODEL</div><div id="pmTModel" class="value">--</div></div>
+                <div class="metric-card"><div class="label">MANUALLY FLAGGED</div><div id="pmT2" class="value">--</div></div>
+                <div class="metric-card"><div class="label">LOWEST AVERAGE RATINGS</div><div id="pmT3" class="value">--</div></div>
+                <div class="metric-card"><div class="label">PRODUCT RECOVERY</div><div id="pmT4" class="value">--</div></div>
             </div>
 
-            <div class="chart-card" style="margin-bottom:1rem;">
+            <div id="replayChartPanel" class="chart-card" style="margin-bottom:1rem;display:none;">
                 <div class="chart-title">Replay Crisis Timeline (rolling rating vs risk score)</div>
                 <canvas id="replayCrisisChart" height="110"></canvas>
             </div>
 
-            <div class="table-wrap">
-                <table class="results-table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>ASIN</th>
-                            <th>T_model</th>
-                            <th>T2 Manual</th>
-                            <th>T3 Bottom</th>
-                            <th>Lead Time</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="replayTableBody">
-                        <tr><td colspan="7" style="color:var(--text-secondary);">Open replay section to load data.</td></tr>
-                    </tbody>
-                </table>
+            <div id="replayLeadPanel" class="replay-lead-banner" style="display:none;">
+                <div class="label">MODEL LEADS MANUAL BY:</div>
+                <div id="pmLead" class="value">--</div>
+            </div>
+        </section>
+
+        <section id="replaySummarySection" class="section-view" style="margin-top:1rem;">
+            <div class="chart-card">
+                <details>
+                    <summary style="cursor:pointer;color:var(--text-primary);font-weight:700;margin-bottom:0.5rem;">
+                        Summary of Replayed Product History
+                    </summary>
+                    <div class="table-wrap" style="margin-top:0.6rem;">
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>ASIN</th>
+                                    <th>T_model</th>
+                                    <th>T2 Manual</th>
+                                    <th>T3 Bottom</th>
+                                    <th>Lead Time</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="replayTableBody">
+                                <tr><td colspan="7" style="color:var(--text-secondary);">Open replay section to load data.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
             </div>
         </section>
     </main>
@@ -697,7 +773,8 @@
         const sections = {
             training: document.getElementById('trainingSection'),
             infrastructure: document.getElementById('infrastructureSection'),
-            replay: document.getElementById('replaySection')
+            replay: document.getElementById('replaySection'),
+            replaySummary: document.getElementById('replaySummarySection')
         };
 
         let chartAccuracyProgress = null;
@@ -864,6 +941,9 @@
             Object.values(sections).forEach((section) => section.classList.remove('active'));
             if (sections[key]) {
                 sections[key].classList.add('active');
+                if (key === 'replay' && sections.replaySummary) {
+                    sections.replaySummary.classList.add('active');
+                }
                 if (key === 'training') {
                     loadTrainingResults();
                 }
@@ -883,9 +963,49 @@
             if (el) el.textContent = value;
         }
 
+        function formatDateToMonthYear(dateStr) {
+            if (!dateStr || dateStr === '--') return '--';
+            const match = dateStr.match(/(\d{4})-(\d{2})/);
+            if (!match) return dateStr;
+            const year = match[1];
+            const month = parseInt(match[2], 10);
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${months[month - 1]} ${year}`;
+        }
+
+        function formatDateRoundDown(dateStr) {
+            // Keep the month as-is (round down)
+            return formatDateToMonthYear(dateStr);
+        }
+
+        function formatDateRoundUp(dateStr) {
+            if (!dateStr || dateStr === '--') return '--';
+            // Check if there's a fractional day part (+Xd)
+            const hasFraction = /\+\d+d/.test(dateStr);
+            if (!hasFraction) return formatDateToMonthYear(dateStr);
+            
+            // Parse and increment month if there's a fraction
+            const match = dateStr.match(/(\d{4})-(\d{2})/);
+            if (!match) return dateStr;
+            let year = parseInt(match[1], 10);
+            let month = parseInt(match[2], 10);
+            
+            month++;
+            if (month > 12) {
+                month = 1;
+                year++;
+            }
+            
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${months[month - 1]} ${year}`;
+        }
+
         async function loadReplayAnalysis() {
             if (replayPayload) return;
             const tableBody = document.getElementById('replayTableBody');
+            const metrics = document.getElementById('replayProductMetrics');
+            const chartPanel = document.getElementById('replayChartPanel');
+            const leadPanel = document.getElementById('replayLeadPanel');
             try {
                 const res = await fetch('/api/developer/replay-analysis');
                 const data = await res.json();
@@ -898,9 +1018,7 @@
                 replayPayload = data;
                 const s = data.summary || {};
                 setText('replayShift', s.replay_shift_years != null ? `+${s.replay_shift_years} years` : '--');
-                setText('replayThreshold', s.high_threshold != null ? `>= ${Number(s.high_threshold).toFixed(2)}` : '--');
                 setText('replayFlagged', s.products_flagged != null ? String(s.products_flagged) : '--');
-                setText('replayEarly', s.products_model_early != null ? String(s.products_model_early) : '--');
                 setText('replayAvgLead', s.avg_lead_time_months != null ? `${Number(s.avg_lead_time_months).toFixed(2)} mo` : '--');
 
                 const eligible = (data.products || []).filter(
@@ -918,9 +1036,7 @@
 
                 const sel = document.getElementById('replayProductSelect');
                 if (sel) {
-                    const placeholder = useEarly
-                        ? '-- Select flagged + early product --'
-                        : '-- No early products, showing flagged products --';
+                    const placeholder = candidates.length ? 'Select Product' : 'Select Product';
                     sel.innerHTML = `<option value="">${placeholder}</option>` + candidates.map((p, i) => {
                         const lead = p.lead_time_months != null ? ` (+${p.lead_time_months} mo)` : '';
                         return `<option value="${i}">${(p.product_name || 'Unknown').slice(0, 60)} [${p.asin}]${lead}</option>`;
@@ -928,8 +1044,16 @@
                     sel._products = candidates;
                 }
 
+                if (metrics) metrics.style.display = 'none';
+                if (chartPanel) chartPanel.style.display = 'none';
+                if (leadPanel) leadPanel.style.display = 'none';
+                if (replayChart) {
+                    replayChart.destroy();
+                    replayChart = null;
+                }
+
                 if (!candidates.length) {
-                    if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" style="color:var(--text-secondary);">No flagged products found for current replay settings.</td></tr>';
+                    if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" style="color:var(--text-secondary);">No downturn-flagged products found for current replay settings.</td></tr>';
                 } else {
                     if (tableBody) {
                         tableBody.innerHTML = candidates.map((p) => `
@@ -953,8 +1077,16 @@
         function onReplayProductChange() {
             const sel = document.getElementById('replayProductSelect');
             const metrics = document.getElementById('replayProductMetrics');
+            const chartPanel = document.getElementById('replayChartPanel');
+            const leadPanel = document.getElementById('replayLeadPanel');
             if (!sel || sel.value === '') {
                 if (metrics) metrics.style.display = 'none';
+                if (chartPanel) chartPanel.style.display = 'none';
+                if (leadPanel) leadPanel.style.display = 'none';
+                if (replayChart) {
+                    replayChart.destroy();
+                    replayChart = null;
+                }
                 return;
             }
 
@@ -962,12 +1094,14 @@
             if (!product) return;
 
             if (metrics) metrics.style.display = '';
-            setText('pmT1', product.t1_crisis_start || '--');
-            setText('pmTModel', product.t_model || '--');
-            setText('pmT2', product.t2_manual_detect || '--');
-            setText('pmT3', product.t3_crisis_bottom || '--');
-            setText('pmT4', product.t4_recovery || '--');
-            setText('pmLead', product.lead_time_months != null ? `+${product.lead_time_months} months` : '--');
+            if (chartPanel) chartPanel.style.display = '';
+            if (leadPanel) leadPanel.style.display = '';
+            setText('pmT1', formatDateToMonthYear(product.t1_crisis_start));
+            setText('pmTModel', formatDateRoundDown(product.t_model));
+            setText('pmT2', formatDateRoundUp(product.t2_manual_detect));
+            setText('pmT3', formatDateRoundUp(product.t3_crisis_bottom));
+            setText('pmT4', formatDateToMonthYear(product.t4_recovery));
+            setText('pmLead', product.lead_time_months != null ? `${Math.ceil(product.lead_time_months)} mo` : '--');
 
             renderReplayChart(product);
         }
@@ -1003,6 +1137,7 @@
             const tManualLocal = product.t2_plot_idx != null ? (Number(product.t2_plot_idx) - windowStart) : null;
             const tBottomLocal = product.t3_plot_idx != null ? (Number(product.t3_plot_idx) - windowStart) : null;
             const tRecoveryLocal = product.t4_plot_idx != null ? (Number(product.t4_plot_idx) - windowStart) : null;
+            const tStartLocal = product.t1_plot_idx != null ? (Number(product.t1_plot_idx) - windowStart) : null;
 
             replayChart = new Chart(ctx, {
                 type: 'line',
@@ -1011,6 +1146,7 @@
                     datasets: [
                         { label: 'Rolling Avg Rating (3-mo)', data: rolling, borderColor: '#60a5fa', backgroundColor: 'transparent', yAxisID: 'yRating', tension: 0.3, pointRadius: 0, borderWidth: 2.5 },
                         { label: 'Model Risk Score', data: risk, borderColor: '#f59e0b', backgroundColor: 'transparent', yAxisID: 'yRisk', tension: 0.25, pointRadius: 0, borderDash: [6, 3], borderWidth: 2 },
+                        { label: 'Crisis Zone', data: [], backgroundColor: 'rgba(239,68,68,0.18)', borderColor: 'rgba(239,68,68,0.18)', borderWidth: 2, fill: true, pointRadius: 0, showLine: false, yAxisID: 'yRating' },
                     ],
                 },
                 options: {
@@ -1018,8 +1154,16 @@
                     maintainAspectRatio: true,
                     interaction: { mode: 'index', intersect: false },
                     plugins: {
+                        legend: { labels: { color: '#60a5fa' } },
                         annotation: {
                             annotations: {
+                                crisisShadeBox: {
+                                    type: 'box',
+                                    xMin: tStartLocal,
+                                    xMax: tRecoveryLocal,
+                                    backgroundColor: 'rgba(239,68,68,0.18)',
+                                    borderWidth: 0,
+                                },
                                 tModelLine: {
                                     type: 'line',
                                     xMin: tModelLocal,
@@ -1125,9 +1269,9 @@
                         },
                     },
                     scales: {
-                        yRating: { type: 'linear', position: 'left', min: 1, max: 5, title: { display: true, text: 'Avg Rating' }, grid: { color: 'rgba(148,163,184,0.1)' } },
-                        yRisk: { type: 'linear', position: 'right', min: 0, max: 100, title: { display: true, text: 'Risk Score' }, grid: { drawOnChartArea: false } },
-                        x: { ticks: { maxTicksLimit: 16, maxRotation: 45 }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                        yRating: { type: 'linear', position: 'left', min: 1, max: 5, title: { display: true, text: 'Avg Rating', color: '#ffffff' }, ticks: { color: '#ffffff' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                        yRisk: { type: 'linear', position: 'right', min: 0, max: 100, title: { display: true, text: 'Risk Score', color: '#ffffff' }, ticks: { color: '#ffffff' }, grid: { drawOnChartArea: false } },
+                        x: { ticks: { maxTicksLimit: 16, maxRotation: 45, color: '#ffffff' }, grid: { color: 'rgba(148,163,184,0.1)' } },
                     },
                 },
             });

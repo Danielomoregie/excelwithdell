@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Replay Analysis - FusionTech</title>
+    <link rel="stylesheet" href="/static/dashboard.css">
+    <style>
+        .back-link {
+            font-size: 1.2rem !important;
+            font-weight: 600 !important;
+            padding: 0.6rem 1.2rem !important;
+        }
+
+        .dev-shell {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.2rem 2rem 1.5rem;
+        }
+
+        .section-view {
+            margin-top: 1.2rem;
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.18) 0%, rgba(15, 23, 42, 0.35) 100%);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 14px;
+            padding: 1.4rem;
+        }
+
+        .section-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 0.8rem;
+            margin: 0.9rem 0 1.1rem;
+        }
+
+        .metric-card {
+            border: 1px solid rgba(96, 165, 250, 0.28);
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 0.75rem 0.85rem;
+        }
+
+        .metric-card .label {
+            color: var(--text-secondary);
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .metric-card .value {
+            color: #bfdbfe;
+            font-size: 1.24rem;
+            font-weight: 800;
+            margin-top: 0.2rem;
+        }
+
+        .chart-card {
+            border: 1px solid rgba(96, 165, 250, 0.24);
+            border-radius: 10px;
+            padding: 0.7rem;
+            background: rgba(2, 6, 23, 0.45);
+        }
+
+        .chart-title {
+            color: #dbeafe;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .replay-select-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+            padding: 0.7rem 0.8rem;
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.32);
+        }
+
+        .replay-select-row label {
+            color: #dbeafe;
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            padding: 0.4rem 0.7rem;
+            border-radius: 9px;
+            border: 1px solid rgba(56, 189, 248, 0.38);
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.36) 0%, rgba(2, 132, 199, 0.24) 100%);
+            box-shadow: inset 0 1px 0 rgba(147, 197, 253, 0.22), 0 4px 16px rgba(2, 132, 199, 0.18);
+        }
+
+        .replay-product-select {
+            background: #0f172a;
+            color: #dbeafe;
+            border: 1px solid rgba(59, 130, 246, 0.45);
+            border-radius: 10px;
+            padding: 0.72rem 0.9rem;
+            min-width: 420px;
+            max-width: 760px;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .replay-product-select:focus {
+            outline: none;
+            border-color: rgba(96, 165, 250, 0.9);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .replay-lead-banner {
+            margin-top: 0.8rem;
+            width: 100%;
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            border-radius: 10px;
+            padding: 0.65rem 0.8rem;
+            background: rgba(20, 83, 45, 0.22);
+        }
+
+        .replay-lead-banner .label {
+            color: #86efac;
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 700;
+        }
+
+        .replay-lead-banner .value {
+            color: #22c55e;
+            font-size: 1.24rem;
+            font-weight: 800;
+            margin-top: 0.2rem;
+        }
+
+        .table-wrap {
+            margin-top: 1rem;
+            overflow-x: auto;
+            border: 1px solid rgba(96, 165, 250, 0.24);
+            border-radius: 10px;
+        }
+
+        .results-table {
+            width: 100%;
+            min-width: 860px;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        .results-table th,
+        .results-table td {
+            border-bottom: 1px solid rgba(96, 165, 250, 0.15);
+            padding: 0.5rem 0.55rem;
+            color: #dbeafe;
+            text-align: left;
+        }
+
+        .results-table th {
+            background: rgba(30, 58, 138, 0.34);
+            font-weight: 700;
+        }
+
+        .badge {
+            display: inline-block;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            padding: 0.2rem 0.5rem;
+            font-weight: 700;
+        }
+
+        .badge.yes {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.45);
+        }
+
+        .badge.no {
+            background: rgba(239, 68, 68, 0.18);
+            color: #fecaca;
+            border: 1px solid rgba(239, 68, 68, 0.45);
+        }
+
+        @media (max-width: 768px) {
+            .dev-shell {
+                padding: 1.2rem;
+            }
+
+            .section-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .replay-product-select {
+                min-width: 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <a href="/developer" aria-label="Go to developer console home">
+                    <img src="/static/fusiontech_logo_compact.svg" alt="FusionTech Systems" class="header-logo">
+                </a>
+                <div class="header-text">
+                    <h1>Replay Analysis</h1>
+                    <p class="subtitle">Crisis Timeline Replay and Recovery Tracking</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <a class="back-link" href="/developer">Developer Console</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="dev-shell">
+        <section class="section-view">
+            <div class="section-top">
+                <h3 class="section-title">Replay Analysis</h3>
+            </div>
+
+            <div class="metrics-grid" style="margin-bottom:1rem;">
+                <div class="metric-card"><div class="label">Replay Shift</div><div id="replayShift" class="value">--</div></div>
+                <div class="metric-card"><div class="label">Products w/ Crises</div><div id="replayFlagged" class="value">--</div></div>
+                <div class="metric-card"><div class="label">Avg Lead Time</div><div id="replayAvgLead" class="value">--</div></div>
+            </div>
+
+            <div class="replay-select-row">
+                <label for="replayProductSelect">Analyze Product Rerun:</label>
+                <select id="replayProductSelect" class="replay-product-select" onchange="onReplayProductChange()">
+                    <option value="">Select Product</option>
+                </select>
+            </div>
+
+            <div class="metrics-grid" id="replayProductMetrics" style="margin-bottom:1rem;display:none;">
+                <div class="metric-card"><div class="label">CRISIS START</div><div id="pmT1" class="value">--</div></div>
+                <div class="metric-card"><div class="label">FLAGGED BY MODEL</div><div id="pmTModel" class="value">--</div></div>
+                <div class="metric-card"><div class="label">MANUALLY FLAGGED</div><div id="pmT2" class="value">--</div></div>
+                <div class="metric-card"><div class="label">LOWEST AVERAGE RATINGS</div><div id="pmT3" class="value">--</div></div>
+                <div class="metric-card"><div class="label">PRODUCT RECOVERY</div><div id="pmT4" class="value">--</div></div>
+            </div>
+
+            <div id="replayChartPanel" class="chart-card" style="margin-bottom:1rem;display:none;">
+                <div class="chart-title">Replay Crisis Timeline (rolling rating vs risk score)</div>
+                <canvas id="replayCrisisChart" height="110"></canvas>
+            </div>
+
+            <div id="replayLeadPanel" class="replay-lead-banner" style="display:none;">
+                <div class="label">MODEL LEADS MANUAL BY:</div>
+                <div id="pmLead" class="value">--</div>
+            </div>
+        </section>
+
+        <section class="section-view" style="margin-top:1rem;">
+            <div class="section-top">
+                <h3 class="section-title">Summary of Replayed Product History</h3>
+            </div>
+            <div class="chart-card">
+                <div class="table-wrap" style="margin-top:0;">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>ASIN</th>
+                                <th>T_model</th>
+                                <th>T2 Manual</th>
+                                <th>T3 Bottom</th>
+                                <th>Lead Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="replayTableBody">
+                            <tr><td colspan="7" style="color:var(--text-secondary);">Loading replay data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3/dist/chartjs-plugin-annotation.min.js"></script>
+    <script>
+        let replayChart = null;
+        let replayPayload = null;
+
+        function setText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        }
+
+        function formatDateToMonthYear(dateStr) {
+            if (!dateStr || dateStr === '--') return '--';
+            const match = dateStr.match(/(\d{4})-(\d{2})/);
+            if (!match) return dateStr;
+            const year = match[1];
+            const month = parseInt(match[2], 10);
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${months[month - 1]} ${year}`;
+        }
+
+        function formatDateRoundDown(dateStr) {
+            return formatDateToMonthYear(dateStr);
+        }
+
+        function formatDateRoundUp(dateStr) {
+            if (!dateStr || dateStr === '--') return '--';
+            const hasFraction = /\+\d+d/.test(dateStr);
+            if (!hasFraction) return formatDateToMonthYear(dateStr);
+
+            const match = dateStr.match(/(\d{4})-(\d{2})/);
+            if (!match) return dateStr;
+            let year = parseInt(match[1], 10);
+            let month = parseInt(match[2], 10);
+
+            month++;
+            if (month > 12) {
+                month = 1;
+                year++;
+            }
+
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${months[month - 1]} ${year}`;
+        }
+
+        async function loadReplayAnalysis() {
+            if (replayPayload) return;
+            const tableBody = document.getElementById('replayTableBody');
+            const metrics = document.getElementById('replayProductMetrics');
+            const chartPanel = document.getElementById('replayChartPanel');
+            const leadPanel = document.getElementById('replayLeadPanel');
+            try {
+                const res = await fetch('/api/developer/replay-analysis');
+                const data = await res.json();
+
+                if (!data || data.status !== 'success') {
+                    if (tableBody) tableBody.innerHTML = `<tr><td colspan="7" style="color:var(--text-secondary);">${data?.message || 'Replay API unavailable.'}</td></tr>`;
+                    return;
+                }
+
+                replayPayload = data;
+                const s = data.summary || {};
+                setText('replayShift', s.replay_shift_years != null ? `+${s.replay_shift_years} years` : '--');
+                setText('replayFlagged', s.products_flagged != null ? String(s.products_flagged) : '--');
+                setText('replayAvgLead', s.avg_lead_time_months != null ? `${Number(s.avg_lead_time_months).toFixed(2)} mo` : '--');
+
+                const eligible = (data.products || []).filter(
+                    p => p.has_crisis && p.t_model != null && p.model_detected_early === true
+                );
+                const flaggedOnly = (data.products || []).filter(
+                    p => p.has_crisis && p.t_model != null
+                );
+
+                eligible.sort((a, b) => (b.lead_time_months ?? -Infinity) - (a.lead_time_months ?? -Infinity));
+                flaggedOnly.sort((a, b) => (b.lead_time_months ?? -Infinity) - (a.lead_time_months ?? -Infinity));
+
+                const useEarly = eligible.length > 0;
+                const candidates = useEarly ? eligible : flaggedOnly;
+
+                const sel = document.getElementById('replayProductSelect');
+                if (sel) {
+                    sel.innerHTML = `<option value="">Select Product</option>` + candidates.map((p, i) => {
+                        const lead = p.lead_time_months != null ? ` (+${p.lead_time_months} mo)` : '';
+                        return `<option value="${i}">${(p.product_name || 'Unknown').slice(0, 60)} [${p.asin}]${lead}</option>`;
+                    }).join('');
+                    sel._products = candidates;
+                }
+
+                if (metrics) metrics.style.display = 'none';
+                if (chartPanel) chartPanel.style.display = 'none';
+                if (leadPanel) leadPanel.style.display = 'none';
+                if (replayChart) {
+                    replayChart.destroy();
+                    replayChart = null;
+                }
+
+                if (!candidates.length) {
+                    if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" style="color:var(--text-secondary);">No downturn-flagged products found for current replay settings.</td></tr>';
+                } else {
+                    if (tableBody) {
+                        tableBody.innerHTML = candidates.map((p) => `
+                            <tr>
+                                <td title="${(p.product_name || '').replace(/"/g, '&quot;')}">${(p.product_name || 'Unknown').slice(0, 55)}</td>
+                                <td style="font-family:monospace;font-size:0.75rem;">${p.asin || '--'}</td>
+                                <td>${p.t_model || '--'}</td>
+                                <td>${p.t2_manual_detect || '--'}</td>
+                                <td>${p.t3_crisis_bottom || '--'}</td>
+                                <td>${p.lead_time_months != null ? `+${p.lead_time_months} mo` : '--'}</td>
+                                <td>${p.model_detected_early ? '<span class="badge yes">Early</span>' : '<span class="badge no">Flagged</span>'}</td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } catch (e) {
+                if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" style="color:var(--text-secondary);">Error loading replay data.</td></tr>';
+            }
+        }
+
+        function onReplayProductChange() {
+            const sel = document.getElementById('replayProductSelect');
+            const metrics = document.getElementById('replayProductMetrics');
+            const chartPanel = document.getElementById('replayChartPanel');
+            const leadPanel = document.getElementById('replayLeadPanel');
+            if (!sel || sel.value === '') {
+                if (metrics) metrics.style.display = 'none';
+                if (chartPanel) chartPanel.style.display = 'none';
+                if (leadPanel) leadPanel.style.display = 'none';
+                if (replayChart) {
+                    replayChart.destroy();
+                    replayChart = null;
+                }
+                return;
+            }
+
+            const product = (sel._products || [])[Number(sel.value)];
+            if (!product) return;
+
+            if (metrics) metrics.style.display = '';
+            if (chartPanel) chartPanel.style.display = '';
+            if (leadPanel) leadPanel.style.display = '';
+            setText('pmT1', formatDateToMonthYear(product.t1_crisis_start));
+            setText('pmTModel', formatDateRoundDown(product.t_model));
+            setText('pmT2', formatDateRoundUp(product.t2_manual_detect));
+            setText('pmT3', formatDateRoundUp(product.t3_crisis_bottom));
+            setText('pmT4', formatDateToMonthYear(product.t4_recovery));
+            setText('pmLead', product.lead_time_months != null ? `${Math.ceil(product.lead_time_months)} mo` : '--');
+
+            renderReplayChart(product);
+        }
+
+        function renderReplayChart(product) {
+            if (replayChart) {
+                replayChart.destroy();
+                replayChart = null;
+            }
+            const ctx = document.getElementById('replayCrisisChart')?.getContext('2d');
+            if (!ctx) return;
+
+            const labelsAll = product.timeline_labels || [];
+            const rollingAll = product.rolling_ratings || [];
+            const riskAll = product.risk_scores || [];
+            const tModelIdx = (product.t_model_plot_idx != null && product.t_model_plot_idx >= 0)
+                ? Number(product.t_model_plot_idx)
+                : 0;
+            const tBottomIdx = (product.t3_plot_idx != null && product.t3_plot_idx >= 0)
+                ? Number(product.t3_plot_idx)
+                : (labelsAll.length - 1);
+
+            const windowStart = Math.max(0, Math.floor(tModelIdx - 10));
+            const windowEnd = Math.min(labelsAll.length - 1, Math.ceil(tBottomIdx + 6));
+
+            const labels = labelsAll.slice(windowStart, windowEnd + 1);
+            const rolling = rollingAll.slice(windowStart, windowEnd + 1);
+            const risk = riskAll.slice(windowStart, windowEnd + 1);
+            const threshold = replayPayload?.summary?.high_threshold || 50;
+
+            const tModelLocal = product.t_model_plot_idx != null ? (Number(product.t_model_plot_idx) - windowStart) : null;
+            const tManualLocal = product.t2_plot_idx != null ? (Number(product.t2_plot_idx) - windowStart) : null;
+            const tBottomLocal = product.t3_plot_idx != null ? (Number(product.t3_plot_idx) - windowStart) : null;
+            const tRecoveryLocal = product.t4_plot_idx != null ? (Number(product.t4_plot_idx) - windowStart) : null;
+            const tStartLocal = product.t1_plot_idx != null ? (Number(product.t1_plot_idx) - windowStart) : null;
+
+            replayChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Rolling Avg Rating (3-mo)', data: rolling, borderColor: '#60a5fa', backgroundColor: 'transparent', yAxisID: 'yRating', tension: 0.3, pointRadius: 0, borderWidth: 2.5 },
+                        { label: 'Model Risk Score', data: risk, borderColor: '#f59e0b', backgroundColor: 'transparent', yAxisID: 'yRisk', tension: 0.25, pointRadius: 0, borderDash: [6, 3], borderWidth: 2 },
+                        { label: 'Crisis Zone', data: [], backgroundColor: 'rgba(239,68,68,0.18)', borderColor: 'rgba(239,68,68,0.18)', borderWidth: 2, fill: true, pointRadius: 0, showLine: false, yAxisID: 'yRating' },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { color: '#60a5fa' } },
+                        annotation: {
+                            annotations: {
+                                crisisShadeBox: {
+                                    type: 'box',
+                                    xMin: tStartLocal,
+                                    xMax: tRecoveryLocal,
+                                    backgroundColor: 'rgba(239,68,68,0.18)',
+                                    borderWidth: 0,
+                                },
+                                tModelLine: {
+                                    type: 'line',
+                                    xMin: tModelLocal,
+                                    xMax: tModelLocal,
+                                    borderColor: 'rgba(250,204,21,0.95)',
+                                    borderWidth: 3,
+                                    label: {
+                                        display: tModelLocal != null && tModelLocal >= 0 && tModelLocal < labels.length,
+                                        content: 'T_model',
+                                        position: 'end',
+                                        yAdjust: 6,
+                                        color: '#fef08a',
+                                        backgroundColor: 'rgba(15,23,42,0.88)',
+                                        font: { size: 11, weight: '700' },
+                                        padding: 6,
+                                    },
+                                },
+                                tManualLine: {
+                                    type: 'line',
+                                    xMin: tManualLocal,
+                                    xMax: tManualLocal,
+                                    borderColor: 'rgba(168,85,247,0.95)',
+                                    borderWidth: 3,
+                                    label: {
+                                        display: tManualLocal != null && tManualLocal >= 0 && tManualLocal < labels.length,
+                                        content: 'T2 Manual',
+                                        position: 'end',
+                                        yAdjust: 6,
+                                        color: '#e9d5ff',
+                                        backgroundColor: 'rgba(15,23,42,0.88)',
+                                        font: { size: 11, weight: '700' },
+                                        padding: 6,
+                                    },
+                                },
+                                tBottomLine: {
+                                    type: 'line',
+                                    xMin: tBottomLocal,
+                                    xMax: tBottomLocal,
+                                    borderColor: 'rgba(239,68,68,0.95)',
+                                    borderWidth: 3,
+                                    label: {
+                                        display: tBottomLocal != null && tBottomLocal >= 0 && tBottomLocal < labels.length,
+                                        content: 'T3 Bottom',
+                                        position: 'end',
+                                        yAdjust: 6,
+                                        color: '#fecaca',
+                                        backgroundColor: 'rgba(15,23,42,0.88)',
+                                        font: { size: 11, weight: '700' },
+                                        padding: 6,
+                                    },
+                                },
+                                tRecoveryLine: {
+                                    type: 'line',
+                                    xMin: tRecoveryLocal,
+                                    xMax: tRecoveryLocal,
+                                    borderColor: 'rgba(34,197,94,0.95)',
+                                    borderWidth: 3,
+                                    label: {
+                                        display: tRecoveryLocal != null && tRecoveryLocal >= 0 && tRecoveryLocal < labels.length,
+                                        content: 'T4 Recovery',
+                                        position: 'end',
+                                        yAdjust: 6,
+                                        color: '#bbf7d0',
+                                        backgroundColor: 'rgba(15,23,42,0.88)',
+                                        font: { size: 11, weight: '700' },
+                                        padding: 6,
+                                    },
+                                },
+                                thresholdLine: {
+                                    type: 'line',
+                                    yMin: Number(threshold),
+                                    yMax: Number(threshold),
+                                    yScaleID: 'yRisk',
+                                    borderColor: 'rgba(244,63,94,0.9)',
+                                    borderWidth: 2.8,
+                                    borderDash: [6, 4],
+                                    label: {
+                                        display: true,
+                                        content: `Model Flag Threshold ${Number(threshold).toFixed(2)}`,
+                                        position: 'start',
+                                        color: '#fecdd3',
+                                        backgroundColor: 'rgba(15,23,42,0.88)',
+                                        font: { size: 11, weight: '700' },
+                                        padding: 6,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    scales: {
+                        yRating: { type: 'linear', position: 'left', min: 1, max: 5, title: { display: true, text: 'Avg Rating', color: '#ffffff' }, ticks: { color: '#ffffff' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                        yRisk: { type: 'linear', position: 'right', min: 0, max: 100, title: { display: true, text: 'Risk Score', color: '#ffffff' }, ticks: { color: '#ffffff' }, grid: { drawOnChartArea: false } },
+                        x: { ticks: { maxTicksLimit: 16, maxRotation: 45, color: '#ffffff' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    },
+                },
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadReplayAnalysis);
+    </script>
+</body>
+</html>

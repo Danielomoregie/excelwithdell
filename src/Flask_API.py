@@ -170,6 +170,13 @@ def developer_dell_infrastructure_fit_page():
     return render_template("dell_infrastructure_fit.html", user=user)
 
 
+@app.route("/developer/replay-analysis")
+@require_dev_unlock
+def developer_replay_analysis_page():
+    user = get_current_user()
+    return render_template("replay_analysis.html", user=user)
+
+
 @app.route("/api/dev-unlock", methods=['POST'])
 def dev_unlock():
     data = request.get_json() or {}
@@ -1735,13 +1742,15 @@ def api_developer_replay_analysis():
 
     high_threshold = float(operating_threshold if operating_threshold is not None else ALERT_THRESHOLDS.get("high", 50))
 
-    REPLAY_SHIFT_YEARS = 8
     ROLLING_WINDOW = 3
     CRISIS_DROP_THRESHOLD = 0.3
     CRISIS_RECOVERY_EPS = 0.1
     MIN_REVIEWS = 8
     MIN_MONTHS = 6
     MAX_MODEL_LEAD_MONTHS = 4
+
+    replay_shift = df["date"].max() - df["date"].min()
+    replay_shift_years = round(replay_shift.days / 365.25, 2)
 
     def _format_period_exact(idx_exact, month_list):
         if idx_exact is None or not month_list:
@@ -1753,7 +1762,18 @@ def api_developer_replay_analysis():
         base_period = month_list[base]
         return str(base_period) if extra_days <= 0 else f"{base_period} +{extra_days}d"
 
-    df["replay_date"] = df["date"] + pd.DateOffset(years=REPLAY_SHIFT_YEARS)
+    def _interp_value(values, idx_exact):
+        if not values:
+            return None
+        idx_exact = max(0.0, min(float(idx_exact), float(len(values) - 1)))
+        lo = int(math.floor(idx_exact))
+        hi = int(math.ceil(idx_exact))
+        if lo == hi:
+            return float(values[lo])
+        frac = idx_exact - lo
+        return float(values[lo]) + frac * (float(values[hi]) - float(values[lo]))
+
+    df["replay_date"] = df["date"] + replay_shift
     df["replay_month"] = df["replay_date"].dt.to_period("M")
 
     all_asins = sorted(df["asin"].dropna().astype(str).unique())
@@ -1909,16 +1929,16 @@ def api_developer_replay_analysis():
         t_model_label = _format_period_exact(t_model_idx_exact, months)
 
         # T4 recovery rule:
-        # first month after T3 where rolling avg >= 0.8 * max(rolling avg in 3 months before T_model)
-        model_ref_idx = int(math.floor(t_model_idx_exact)) if t_model_idx_exact is not None else int(math.floor(t3_idx_exact))
-        model_ref_idx = max(0, min(model_ref_idx, n - 1))
-        pre_end = max(1, model_ref_idx)
-        pre_start = max(0, pre_end - 3)
-        pre_model_slice = rolling_ratings[pre_start:pre_end]
-        if not pre_model_slice:
-            pre_model_slice = rolling_ratings[:max(1, min(3, n))]
+        # first month after T3 where rolling avg has recovered 80% of the drop from T_model to T3
+        model_anchor_idx = t_model_idx_exact if t_model_idx_exact is not None else float(t3_idx_exact)
+        model_anchor_rating = _interp_value(rolling_ratings, model_anchor_idx)
+        bottom_rating = _interp_value(rolling_ratings, t3_idx_exact)
+        if model_anchor_rating is None or bottom_rating is None:
+            results.append({"asin": asin, "product_name": product_name, "has_crisis": False})
+            continue
 
-        recovery_target = 0.8 * max(pre_model_slice)
+        # 0% recovered = bottom, 100% recovered = model anchor.
+        recovery_target = bottom_rating + (0.8 * (model_anchor_rating - bottom_rating))
         t4_idx = n - 1
         t4_idx_exact = float(t4_idx)
         for i in range(t3_idx + 1, n):
@@ -1988,7 +2008,7 @@ def api_developer_replay_analysis():
     return jsonify({
         "status": "success",
         "summary": {
-            "replay_shift_years": REPLAY_SHIFT_YEARS,
+            "replay_shift_years": replay_shift_years,
             "high_threshold": high_threshold,
             "products_analyzed": len(results),
             "products_with_crisis": len(with_crisis),
