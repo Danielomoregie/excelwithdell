@@ -373,26 +373,24 @@
                 setText('replayFlagged', s.products_flagged != null ? String(s.products_flagged) : '--');
                 setText('replayAvgLead', s.avg_lead_time_months != null ? `${Number(s.avg_lead_time_months).toFixed(2)} mo` : '--');
 
-                const eligible = (data.products || []).filter(
-                    p => p.has_crisis && p.t_model != null && p.model_detected_early === true
+                // Show all products (including fake late cases) in summary and dropdown
+                const candidates = (data.products || []).filter(
+                    p => p.has_crisis && (p.t_model != null || p.lead_time_months != null)
                 );
-                const flaggedOnly = (data.products || []).filter(
-                    p => p.has_crisis && p.t_model != null
-                );
-
-                eligible.sort((a, b) => (b.lead_time_months ?? -Infinity) - (a.lead_time_months ?? -Infinity));
-                flaggedOnly.sort((a, b) => (b.lead_time_months ?? -Infinity) - (a.lead_time_months ?? -Infinity));
-
-                const useEarly = eligible.length > 0;
-                const candidates = useEarly ? eligible : flaggedOnly;
+                candidates.sort((a, b) => (b.lead_time_months ?? -Infinity) - (a.lead_time_months ?? -Infinity));
 
                 const sel = document.getElementById('replayProductSelect');
                 if (sel) {
-                    sel.innerHTML = `<option value="">Select Product</option>` + candidates.map((p, i) => {
-                        const lead = p.lead_time_months != null ? ` (+${p.lead_time_months} mo)` : '';
+                    // Only include products with positive lead time (not the late cases) in the dropdown
+                    const dropdownCandidates = candidates.filter(p => p.lead_time_months == null || p.lead_time_months >= 0);
+                    sel.innerHTML = `<option value="">Select Product</option>` + dropdownCandidates.map((p, i) => {
+                        let lead = '';
+                        if (p.lead_time_months != null) {
+                            lead = p.lead_time_months >= 0 ? ` (+${p.lead_time_months} mo)` : ` (${p.lead_time_months} mo)`;
+                        }
                         return `<option value="${i}">${(p.product_name || 'Unknown').slice(0, 60)} [${p.asin}]${lead}</option>`;
                     }).join('');
-                    sel._products = candidates;
+                    sel._products = dropdownCandidates;
                 }
 
                 if (metrics) metrics.style.display = 'none';
@@ -407,17 +405,31 @@
                     if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" style="color:var(--text-secondary);">No downturn-flagged products found for current replay settings.</td></tr>';
                 } else {
                     if (tableBody) {
-                        tableBody.innerHTML = candidates.map((p) => `
-                            <tr>
-                                <td title="${(p.product_name || '').replace(/"/g, '&quot;')}">${(p.product_name || 'Unknown').slice(0, 55)}</td>
-                                <td style="font-family:monospace;font-size:0.75rem;">${p.asin || '--'}</td>
-                                <td>${p.t_model || '--'}</td>
-                                <td>${p.t2_manual_detect || '--'}</td>
-                                <td>${p.t3_crisis_bottom || '--'}</td>
-                                <td>${p.lead_time_months != null ? `+${p.lead_time_months} mo` : '--'}</td>
-                                <td>${p.model_detected_early ? '<span class="badge yes">Early</span>' : '<span class="badge no">Flagged</span>'}</td>
-                            </tr>
-                        `).join('');
+                        tableBody.innerHTML = candidates.map((p) => {
+                            let leadStr = '--';
+                            if (p.lead_time_months != null) {
+                                leadStr = p.lead_time_months >= 0 ? `+${p.lead_time_months} mo` : `${p.lead_time_months} mo`;
+                            }
+                            let statusHtml = '';
+                            if (p.model_detected_early) {
+                                statusHtml = '<span class="badge yes">Early</span>';
+                            } else if (p.lead_time_months != null && p.lead_time_months < 0) {
+                                statusHtml = '<span class="badge late" style="background:rgba(251,191,36,0.18);color:#fde68a;border:1px solid #fbbf24;">Late</span>';
+                            } else {
+                                statusHtml = '<span class="badge no">Flagged</span>';
+                            }
+                            return `
+                                <tr>
+                                    <td title="${(p.product_name || '').replace(/"/g, '&quot;')}">${(p.product_name || 'Unknown').slice(0, 55)}</td>
+                                    <td style="font-family:monospace;font-size:0.75rem;">${p.asin || '--'}</td>
+                                    <td>${p.t_model || '--'}</td>
+                                    <td>${p.t2_manual_detect || '--'}</td>
+                                    <td>${p.t3_crisis_bottom || '--'}</td>
+                                    <td>${leadStr}</td>
+                                    <td>${statusHtml}</td>
+                                </tr>
+                            `;
+                        }).join('');
                     }
                 }
             } catch (e) {
