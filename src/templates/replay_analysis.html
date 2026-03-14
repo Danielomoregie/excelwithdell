@@ -278,6 +278,18 @@
                 <div class="label">MODEL LEADS MANUAL BY:</div>
                 <div id="pmLead" class="value">--</div>
             </div>
+
+            <div style="width:100%;margin-top:2.2rem;margin-bottom:1.2rem;">
+                <hr style="border:none;height:4px;background:linear-gradient(90deg,rgba(59,130,246,0.38) 0%,rgba(34,197,94,0.42) 50%,rgba(168,85,247,0.38) 100%);border-radius:6px;box-shadow:0 2px 12px rgba(59,130,246,0.16);">
+            </div>
+            <div id="revenueProtectionBox" style="display:none;margin-top:0;width:100%;">
+                <details style="border:2px solid #60a5fa;border-radius:14px;background:rgba(15,23,42,0.45);padding:1.2rem;width:100%;">
+                    <summary style="font-size:1.18rem;font-weight:700;color:#60a5fa;cursor:pointer;text-align:left;">Visualize Estimate Revenue Protection</summary>
+                    <div style="margin-top:1rem;color:#dbeafe;font-size:1rem;min-height:60px;text-align:left;">
+                        <!-- Content will go here in the future -->
+                    </div>
+                </details>
+            </div>
         </section>
 
         <section class="section-view" style="margin-top:1rem;">
@@ -442,10 +454,12 @@
             const metrics = document.getElementById('replayProductMetrics');
             const chartPanel = document.getElementById('replayChartPanel');
             const leadPanel = document.getElementById('replayLeadPanel');
+            const revenueBox = document.getElementById('revenueProtectionBox');
             if (!sel || sel.value === '') {
                 if (metrics) metrics.style.display = 'none';
                 if (chartPanel) chartPanel.style.display = 'none';
                 if (leadPanel) leadPanel.style.display = 'none';
+                if (revenueBox) revenueBox.style.display = 'none';
                 if (replayChart) {
                     replayChart.destroy();
                     replayChart = null;
@@ -459,12 +473,14 @@
             if (metrics) metrics.style.display = '';
             if (chartPanel) chartPanel.style.display = '';
             if (leadPanel) leadPanel.style.display = '';
+            if (revenueBox) revenueBox.style.display = '';
             setText('pmT1', formatDateToMonthYear(product.t1_crisis_start));
             setText('pmTModel', formatDateRoundDown(product.t_model));
             setText('pmT2', formatDateRoundUp(product.t2_manual_detect));
             setText('pmT3', formatDateRoundUp(product.t3_crisis_bottom));
             setText('pmT4', formatDateToMonthYear(product.t4_recovery));
-            setText('pmLead', product.lead_time_months != null ? `${Math.floor(product.lead_time_months)} mo` : '--');
+            // Use the product-specific value for Model Leads Manual By
+            setText('pmLead', product.lead_time_months != null ? `${Number(product.lead_time_months).toFixed(2)} mo` : '--');
 
             renderReplayChart(product);
         }

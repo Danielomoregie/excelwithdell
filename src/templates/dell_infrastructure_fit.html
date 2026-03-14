@@ -293,21 +293,71 @@
             <div class="meta-row" id="metaRow"></div>
         </section>
 
+
+
+        <section class="fit-card" style="margin-bottom:1.2rem;">
+            <details class="fit-section" open>
+                <summary>Section 1 - Model Requirements</summary>
+                <div class="section-body">
+                    <div class="req-grid" id="requirementsGrid"></div>
+                </div>
+            </details>
+        </section>
+
+        <section class="fit-card" style="margin-bottom:1.2rem;">
+            <details class="fit-section" open>
+                <summary>Section 2 - AI/ML Project Dataset & Compute Estimate</summary>
+                <div class="section-body">
+                    <div style="color:#93c5fd;font-size:0.97rem;margin-bottom:0.7rem;font-weight:bold;">
+                        <strong>Additional capacity needed for running multiple AI/ML projects beyond review analysis.</strong>
+                    </div>
+                    <div class="req-grid" style="margin-bottom:0.7rem;">
+                        <div class="req-item">
+                            <span class="k">Projected Concurrent AI/ML Projects</span>
+                            <span class="v">10–15</span>
+                        </div>
+                        <div class="req-item">
+                            <span class="k">Average Dataset Size per Project</span>
+                            <span class="v">50–100 GB</span>
+                        </div>
+                        <div class="req-item">
+                            <span class="k">Total Dataset Footprint</span>
+                            <span class="v">500–1,500 GB</span>
+                        </div>
+                        <div class="req-item">
+                            <span class="k">Compute Requirement per Project</span>
+                            <span class="v">4–8 vCPU + GPU-ready</span>
+                        </div>
+                        <div class="req-item">
+                            <span class="k">Chat / Query Load per Project</span>
+                            <span class="v">1–2 K requests/day</span>
+                        </div>
+                        <div class="req-item">
+                            <span class="k">Total Chat Tokens per Month (all projects)</span>
+                            <span class="v">200–400M</span>
+                        </div>
+                        <div class="req-item" style="grid-column:1/-1;background:rgba(30,58,138,0.13);margin-top:0.3rem;">
+                            <span class="k" style="font-weight:bold;">10-Year Storage Projection (Growth + New Projects + Backups)</span>
+                            <span class="v" style="font-size:1.08rem;">40–50 TB</span>
+                        </div>
+                    </div>
+                </div>
+            </details>
+        </section>
+
         <section class="fit-nav">
             <button class="fit-btn ghost" id="prevBtn">&lt; Previous</button>
-            <div class="fit-nav-title" id="infraTitle">Loading...</div>
+            <div class="fit-nav-title" style="display:flex;align-items:center;justify-content:center;gap:0.7rem;">
+                <span id="stepIndicator" style="display:inline-flex;align-items:center;justify-content:center;">
+                    <span id="stepCircle" style="display:inline-flex;align-items:center;justify-content:center;width:1.45em;height:1.45em;border-radius:50%;background:#1e293b;color:#60a5fa;font-weight:900;font-size:0.98em;box-shadow:0 0 0 2px #60a5fa;">1</span>
+                </span>
+                <span id="infraTitle">Loading...</span>
+            </div>
             <button class="fit-btn" id="nextBtn">Next &gt;</button>
         </section>
 
         <section class="fit-layout">
             <div class="fit-card">
-                <details class="fit-section" open>
-                    <summary>Section 1 - Model Requirements</summary>
-                    <div class="section-body">
-                        <div class="req-grid" id="requirementsGrid"></div>
-                    </div>
-                </details>
-
                 <details class="fit-section" open>
                     <summary>Section 2 - Infrastructure Capability</summary>
                     <div class="section-body" id="capabilityBody"></div>
@@ -456,7 +506,6 @@
                 `Annual Reviews: ${req.annual_reviews.toLocaleString()}`,
                 `Chat Turns/Day: ${req.daily_chat_turns.toLocaleString()}`,
                 `Estimated QPS: ${formatQps(req.queries_per_second)}`,
-                `LLM Cost (Balanced): $${req.monthly_llm_cost.balanced.toLocaleString()}/mo`,
                 `Dataset Growth: ${(req.dataset_growth_rate * 100).toFixed(0)}% yearly`,
                 dynamicStats.artifact_stats_available
                     ? `Dynamic Stats: ${dynamicStats.total_reviews_analyzed.toLocaleString()} reviews analyzed`
@@ -471,23 +520,15 @@
                 ['Scaled Employees', req.employees.toLocaleString()],
                 ['Annual Reviews', req.annual_reviews.toLocaleString()],
                 ['Review Dataset (Year 1)', formatBytes(req.review_dataset_size_bytes)],
-                ['Chatbot Logs (Year 1)', formatBytes(req.chatbot_dataset_size_bytes)],
                 ['Total Dataset (Year 1)', formatBytes(req.dataset_size_bytes)],
                 ['Storage Need (5-year, growth incl.)', formatBytes(req.storage_required_bytes)],
-                ['Dashboard Queries/Day', req.avg_daily_dashboard_queries.toLocaleString()],
-                ['Chat Turns/Day', req.daily_chat_turns.toLocaleString()],
-                ['Total Requests/Day', req.daily_total_requests.toLocaleString()],
+                ['Total Requests/Day (Dashboard + Chatbot Interactions)', req.daily_total_requests.toLocaleString()],
                 ['Queries Per Second', formatQps(req.queries_per_second)],
                 ['Throughput Needed', `${formatBytes(req.throughput_needed_bytes_per_second)}/s`],
                 ['Risk Inference Time', `${req.model_inference_time_ms} ms`],
                 ['Chat Inference Time', `${req.chat_inference_time_ms} ms`],
                 ['Weighted Inference Time', `${req.weighted_inference_time_ms} ms`],
                 ['Compute Estimate', `~${req.estimated_vcpu_needed} vCPU`],
-                ['Chat Tokens/Month', req.monthly_chat_tokens.toLocaleString()],
-                ['LLM Cost (Economy/Balanced/Premium)', `$${req.monthly_llm_cost.economy.toLocaleString()} / $${req.monthly_llm_cost.balanced.toLocaleString()} / $${req.monthly_llm_cost.premium.toLocaleString()} per month`],
-                ['Training Cost (Yearly)', `$${req.training_total_cost_yearly.toLocaleString()}`],
-                ['Total AI Ops Cost (Yearly, balanced)', `$${req.total_ai_ops_cost_yearly_balanced.toLocaleString()}`],
-                ['Projected Dataset (3 years)', formatBytes(projected3y)],
             ];
             el.requirementsGrid.innerHTML = items.map(([k, v]) => `
                 <div class="req-item">
@@ -649,24 +690,35 @@
             const infra = state.infrastructures[state.index];
             const score = state.scores.find((s) => s.infra.name === infra.name).score;
 
+            // Update single step indicator
+            const stepCircle = document.getElementById('stepCircle');
+            if (stepCircle) {
+                stepCircle.textContent = (state.index + 1).toString();
+            }
+
             el.infraTitle.textContent = infra.name;
             renderRequirements(state.requirements);
             renderCapability(infra);
             renderComparison(infra, state.requirements, score);
             renderScore(infra, score);
-
-            el.prevBtn.disabled = state.index === 0;
-            el.nextBtn.disabled = state.index === state.infrastructures.length - 1;
         }
 
         function bindEvents() {
             el.prevBtn.addEventListener('click', () => {
-                state.index = Math.max(0, state.index - 1);
+                if (state.index === 0) {
+                    state.index = state.infrastructures.length - 1;
+                } else {
+                    state.index = state.index - 1;
+                }
                 renderCurrent();
             });
 
             el.nextBtn.addEventListener('click', () => {
-                state.index = Math.min(state.infrastructures.length - 1, state.index + 1);
+                if (state.index === state.infrastructures.length - 1) {
+                    state.index = 0;
+                } else {
+                    state.index = state.index + 1;
+                }
                 renderCurrent();
             });
         }
