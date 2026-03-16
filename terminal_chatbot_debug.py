@@ -1,9 +1,17 @@
 from dotenv import load_dotenv
 from openai import OpenAI
+import os
 
 load_dotenv(override=True)
 
 client = OpenAI()
+
+# 🔍 DEBUG: check if key is loaded (only show first few chars)
+api_key = os.getenv("OPENAI_API_KEY")
+if api_key:
+    print("✅ Key loaded:", api_key[:12] + "...")
+else:
+    print("❌ Key NOT loaded")
 
 conversation = []
 
