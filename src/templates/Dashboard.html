@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FusionTech Product Risk Dashboard</title>
-    <link rel="stylesheet" href="/static/dashboard.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}?v=chatbot-10">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -159,14 +159,23 @@
             <!-- AI Assistant -->
             <div class="chart-container" style="grid-column: 1 / -1;">
                 <div class="ai-assistant-container">
-                    <div id="chatbot-messages" class="chatbot-messages" aria-live="polite">
-                        <div class="chatbot-message assistant">Hi, I am your FusionTech assistant. Ask me anything.</div>
+                    <div id="chat-start-screen" class="chat-start-screen">
+                        <div class="chat-start-header">
+                            <h3 class="chat-start-title">Hey {{ user.first_name if user else 'there' }}, ask a question below!</h3>
+                        </div>
+                        <div class="chat-starter-list" id="chat-starter-list">
+                            <button type="button" class="chat-starter-item">Top products with rising customer complaints this month</button>
+                            <button type="button" class="chat-starter-item">Main reasons for negative reviews in recent weeks</button>
+                            <button type="button" class="chat-starter-item">What should leadership prioritize fixing first</button>
+                        </div>
                     </div>
-                    <div class="ai-input-wrapper">
-                        <input type="text" id="chatbot-input" placeholder="Any Questions Regarding Customer Feedback Trends Today?" class="ai-input">
-                        <button id="chatbot-btn" class="ai-btn" disabled>Ask AI</button>
+
+                    <div id="chatbot-messages" class="chatbot-messages chat-hidden" aria-live="polite"></div>
+
+                    <div class="chat-prompt-shell">
+                        <input type="text" id="chatbot-input" placeholder="Ask anything" class="ai-input">
+                        <button id="chatbot-btn" class="chat-send-chip" disabled>Send</button>
                     </div>
-                    <div id="chatbot-status" class="chatbot-status" role="status" aria-live="polite"></div>
                 </div>
             </div>
 
@@ -249,6 +258,6 @@
         <p>FusionTech Systems &nbsp;&bull;&nbsp; Product Risk Management Platform &nbsp;&bull;&nbsp; © 2026</p>
     </footer>
 
-    <script src="/static/dashboard.js"></script>
+    <script src="{{ url_for('static', filename='dashboard.js') }}?v=chatbot-10"></script>
 </body>
 </html>

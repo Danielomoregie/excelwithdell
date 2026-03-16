@@ -15,6 +15,8 @@ let storedThemeData  = null;
 
 let sentimentChart, volumeChart, themesChart, revenueChart;
 let isSendingChat = false;
+const CHAT_TYPING_ID = 'chatbot-typing-indicator';
+let chatConversationStarted = false;
 
 // ============================================================
 //  DASHBOARD LOADING
@@ -209,6 +211,14 @@ function setupEventListeners() {
                 e.preventDefault();
                 sendChatMessage();
             }
+        });
+
+        document.querySelectorAll('.chat-starter-item').forEach((starter) => {
+            starter.addEventListener('click', () => {
+                aiInput.value = starter.textContent.trim();
+                aiBtn.disabled = aiInput.value.trim() === '' || isSendingChat;
+                sendChatMessage();
+            });
         });
     }
 
@@ -1052,16 +1062,63 @@ function appendChatMessage(role, text) {
     const history = document.getElementById('chatbot-messages');
     if (!history) return;
 
+    if (!chatConversationStarted) {
+        enterConversationMode();
+    }
+
+    const row = document.createElement('div');
+    row.className = `chat-row ${role}`;
+
+    if (role === 'assistant') {
+        const avatar = document.createElement('div');
+        avatar.className = 'chat-avatar';
+        avatar.textContent = 'AI';
+        row.appendChild(avatar);
+    }
+
     const message = document.createElement('div');
     message.className = `chatbot-message ${role}`;
     message.textContent = text;
-    history.appendChild(message);
+    row.appendChild(message);
+
+    history.appendChild(row);
     history.scrollTop = history.scrollHeight;
 }
 
-function setChatStatus(text) {
-    const status = document.getElementById('chatbot-status');
-    if (status) status.textContent = text;
+function enterConversationMode() {
+    const startScreen = document.getElementById('chat-start-screen');
+    const history = document.getElementById('chatbot-messages');
+    if (startScreen) startScreen.classList.add('chat-hidden');
+    if (history) history.classList.remove('chat-hidden');
+    chatConversationStarted = true;
+}
+
+function showTypingIndicator() {
+    const history = document.getElementById('chatbot-messages');
+    if (!history || document.getElementById(CHAT_TYPING_ID)) return;
+
+    const row = document.createElement('div');
+    row.id = CHAT_TYPING_ID;
+    row.className = 'chat-row assistant';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'chat-avatar';
+    avatar.textContent = 'AI';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'chatbot-message assistant typing';
+    bubble.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+
+    history.appendChild(row);
+    history.scrollTop = history.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    const existing = document.getElementById(CHAT_TYPING_ID);
+    if (existing) existing.remove();
 }
 
 async function sendChatMessage() {
@@ -1076,7 +1133,7 @@ async function sendChatMessage() {
     aiInput.value = '';
     aiBtn.disabled = true;
     isSendingChat = true;
-    setChatStatus('Thinking...');
+    showTypingIndicator();
 
     try {
         const res = await fetch('/chat', {
@@ -1096,12 +1153,13 @@ async function sendChatMessage() {
             ? data.response.trim()
             : 'Sorry, I could not process that right now.';
 
+        hideTypingIndicator();
         appendChatMessage('assistant', reply);
-        setChatStatus(res.ok ? '' : 'The service returned an error. You can try again.');
     } catch (error) {
+        hideTypingIndicator();
         appendChatMessage('assistant', 'Sorry, I could not reach the chatbot service right now.');
-        setChatStatus('Network error. Please check connection and retry.');
     } finally {
+        hideTypingIndicator();
         isSendingChat = false;
         aiBtn.disabled = aiInput.value.trim() === '';
         aiInput.focus();

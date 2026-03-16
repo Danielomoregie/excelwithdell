@@ -9,7 +9,6 @@ import uuid
 from flask import Flask, jsonify, request, render_template, session, redirect, url_for
 from functools import wraps
 from psycopg2 import sql
-from openai import OpenAI
 
 from Sentiment_Analyzer import analyze_sentiment, clean_review_text
 from Theme_Extractor import classify_review_themes, COMPLAINT_CATEGORIES
@@ -22,6 +21,7 @@ from Neon_Accessibility_Helper_Functions import (
     create_user, update_user, get_departments,
     hash_password, verify_password, authenticate_user, create_user_with_password, update_password
 )
+from chatbot import handle_chat_request
 
 # ==============================
 # APP SETUP
@@ -50,15 +50,6 @@ ONLINE_REVIEWS_INITIAL_CSV_PATH = os.path.join(
 
 # Global artifacts (loaded on startup)
 artifacts = None
-OPENAI_CHAT_MODEL = os.environ.get("OPENAI_CHAT_MODEL", "gpt-4o-mini")
-
-
-def _get_openai_client():
-    """Create an OpenAI client from environment configuration."""
-    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
-    if not api_key:
-        return None
-    return OpenAI(api_key=api_key)
 
 
 def require_profile(f):
@@ -1247,43 +1238,14 @@ def api_chatbot():
 def chat():
     """Basic OpenAI chatbot endpoint for dashboard chat UI."""
     payload = request.get_json(silent=True) or {}
-    message = str(payload.get("message", "")).strip()
+    user = get_current_user()
+    user_profile = {
+        "first_name": user.get("first_name") if user else "",
+        "department": user.get("department") if user else "",
+    }
 
-    if not message:
-        return jsonify({"response": "Please enter a message."}), 400
-
-    client = _get_openai_client()
-    if client is None:
-        return jsonify({"response": "OpenAI API key is not configured on the server."}), 503
-
-    try:
-        completion = client.responses.create(
-            model=OPENAI_CHAT_MODEL,
-            input=[
-                {
-                    "role": "system",
-                    "content": "You are a helpful assistant for the FusionTech product dashboard.",
-                },
-                {
-                    "role": "user",
-                    "content": message,
-                },
-            ],
-        )
-
-        answer = (completion.output_text or "").strip()
-        if not answer:
-            answer = "I could not generate a response right now."
-
-        return jsonify({"response": answer})
-    except Exception as exc:
-        error_text = str(exc).lower()
-        if "401" in error_text or "invalid api key" in error_text or "unauthorized" in error_text:
-            return jsonify({"response": "AI service authentication failed. Please verify OPENAI_API_KEY on the server."}), 502
-        if "model" in error_text and ("not found" in error_text or "does not exist" in error_text or "access" in error_text):
-            return jsonify({"response": "Configured chat model is unavailable for this key. Set OPENAI_CHAT_MODEL to a supported model."}), 502
-
-        return jsonify({"response": "Sorry, I could not reach the AI service right now. Please try again."}), 502
+    response_body, status_code = handle_chat_request(payload, session, user_profile)
+    return jsonify(response_body), status_code
 
 
 @app.route("/api/developer/dell-infrastructure-fit")
