@@ -9,6 +9,7 @@ import uuid
 from flask import Flask, jsonify, request, render_template, session, redirect, url_for
 from functools import wraps
 from psycopg2 import sql
+from openai import OpenAI
 
 from Sentiment_Analyzer import analyze_sentiment, clean_review_text
 from Theme_Extractor import classify_review_themes, COMPLAINT_CATEGORIES
@@ -43,9 +44,21 @@ MODEL_REGISTRY_PATH = os.path.join(MODELS_DIR, "model_registry.json")
 BASELINE_METRICS_PATH = os.path.join(MODELS_DIR, "baseline_metrics.json")
 VALIDATION_REPORT_PATH = os.path.join(MODELS_DIR, "Validation_Report.json")
 EVALUATION_DATASET_PATH = os.path.join(MODELS_DIR, "evaluation_reviews.csv")
+ONLINE_REVIEWS_INITIAL_CSV_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "Dataset_Scripts", "CSV_Files", "FusionTech Online Reviews_Initial.csv"
+)
 
 # Global artifacts (loaded on startup)
 artifacts = None
+OPENAI_CHAT_MODEL = os.environ.get("OPENAI_CHAT_MODEL", "gpt-4o-mini")
+
+
+def _get_openai_client():
+    """Create an OpenAI client from environment configuration."""
+    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    if not api_key:
+        return None
+    return OpenAI(api_key=api_key)
 
 
 def require_profile(f):
@@ -1229,6 +1242,50 @@ def api_chatbot():
     })
 
 
+@app.route("/chat", methods=["POST"])
+@require_profile
+def chat():
+    """Basic OpenAI chatbot endpoint for dashboard chat UI."""
+    payload = request.get_json(silent=True) or {}
+    message = str(payload.get("message", "")).strip()
+
+    if not message:
+        return jsonify({"response": "Please enter a message."}), 400
+
+    client = _get_openai_client()
+    if client is None:
+        return jsonify({"response": "OpenAI API key is not configured on the server."}), 503
+
+    try:
+        completion = client.responses.create(
+            model=OPENAI_CHAT_MODEL,
+            input=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant for the FusionTech product dashboard.",
+                },
+                {
+                    "role": "user",
+                    "content": message,
+                },
+            ],
+        )
+
+        answer = (completion.output_text or "").strip()
+        if not answer:
+            answer = "I could not generate a response right now."
+
+        return jsonify({"response": answer})
+    except Exception as exc:
+        error_text = str(exc).lower()
+        if "401" in error_text or "invalid api key" in error_text or "unauthorized" in error_text:
+            return jsonify({"response": "AI service authentication failed. Please verify OPENAI_API_KEY on the server."}), 502
+        if "model" in error_text and ("not found" in error_text or "does not exist" in error_text or "access" in error_text):
+            return jsonify({"response": "Configured chat model is unavailable for this key. Set OPENAI_CHAT_MODEL to a supported model."}), 502
+
+        return jsonify({"response": "Sorry, I could not reach the AI service right now. Please try again."}), 502
+
+
 @app.route("/api/developer/dell-infrastructure-fit")
 @require_dev_unlock
 def api_developer_dell_infrastructure_fit():
@@ -1394,14 +1451,14 @@ def api_developer_dell_infrastructure_fit():
             "primary_type": "Compute / Servers",
             "compute_capacity": {
                 "max_cpus": 2,
-                "max_cores_per_cpu": 144,
-                "max_ram_tb": 8,
+                "max_cores_per_cpu": 86,
+                "max_ram_tb": 3,
                 "max_gpu": 8,
                 "compute_index": 1000,
             },
             "storage_capacity": {
-                "internal_nvme_tb": 245,
-                "cluster_capacity_bytes": 245 * 1024**4,
+                "internal_nvme_tb": 122.88,
+                "cluster_capacity_bytes": int(122.88 * 1024**4),
             },
             "throughput": {
                 "note": "Optimized for compute-heavy workloads",
@@ -1412,10 +1469,8 @@ def api_developer_dell_infrastructure_fit():
                 "scalability_index": 98,
             },
             "best_for": [
-                "AI/ML inference",
-                "virtualization",
-                "containerized applications",
-                "compute-heavy workloads",
+                "AI/ML Inference",
+                "Compute-Heavy Workloads",
             ],
             "efficiency_hint": 88,
         },
@@ -1773,6 +1828,46 @@ def api_developer_replay_analysis():
         frac = idx_exact - lo
         return float(values[lo]) + frac * (float(values[hi]) - float(values[lo]))
 
+    def _parse_price_value(raw_value):
+        if raw_value is None:
+            return None
+        if isinstance(raw_value, (int, float)):
+            v = float(raw_value)
+            return v if math.isfinite(v) and v > 0 else None
+        text = str(raw_value).strip()
+        if not text:
+            return None
+        # Normalize common price formatting and extract the first numeric token.
+        normalized = text.replace(",", "")
+        matches = re.findall(r"-?\d+(?:\.\d+)?", normalized)
+        if not matches:
+            return None
+        try:
+            v = float(matches[0])
+            return v if math.isfinite(v) and v > 0 else None
+        except (TypeError, ValueError):
+            return None
+
+    # Build ASIN average prices from the source CSV by averaging all parseable, non-empty prices.
+    asin_price_mean_map = {}
+    try:
+        if os.path.exists(ONLINE_REVIEWS_INITIAL_CSV_PATH):
+            price_df = pd.read_csv(
+                ONLINE_REVIEWS_INITIAL_CSV_PATH,
+                usecols=["asin", "price"],
+                dtype={"asin": "string", "price": "string"},
+            )
+            price_df = price_df.dropna(subset=["asin"])
+            price_df["asin"] = price_df["asin"].astype(str).str.strip()
+            price_df = price_df[price_df["asin"] != ""]
+            price_df["_price_num"] = price_df["price"].apply(_parse_price_value)
+            price_df = price_df.dropna(subset=["_price_num"])
+            if not price_df.empty:
+                grouped_means = price_df.groupby("asin")["_price_num"].mean()
+                asin_price_mean_map = {str(k): float(v) for k, v in grouped_means.items()}
+    except Exception:
+        asin_price_mean_map = {}
+
     df["replay_date"] = df["date"] + replay_shift
     df["replay_month"] = df["replay_date"].dt.to_period("M")
 
@@ -1792,6 +1887,11 @@ def api_developer_replay_analysis():
                     product_name = str(values.iloc[0])
                     break
 
+        asin_avg_price = asin_price_mean_map.get(str(asin))
+
+        if asin_avg_price is None:
+            asin_avg_price = 1377.27
+
         monthly = (
             asin_df.groupby("replay_month")
             .agg(avg_rating=("rating", "mean"), review_count=("rating", "count"))
@@ -1800,11 +1900,42 @@ def api_developer_replay_analysis():
         if monthly.empty:
             continue
 
+        # Build a model-driven negative sentiment signal from trained artifact fields.
+        has_combined_sentiment = "combined_sentiment" in asin_df.columns
+        if has_combined_sentiment:
+            sentiment_negative = pd.to_numeric(asin_df["combined_sentiment"], errors="coerce") < -0.2
+        else:
+            sentiment_negative = pd.Series(False, index=asin_df.index)
+        rating_negative = pd.to_numeric(asin_df["rating"], errors="coerce") <= 3
+        asin_df["is_negative_signal"] = (rating_negative | sentiment_negative).fillna(False)
+
+        neg_counts = (
+            asin_df.groupby("replay_month")["is_negative_signal"]
+            .sum()
+            .rename("negative_count")
+            .astype(int)
+        )
+        monthly = monthly.join(neg_counts, how="left")
+
         # Standardize to monthly bins and fill missing months by carry-forward.
         full_index = pd.period_range(monthly.index.min(), monthly.index.max(), freq="M")
         monthly = monthly.reindex(full_index)
         monthly["review_count"] = monthly["review_count"].fillna(0).astype(int)
+        monthly["negative_count"] = monthly["negative_count"].fillna(0).astype(int)
         monthly["avg_rating"] = monthly["avg_rating"].ffill().bfill()
+
+        # Negative sentiment risk (%) per month with 3-month rolling smoothing.
+        denom = monthly["review_count"].replace(0, float("nan"))
+        monthly["negative_sentiment_rate"] = (
+            monthly["negative_count"].div(denom).fillna(0.0).astype(float)
+        )
+        monthly["negative_sentiment_rate_smooth"] = (
+            monthly["negative_sentiment_rate"]
+            .rolling(window=ROLLING_WINDOW, min_periods=1)
+            .mean()
+            .ffill()
+            .fillna(0.0)
+        )
 
         months = list(monthly.index)
         avg_ratings = [float(v) for v in monthly["avg_rating"].tolist()]
@@ -1929,7 +2060,7 @@ def api_developer_replay_analysis():
         t_model_label = _format_period_exact(t_model_idx_exact, months)
 
         # T4 recovery rule:
-        # first month after T3 where rolling avg has recovered 80% of the drop from T_model to T3
+        # first month after T3 where rolling avg has recovered 90% of the drop from T_model to T3
         model_anchor_idx = t_model_idx_exact if t_model_idx_exact is not None else float(t3_idx_exact)
         model_anchor_rating = _interp_value(rolling_ratings, model_anchor_idx)
         bottom_rating = _interp_value(rolling_ratings, t3_idx_exact)
@@ -1938,7 +2069,7 @@ def api_developer_replay_analysis():
             continue
 
         # 0% recovered = bottom, 100% recovered = model anchor.
-        recovery_target = bottom_rating + (0.8 * (model_anchor_rating - bottom_rating))
+        recovery_target = bottom_rating + (0.9 * (model_anchor_rating - bottom_rating))
         t4_idx = n - 1
         t4_idx_exact = float(t4_idx)
         for i in range(t3_idx + 1, n):
@@ -1972,6 +2103,7 @@ def api_developer_replay_analysis():
         results.append({
             "asin": asin,
             "product_name": product_name,
+            "asin_avg_price": round(float(asin_avg_price), 2),
             "has_crisis": True,
             "t1_crisis_start": t1_label,
             "t2_manual_detect": t2_label,
@@ -1995,6 +2127,7 @@ def api_developer_replay_analysis():
             "timeline_labels": [str(m) for m in months],
             "rolling_ratings": [round(v, 3) for v in rolling_ratings],
             "risk_scores": risk_scores,
+            "negative_sentiment_risk": [round(float(v) * 100.0, 2) for v in monthly["negative_sentiment_rate_smooth"].tolist()],
             "review_counts": [int(v) for v in monthly["review_count"].tolist()],
             "baseline_rating": round(baseline, 3),
             "recovery_target_rating": round(recovery_target, 3),

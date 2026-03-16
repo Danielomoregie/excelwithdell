@@ -159,10 +159,14 @@
             <!-- AI Assistant -->
             <div class="chart-container" style="grid-column: 1 / -1;">
                 <div class="ai-assistant-container">
+                    <div id="chatbot-messages" class="chatbot-messages" aria-live="polite">
+                        <div class="chatbot-message assistant">Hi, I am your FusionTech assistant. Ask me anything.</div>
+                    </div>
                     <div class="ai-input-wrapper">
                         <input type="text" id="chatbot-input" placeholder="Any Questions Regarding Customer Feedback Trends Today?" class="ai-input">
                         <button id="chatbot-btn" class="ai-btn" disabled>Ask AI</button>
                     </div>
+                    <div id="chatbot-status" class="chatbot-status" role="status" aria-live="polite"></div>
                 </div>
             </div>
 

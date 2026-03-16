@@ -207,6 +207,179 @@
             border: 1px solid rgba(239, 68, 68, 0.45);
         }
 
+        .help-dot {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            font-size: 10px;
+            line-height: 1;
+            cursor: help;
+            margin-left: 4px;
+            user-select: none;
+        }
+
+        .help-dot.model {
+            border: 1px solid rgba(252, 165, 165, 0.45);
+            color: #fecaca;
+        }
+
+        .help-dot.manual {
+            border: 1px solid rgba(147, 197, 253, 0.5);
+            color: #dbeafe;
+        }
+
+        .help-tip {
+            position: absolute;
+            left: 50%;
+            bottom: calc(100% + 8px);
+            transform: translateX(-50%);
+            min-width: 220px;
+            max-width: 280px;
+            padding: 0.45rem 0.55rem;
+            border-radius: 8px;
+            border: 1px solid rgba(96, 165, 250, 0.35);
+            background: rgba(2, 6, 23, 0.95);
+            color: #dbeafe;
+            font-size: 0.72rem;
+            font-weight: 500;
+            text-transform: none;
+            letter-spacing: 0;
+            white-space: normal;
+            line-height: 1.35;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            z-index: 40;
+            pointer-events: none;
+            box-shadow: 0 8px 22px rgba(2, 6, 23, 0.45);
+        }
+
+        .help-dot:hover .help-tip,
+        .help-dot:focus .help-tip,
+        .help-dot:focus-visible .help-tip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .math-equation {
+            color: #fef3c7;
+            font-size: 1.52rem;
+            line-height: 2.15;
+            font-family: "Cambria Math", "Times New Roman", serif;
+            font-style: normal;
+            text-align: center;
+            white-space: normal;
+            overflow: visible;
+            padding: 1.35rem 0 1.45rem;
+        }
+
+        .math-integral {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.2em;
+            margin: 0 0.18rem;
+            vertical-align: middle;
+        }
+
+        .math-integral .symbol {
+            font-size: 2.05em;
+            line-height: 1;
+        }
+
+        .math-integral .upper,
+        .math-integral .lower {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.66em;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .math-integral .upper {
+            top: -1.45em;
+        }
+
+        .math-integral .lower {
+            bottom: -1.25em;
+        }
+
+        .price-fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            vertical-align: middle;
+            margin: 0 0.24rem;
+            min-width: 28ch;
+            gap: 0.14rem;
+            line-height: 1.2;
+        }
+
+        .price-fraction .line {
+            display: block;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .price-fraction .paren {
+            color: #60a5fa;
+            font-weight: 800;
+            font-size: 0.9em;
+        }
+
+        .price-fraction .bar {
+            display: block;
+            width: 100%;
+            border-top: 1px solid rgba(191, 219, 254, 0.85);
+            margin: 0.08rem 0;
+        }
+
+        .money-box {
+            display: inline-block;
+            padding: 0.05rem 0.38rem;
+            border: 1px solid rgba(147, 197, 253, 0.55);
+            border-radius: 6px;
+            background: rgba(30, 58, 138, 0.2);
+            box-shadow: inset 0 1px 0 rgba(191, 219, 254, 0.22);
+        }
+
+        .monthly-revenue-expression {
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .revenue-metric-card {
+            min-height: 126px;
+            padding: 0.72rem;
+        }
+
+        .saved-card-flash {
+            animation: savedCardPulse 2.6s ease-in-out infinite;
+        }
+
+        .saved-divider {
+            width: 100%;
+            border-top: 1px solid rgba(134, 239, 172, 0.35);
+            margin: 0.34rem 0 0.3rem;
+        }
+
+        @keyframes savedCardPulse {
+            0%,
+            100% {
+                box-shadow: inset 0 1px 0 rgba(134,239,172,0.18), 0 0 0 rgba(34,197,94,0);
+            }
+            50% {
+                box-shadow: inset 0 1px 0 rgba(134,239,172,0.3), 0 0 15px rgba(34,197,94,0.28);
+            }
+        }
+
         @media (max-width: 768px) {
             .dev-shell {
                 padding: 1.2rem;
@@ -284,9 +457,106 @@
             </div>
             <div id="revenueProtectionBox" style="display:none;margin-top:0;width:100%;">
                 <details style="border:2px solid #60a5fa;border-radius:14px;background:rgba(15,23,42,0.45);padding:1.2rem;width:100%;">
-                    <summary style="font-size:1.18rem;font-weight:700;color:#60a5fa;cursor:pointer;text-align:left;">Visualize Estimate Revenue Protection</summary>
+                    <summary style="font-size:1.18rem;font-weight:700;color:#60a5fa;cursor:pointer;text-align:left;">Visualize Estimated Revenue Protection</summary>
                     <div style="margin-top:1rem;color:#dbeafe;font-size:1rem;min-height:60px;text-align:left;">
-                        <!-- Content will go here in the future -->
+                        <div class="chart-title" style="margin-bottom:0.6rem;">Estimated Revenue Protection Timeline (Rolling Avg + T1-T4)</div>
+                        <canvas id="revenueProtectionChart" height="110"></canvas>
+                        <div id="manualFitPanel" style="display:none;margin-top:1rem;padding:0.85rem 1rem;border:1px solid rgba(96,165,250,0.28);border-radius:10px;background:rgba(2,6,23,0.45);">
+                            <div class="chart-title" style="margin-bottom:0.45rem;">Curve Fit (closest lower month of T_model to T4_recovery)</div>
+                            <canvas id="manualFitChart" height="110"></canvas>
+                            <div id="manualFitNote" style="display:none;"></div>
+                        </div>
+                        <div id="manualEquationPanel" style="display:none;margin-top:1rem;padding:0.85rem 1rem;border:1px solid rgba(96,165,250,0.28);border-radius:10px;background:rgba(2,6,23,0.45);">
+                            <div style="border:1px solid rgba(239,68,68,0.34);background:rgba(127,29,29,0.16);border-radius:10px;padding:0.65rem 0.75rem;">
+                                <div style="color:#fca5a5;font-size:0.76rem;font-weight:800;letter-spacing:0.03em;text-transform:uppercase;margin-bottom:0.2rem;">R(t) Model</div>
+                                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.45rem;">
+                                    <div style="border:1px solid rgba(248,113,113,0.28);border-radius:8px;padding:0.45rem 0.5rem;background:rgba(0,0,0,0.14);">
+                                        <div style="color:#fca5a5;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;">Best Fit</div>
+                                        <div id="modelFitType" style="color:#fecaca;font-weight:700;font-size:0.9rem;line-height:1.3;">--</div>
+                                    </div>
+                                    <div style="border:1px solid rgba(248,113,113,0.28);border-radius:8px;padding:0.45rem 0.5rem;background:rgba(0,0,0,0.14);">
+                                        <div style="color:#fca5a5;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;">Equation <span class="help-dot model" tabindex="0">?<span class="help-tip">x-axis is month index from the selected range start (x = 0 at the range start month).</span></span></div>
+                                        <div id="modelEq" style="color:#fecaca;font-weight:700;font-size:0.9rem;line-height:1.3;">--</div>
+                                    </div>
+                                    <div style="border:1px solid rgba(248,113,113,0.28);border-radius:8px;padding:0.45rem 0.5rem;background:rgba(0,0,0,0.14);">
+                                        <div style="color:#fca5a5;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;">Range</div>
+                                        <div id="modelRange" style="color:#fecaca;font-weight:700;font-size:0.9rem;line-height:1.3;">--</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="margin-top:0.55rem;border:1px solid rgba(96,165,250,0.34);background:rgba(30,58,138,0.16);border-radius:10px;padding:0.65rem 0.75rem;">
+                                <div style="color:#93c5fd;font-size:0.76rem;font-weight:800;letter-spacing:0.03em;text-transform:uppercase;margin-bottom:0.2rem;">R(t) Manual</div>
+                                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.45rem;">
+                                    <div style="border:1px solid rgba(96,165,250,0.3);border-radius:8px;padding:0.45rem 0.5rem;background:rgba(0,0,0,0.14);">
+                                        <div style="color:#93c5fd;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;">Best Fit</div>
+                                        <div id="manualFitType" style="color:#dbeafe;font-weight:700;font-size:0.9rem;line-height:1.3;">--</div>
+                                    </div>
+                                    <div style="border:1px solid rgba(96,165,250,0.3);border-radius:8px;padding:0.45rem 0.5rem;background:rgba(0,0,0,0.14);">
+                                        <div style="color:#93c5fd;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;">Equation <span class="help-dot manual" tabindex="0">?<span class="help-tip">x-axis is month index from the selected range start (x = 0 at the range start month).</span></span></div>
+                                        <div id="manualEq" style="color:#dbeafe;font-weight:700;font-size:0.9rem;line-height:1.3;">--</div>
+                                    </div>
+                                    <div style="border:1px solid rgba(96,165,250,0.3);border-radius:8px;padding:0.45rem 0.5rem;background:rgba(0,0,0,0.14);">
+                                        <div style="color:#93c5fd;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;">R^2</div>
+                                        <div id="manualR2" style="color:#dbeafe;font-weight:700;font-size:0.9rem;line-height:1.3;">--</div>
+                                    </div>
+                                    <div style="border:1px solid rgba(96,165,250,0.3);border-radius:8px;padding:0.45rem 0.5rem;background:rgba(0,0,0,0.14);">
+                                        <div style="color:#93c5fd;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;">Range</div>
+                                        <div id="manualRange" style="color:#dbeafe;font-weight:700;font-size:0.9rem;line-height:1.3;">--</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="revenueProtectionCalcPanel" style="display:none;margin-top:1rem;padding:0.95rem 1rem;border:1px solid rgba(250,204,21,0.35);border-radius:10px;background:linear-gradient(135deg,rgba(120,53,15,0.18) 0%,rgba(2,6,23,0.45) 100%);">
+                            <div class="chart-title" style="margin-bottom:0.55rem;color:#fde68a;">Estimated Revenue Protection</div>
+
+                            <div style="margin-bottom:0.9rem;border:1px solid rgba(96,165,250,0.34);border-radius:10px;padding:0.9rem 0.9rem;background:linear-gradient(135deg,rgba(30,58,138,0.22) 0%,rgba(0,0,0,0.16) 100%);box-shadow:inset 0 1px 0 rgba(147,197,253,0.2);">
+                                <div style="color:#bfdbfe;font-size:0.94rem;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;padding-bottom:0.42rem;margin-bottom:0.82rem;border-bottom:1px solid rgba(147,197,253,0.28);">Revenue Monthly Derivation</div>
+                                <div id="monthlyDerivationLine1" style="margin-top:0.78rem;color:#dbeafe;font-size:1.02rem;line-height:1.64;font-family:'Cambria Math','Times New Roman',serif;">Annual Revenue from Products = $2.8 Billion Revenue &times; 80% Product Revenue Share = --</div>
+                                <div id="monthlyDerivationLine2" style="margin-top:0.78rem;color:#dbeafe;font-size:1.02rem;line-height:1.64;font-family:'Cambria Math','Times New Roman',serif;">Annual Revenue per ASIN = -- &divide; 197 unique ASINs = --</div>
+                                <div id="monthlyDerivationLine3" style="margin-top:0.78rem;color:#dbeafe;font-size:1.02rem;line-height:1.64;font-family:'Cambria Math','Times New Roman',serif;">Annual Weighted Revenue (price-adjusted) = -- &times; <span class="price-fraction"><span class="line">$1,377 <span class="paren">(Average Price of selected ASIN)</span></span><span class="bar"></span><span class="line">$1,377 <span class="paren">(Average Price of All Products)</span></span></span> = --</div>
+                                <div id="monthlyDerivationLine4" style="margin-top:0.78rem;color:#93c5fd;font-size:1.08rem;line-height:1.72;font-weight:800;font-family:'Cambria Math','Times New Roman',serif;">Monthly Revenue <span class="monthly-revenue-expression">= -- &divide; 12 Months per Year =</span> <span class="money-box">--</span></div>
+                            </div>
+
+                            <div class="math-equation" style="margin:1.2rem 0 1.6rem;">
+                                <span style="color:#86efac;">Revenue<sub>saved</sub></span> = <span style="color:#93c5fd;">Revenue<sub>monthly</sub></span> <span style="color:#fca5a5;">&times; &beta;</span>
+                                <span style="color:#c4b5fd;">&times;
+                                    <span class="math-integral" style="color:#c4b5fd;">
+                                        <span class="upper">t<sub>recovery</sub></span>
+                                        <span class="symbol">&int;</span>
+                                        <span class="lower">t<sub>model</sub></span>
+                                    </span>
+                                    (R<sub>model</sub>(t) - R<sub>manual</sub>(t)) dt
+                                </span>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:repeat(4,minmax(190px,1fr));gap:0.55rem;align-items:stretch;">
+                                <div class="revenue-metric-card saved-card-flash" style="border:1px solid rgba(34,197,94,0.4);border-radius:8px;background:linear-gradient(135deg,rgba(20,83,45,0.28) 0%,rgba(0,0,0,0.14) 100%);box-shadow:inset 0 1px 0 rgba(134,239,172,0.18);">
+                                    <div style="color:#86efac;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.03em;">Estimated Revenue Saved</div>
+                                    <div id="estimatedRevenueSavedValue" style="margin-top:0.2rem;color:#bbf7d0;font-weight:900;font-size:1.08rem;">--</div>
+                                    <div class="saved-divider"></div>
+                                    <div style="margin-top:0.28rem;color:#86efac;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.03em;">Percentage of Monthly Product Revenue Saved</div>
+                                    <div id="estimatedRevenueSavedPct" style="margin-top:0.08rem;color:#bbf7d0;font-weight:900;font-size:1.08rem;line-height:1.25;">--</div>
+                                </div>
+
+                                <div class="revenue-metric-card" style="border:1px solid rgba(96,165,250,0.4);border-radius:8px;background:linear-gradient(135deg,rgba(30,58,138,0.24) 0%,rgba(0,0,0,0.14) 100%);box-shadow:inset 0 1px 0 rgba(147,197,253,0.18);">
+                                    <div style="color:#93c5fd;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.03em;">Monthly Product Revenue ($)</div>
+                                    <div id="monthlyRevenueComputedValue" style="margin-top:0.2rem;color:#dbeafe;font-weight:900;font-size:1.08rem;">--</div>
+                                </div>
+
+                                <div class="revenue-metric-card" style="border:1px solid rgba(239,68,68,0.4);border-radius:8px;background:linear-gradient(135deg,rgba(127,29,29,0.24) 0%,rgba(0,0,0,0.14) 100%);box-shadow:inset 0 1px 0 rgba(252,165,165,0.18);">
+                                    <div style="color:#fca5a5;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.03em;">RATING ELASTICITY (β)</div>
+                                    <input id="ratingElasticityInput" type="range" min="0.05" max="0.09" step="0.001" value="0.07" style="margin-top:0.45rem;width:100%;accent-color:#ef4444;">
+                                    <div id="ratingElasticityValue" style="margin-top:0.2rem;color:#fecaca;font-weight:800;font-size:0.92rem;">0.070</div>
+                                </div>
+
+                                <div class="revenue-metric-card" style="border:1px solid rgba(168,85,247,0.4);border-radius:8px;background:linear-gradient(135deg,rgba(76,29,149,0.24) 0%,rgba(0,0,0,0.14) 100%);box-shadow:inset 0 1px 0 rgba(196,181,253,0.18);">
+                                    <div style="color:#c4b5fd;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.03em;">Integrated Rating Difference</div>
+                                    <div id="integratedRatingDiffValue" style="margin-top:0.2rem;color:#ddd6fe;font-weight:900;font-size:1.08rem;">--</div>
+                                </div>
+                            </div>
+
+                            <div id="revenueCalcMeta" style="margin-top:0.55rem;color:#c4b5fd;font-size:0.95rem;line-height:1.5;font-weight:600;text-align:right;">--</div>
+                        </div>
                     </div>
                 </details>
             </div>
@@ -303,15 +573,14 @@
                             <tr>
                                 <th>Product</th>
                                 <th>ASIN</th>
-                                <th>T_model</th>
-                                <th>T2 Manual</th>
-                                <th>T3 Bottom</th>
                                 <th>Lead Time</th>
                                 <th>Status</th>
+                                <th>Revenue Protected</th>
+                                <th>Revenue Protected (%)</th>
                             </tr>
                         </thead>
                         <tbody id="replayTableBody">
-                            <tr><td colspan="7" style="color:var(--text-secondary);">Loading replay data...</td></tr>
+                            <tr><td colspan="6" style="color:var(--text-secondary);">Loading replay data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -323,11 +592,360 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3/dist/chartjs-plugin-annotation.min.js"></script>
     <script>
         let replayChart = null;
+        let revenueProtectionChart = null;
+        let manualFitChart = null;
         let replayPayload = null;
+        let revenueProtectionModelState = null;
+
+        const TOTAL_ANNUAL_REVENUE = 2800000000;
+        const UNIQUE_PRODUCTS_COUNT = 197;
+        const MONTHS_PER_YEAR = 12;
+        const BASELINE_AVG_ASIN_PRICE = 1377.27;
 
         function setText(id, value) {
             const el = document.getElementById(id);
             if (el) el.textContent = value;
+        }
+
+        function interpolateSeriesValue(series, idx) {
+            if (!Array.isArray(series) || !series.length || idx == null || isNaN(idx)) return null;
+            const bounded = Math.max(0, Math.min(Number(idx), series.length - 1));
+            const lo = Math.floor(bounded);
+            const hi = Math.ceil(bounded);
+            if (lo === hi) return Number(series[lo]);
+            const frac = bounded - lo;
+            return Number(series[lo]) + frac * (Number(series[hi]) - Number(series[lo]));
+        }
+
+        function buildModelCurve(rollingSeries, tStartIdx, tRecoveryIdx) {
+            const out = Array.isArray(rollingSeries) ? rollingSeries.map(() => null) : [];
+            if (!rollingSeries || !rollingSeries.length || tStartIdx == null || tRecoveryIdx == null) return out;
+            if (isNaN(tStartIdx) || isNaN(tRecoveryIdx) || tRecoveryIdx <= tStartIdx) return out;
+
+            const rModel = interpolateSeriesValue(rollingSeries, tStartIdx);
+            const rRecovery = interpolateSeriesValue(rollingSeries, tRecoveryIdx);
+            if (rModel == null || rRecovery == null) return out;
+
+            const duration = Number(tRecoveryIdx) - Number(tStartIdx);
+            if (duration <= 0) return out;
+
+            // Deeper dip, then recover to T4.
+            const dipDepthBase = Math.max(0.14, Math.min(0.36, (Math.abs(rRecovery - rModel) * 0.22) + 0.16));
+            const dipDepth = Math.max(0.16, Math.min(0.6, dipDepthBase * 2.75));
+            const rMid = Math.min(rModel, rRecovery) - dipDepth;
+
+            const iStart = Math.floor(Number(tStartIdx));
+            const iEnd = Math.ceil(Number(tRecoveryIdx));
+
+            for (let i = 0; i < rollingSeries.length; i++) {
+                if (i < iStart || i > iEnd) continue;
+                const uRaw = (i - Number(tStartIdx)) / duration;
+                const u = Math.max(0, Math.min(1, uRaw));
+                const y = ((1 - u) * (1 - u) * rModel) + (2 * (1 - u) * u * rMid) + (u * u * rRecovery);
+                out[i] = Math.max(0, Math.min(5, Number(y.toFixed(3))));
+            }
+
+            return out;
+        }
+
+        function buildModelCurvePoints(rollingSeries, tStartIdx, tRecoveryIdx, steps = 64) {
+            const out = [];
+            if (!Array.isArray(rollingSeries) || !rollingSeries.length) return out;
+            if (tStartIdx == null || tRecoveryIdx == null) return out;
+            if (isNaN(tStartIdx) || isNaN(tRecoveryIdx) || tRecoveryIdx <= tStartIdx) return out;
+
+            const rModel = interpolateSeriesValue(rollingSeries, tStartIdx);
+            const rRecovery = interpolateSeriesValue(rollingSeries, tRecoveryIdx);
+            if (rModel == null || rRecovery == null) return out;
+
+            const duration = Number(tRecoveryIdx) - Number(tStartIdx);
+            if (duration <= 0) return out;
+
+            const dipDepthBase = Math.max(0.14, Math.min(0.36, (Math.abs(rRecovery - rModel) * 0.22) + 0.16));
+            const dipDepth = Math.max(0.16, Math.min(0.6, dipDepthBase * 2.75));
+            const rMid = Math.min(rModel, rRecovery) - dipDepth;
+
+            for (let s = 0; s <= steps; s++) {
+                const u = s / steps;
+                const x = Number(tStartIdx) + (u * duration);
+                const y = ((1 - u) * (1 - u) * rModel) + (2 * (1 - u) * u * rMid) + (u * u * rRecovery);
+                out.push({ x, y: Math.max(0, Math.min(5, Number(y.toFixed(3)))) });
+            }
+
+            return out;
+        }
+
+        function linearRegression(x, y) {
+            const n = x.length;
+            if (!n) return null;
+            const sx = x.reduce((a, b) => a + b, 0);
+            const sy = y.reduce((a, b) => a + b, 0);
+            const sxx = x.reduce((a, b) => a + (b * b), 0);
+            const sxy = x.reduce((a, xi, i) => a + (xi * y[i]), 0);
+            const den = (n * sxx) - (sx * sx);
+            if (Math.abs(den) < 1e-9) return null;
+            const m = ((n * sxy) - (sx * sy)) / den;
+            const b = (sy - (m * sx)) / n;
+            return { m, b };
+        }
+
+        function solve3x3(A, b) {
+            const m = [
+                [A[0][0], A[0][1], A[0][2], b[0]],
+                [A[1][0], A[1][1], A[1][2], b[1]],
+                [A[2][0], A[2][1], A[2][2], b[2]],
+            ];
+
+            for (let i = 0; i < 3; i++) {
+                let pivot = i;
+                for (let r = i + 1; r < 3; r++) {
+                    if (Math.abs(m[r][i]) > Math.abs(m[pivot][i])) pivot = r;
+                }
+                if (Math.abs(m[pivot][i]) < 1e-10) return null;
+                if (pivot !== i) {
+                    const tmp = m[i];
+                    m[i] = m[pivot];
+                    m[pivot] = tmp;
+                }
+                const div = m[i][i];
+                for (let c = i; c < 4; c++) m[i][c] /= div;
+                for (let r = 0; r < 3; r++) {
+                    if (r === i) continue;
+                    const factor = m[r][i];
+                    for (let c = i; c < 4; c++) m[r][c] -= factor * m[i][c];
+                }
+            }
+
+            return [m[0][3], m[1][3], m[2][3]];
+        }
+
+        function quadraticRegression(x, y) {
+            if (x.length < 3) return null;
+            let s0 = 0, s1 = 0, s2 = 0, s3 = 0, s4 = 0;
+            let t0 = 0, t1 = 0, t2 = 0;
+            for (let i = 0; i < x.length; i++) {
+                const xi = x[i];
+                const yi = y[i];
+                const x2 = xi * xi;
+                s0 += 1;
+                s1 += xi;
+                s2 += x2;
+                s3 += x2 * xi;
+                s4 += x2 * x2;
+                t0 += yi;
+                t1 += xi * yi;
+                t2 += x2 * yi;
+            }
+            const A = [
+                [s4, s3, s2],
+                [s3, s2, s1],
+                [s2, s1, s0],
+            ];
+            const sol = solve3x3(A, [t2, t1, t0]);
+            if (!sol) return null;
+            return { a: sol[0], b: sol[1], c: sol[2] };
+        }
+
+        function logarithmicRegression(x, y) {
+            const z = x.map(v => Math.log(v + 1));
+            const fit = linearRegression(z, y);
+            if (!fit) return null;
+            return { a: fit.b, b: fit.m };
+        }
+
+        function computeR2(actual, predicted) {
+            if (!actual.length || actual.length !== predicted.length) return null;
+            const mean = actual.reduce((a, b) => a + b, 0) / actual.length;
+            let ssTot = 0;
+            let ssRes = 0;
+            for (let i = 0; i < actual.length; i++) {
+                ssTot += (actual[i] - mean) ** 2;
+                ssRes += (actual[i] - predicted[i]) ** 2;
+            }
+            if (Math.abs(ssTot) < 1e-10) return null;
+            return 1 - (ssRes / ssTot);
+        }
+
+        function formatSigned(n, digits = 3) {
+            const v = Number(n || 0);
+            const abs = Math.abs(v).toFixed(digits);
+            return `${v >= 0 ? '+' : '-'} ${abs}`;
+        }
+
+        function evalQuadratic(coeff, x) {
+            if (!coeff) return null;
+            return (coeff.a * x * x) + (coeff.b * x) + coeff.c;
+        }
+
+        function simpsonIntegrate(fn, a, b, n = 120) {
+            if (a == null || b == null || b <= a) return 0;
+            n = Math.max(2, Math.floor(n));
+            if (n % 2 !== 0) n += 1;
+            const h = (b - a) / n;
+            let sum = fn(a) + fn(b);
+            for (let i = 1; i < n; i++) {
+                const x = a + (i * h);
+                sum += (i % 2 === 0 ? 2 : 4) * fn(x);
+            }
+            return (h / 3) * sum;
+        }
+
+        function formatCurrency(value) {
+            if (value == null || !isFinite(value)) return '--';
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 0,
+            }).format(value);
+        }
+
+        function prepareRevenueProtectionModel(product) {
+            const rolling = product.rolling_ratings || [];
+            const labels = product.timeline_labels || [];
+            const t1 = product.t_model_plot_idx != null ? Number(product.t_model_plot_idx) : null;
+            const t4 = product.t4_plot_idx != null ? Number(product.t4_plot_idx) : null;
+
+            if (!rolling.length || !labels.length || t1 == null || t4 == null || t4 <= t1) {
+                return null;
+            }
+
+            const duration = t4 - t1;
+            const samples = 80;
+            const x = [];
+            const yManual = [];
+
+            for (let i = 0; i <= samples; i++) {
+                const u = (i / samples) * duration;
+                const tAbs = t1 + u;
+                x.push(u);
+                yManual.push(Number(interpolateSeriesValue(rolling, tAbs)));
+            }
+
+            const modelPoints = buildModelCurvePoints(rolling, t1, t4, samples);
+            const yModel = modelPoints.map(p => Number(p.y));
+
+            const manualQuad = quadraticRegression(x, yManual);
+            const modelQuad = quadraticRegression(x, yModel);
+            if (!manualQuad || !modelQuad) return null;
+
+            const integral = simpsonIntegrate(
+                (u) => evalQuadratic(modelQuad, u) - evalQuadratic(manualQuad, u),
+                0,
+                duration,
+                200
+            );
+
+            return {
+                t1,
+                t4,
+                duration,
+                manualQuad,
+                modelQuad,
+                integratedRatingDiff: integral,
+                rangeLabel: `${labels[Math.max(0, Math.floor(t1))] || '--'} to ${labels[Math.min(labels.length - 1, Math.ceil(t4))] || '--'}`,
+            };
+        }
+
+        function updateRevenueProtectionPanel() {
+            const panel = document.getElementById('revenueProtectionCalcPanel');
+            const derivationLine1 = document.getElementById('monthlyDerivationLine1');
+            const derivationLine2 = document.getElementById('monthlyDerivationLine2');
+            const derivationLine3 = document.getElementById('monthlyDerivationLine3');
+            const derivationLine4 = document.getElementById('monthlyDerivationLine4');
+            const monthlyRevenueValue = document.getElementById('monthlyRevenueComputedValue');
+            const betaInput = document.getElementById('ratingElasticityInput');
+            const betaValue = document.getElementById('ratingElasticityValue');
+            const diffEl = document.getElementById('integratedRatingDiffValue');
+            const savedEl = document.getElementById('estimatedRevenueSavedValue');
+            const savedPctEl = document.getElementById('estimatedRevenueSavedPct');
+            const metaEl = document.getElementById('revenueCalcMeta');
+
+            if (!panel || !derivationLine1 || !derivationLine2 || !derivationLine3 || !derivationLine4 || !monthlyRevenueValue || !betaInput || !betaValue || !diffEl || !savedEl || !savedPctEl || !metaEl) return;
+
+            const beta = Number(betaInput.value || 0.07);
+            betaValue.textContent = beta.toFixed(3);
+
+            const sharePercent = 80;
+
+            const sel = document.getElementById('replayProductSelect');
+            let selectedProduct = null;
+            let asinAvgPrice = BASELINE_AVG_ASIN_PRICE;
+            if (sel && sel.value !== '' && Array.isArray(sel._products)) {
+                selectedProduct = sel._products[Number(sel.value)];
+                const selectedAvgPrice = Number(selectedProduct?.asin_avg_price);
+                if (isFinite(selectedAvgPrice) && selectedAvgPrice > 0) {
+                    asinAvgPrice = selectedAvgPrice;
+                }
+            }
+
+            const annualProductsRevenue = TOTAL_ANNUAL_REVENUE * (sharePercent / 100);
+            const annualPerAsinRevenue = annualProductsRevenue / UNIQUE_PRODUCTS_COUNT;
+            const priceWeight = asinAvgPrice / BASELINE_AVG_ASIN_PRICE;
+            const annualWeightedRevenue = annualPerAsinRevenue * priceWeight;
+            const revenueMonthly = annualWeightedRevenue / MONTHS_PER_YEAR;
+            const selectedAsinLabel = selectedProduct?.asin ? String(selectedProduct.asin) : 'selected';
+
+            derivationLine1.innerHTML = `Annual Revenue from Products = $2.8 Billion Revenue &times; ${sharePercent.toFixed(0)}% Product Revenue Share = <span style="color:#bfdbfe;font-weight:800;">${formatCurrency(annualProductsRevenue)}</span>`;
+            derivationLine2.innerHTML = `Annual Revenue per ASIN = ${formatCurrency(annualProductsRevenue)} &divide; ${UNIQUE_PRODUCTS_COUNT} unique ASINs = <span style="color:#bfdbfe;font-weight:800;">${formatCurrency(annualPerAsinRevenue)}</span>`;
+            derivationLine3.innerHTML = `Annual Weighted Revenue (price-adjusted) = ${formatCurrency(annualPerAsinRevenue)} &times; <span class="price-fraction"><span class="line">${formatCurrency(asinAvgPrice)} <span class="paren">(Average Price of ${selectedAsinLabel} ASIN)</span></span><span class="bar"></span><span class="line">${formatCurrency(BASELINE_AVG_ASIN_PRICE)} <span class="paren">(Average Price of All Products)</span></span></span> = <span style="color:#bfdbfe;font-weight:800;">${formatCurrency(annualWeightedRevenue)}</span>`;
+            derivationLine4.innerHTML = `Monthly Revenue <span class="monthly-revenue-expression">= ${formatCurrency(annualWeightedRevenue)} &divide; ${MONTHS_PER_YEAR} Months per Year =</span> <span class="money-box" style="color:#dbeafe;font-weight:900;">${formatCurrency(revenueMonthly)}</span>`;
+            monthlyRevenueValue.textContent = formatCurrency(revenueMonthly);
+
+            if (!revenueProtectionModelState) {
+                panel.style.display = 'none';
+                return;
+            }
+
+            panel.style.display = '';
+            const diff = Number(revenueProtectionModelState.integratedRatingDiff || 0);
+            const revenueSaved = revenueMonthly * beta * diff;
+            const savedPctOfMonthlyProduct = revenueMonthly > 0 ? (revenueSaved / revenueMonthly) * 100 : 0;
+
+            diffEl.textContent = diff.toFixed(4);
+            savedEl.textContent = formatCurrency(revenueSaved);
+            savedPctEl.textContent = `${savedPctOfMonthlyProduct.toFixed(2)}%`;
+            metaEl.textContent = `Integration Range: ${revenueProtectionModelState.rangeLabel} (T1 to T4).`;
+        }
+
+        function bestFitSummary(yValues) {
+            if (!Array.isArray(yValues) || yValues.length < 2) return null;
+            const x = yValues.map((_, i) => i);
+
+            const lin = linearRegression(x, yValues);
+            const log = logarithmicRegression(x, yValues);
+            const quad = quadraticRegression(x, yValues);
+
+            const yLin = lin ? x.map(v => (lin.m * v) + lin.b) : null;
+            const yLog = log ? x.map(v => log.a + (log.b * Math.log(v + 1))) : null;
+            const yQuad = quad ? x.map(v => (quad.a * v * v) + (quad.b * v) + quad.c) : null;
+
+            const cands = [
+                lin ? {
+                    name: 'Linear',
+                    r2: computeR2(yValues, yLin),
+                    equation: `y = ${lin.b.toFixed(3)} ${formatSigned(lin.m)}x`,
+                } : null,
+                log ? {
+                    name: 'Logarithmic',
+                    r2: computeR2(yValues, yLog),
+                    equation: `y = ${log.a.toFixed(3)} ${formatSigned(log.b)}ln(x + 1)`,
+                } : null,
+                quad ? {
+                    name: 'Quadratic',
+                    r2: computeR2(yValues, yQuad),
+                    equation: `y = ${quad.a.toFixed(3)}x^2 ${formatSigned(quad.b)}x ${formatSigned(quad.c)}`,
+                } : null,
+            ].filter(Boolean);
+
+            if (!cands.length) return null;
+
+            cands.sort((a, b) => {
+                const ar = (a.r2 != null && isFinite(a.r2)) ? a.r2 : -Infinity;
+                const br = (b.r2 != null && isFinite(b.r2)) ? b.r2 : -Infinity;
+                return br - ar;
+            });
+
+            return cands[0];
         }
 
         function formatDateToMonthYear(dateStr) {
@@ -375,7 +993,7 @@
                 const data = await res.json();
 
                 if (!data || data.status !== 'success') {
-                    if (tableBody) tableBody.innerHTML = `<tr><td colspan="7" style="color:var(--text-secondary);">${data?.message || 'Replay API unavailable.'}</td></tr>`;
+                    if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" style="color:var(--text-secondary);">${data?.message || 'Replay API unavailable.'}</td></tr>`;
                     return;
                 }
 
@@ -412,12 +1030,17 @@
                     replayChart.destroy();
                     replayChart = null;
                 }
+                if (revenueProtectionChart) {
+                    revenueProtectionChart.destroy();
+                    revenueProtectionChart = null;
+                }
 
                 if (!candidates.length) {
-                    if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" style="color:var(--text-secondary);">No downturn-flagged products found for current replay settings.</td></tr>';
+                    if (tableBody) tableBody.innerHTML = '<tr><td colspan="6" style="color:var(--text-secondary);">No downturn-flagged products found for current replay settings.</td></tr>';
                 } else {
                     if (tableBody) {
                         tableBody.innerHTML = candidates.map((p) => {
+                            const TABLE_BETA = 0.09;
                             let leadStr = '--';
                             if (p.lead_time_months != null) {
                                 leadStr = p.lead_time_months >= 0 ? `+${p.lead_time_months} mo` : `${p.lead_time_months} mo`;
@@ -430,22 +1053,36 @@
                             } else {
                                 statusHtml = '<span class="badge no">Flagged</span>';
                             }
+
+                            const asinAvgPrice = (Number(p.asin_avg_price) > 0) ? Number(p.asin_avg_price) : BASELINE_AVG_ASIN_PRICE;
+                            const annualProductsRevenue = TOTAL_ANNUAL_REVENUE * 0.8;
+                            const annualPerAsinRevenue = annualProductsRevenue / UNIQUE_PRODUCTS_COUNT;
+                            const revenueMonthly = (annualPerAsinRevenue * (asinAvgPrice / BASELINE_AVG_ASIN_PRICE)) / MONTHS_PER_YEAR;
+                            const tableModel = prepareRevenueProtectionModel(p);
+                            const integratedDiff = Number(tableModel?.integratedRatingDiff);
+                            const revenueProtected = isFinite(integratedDiff)
+                                ? revenueMonthly * TABLE_BETA * integratedDiff
+                                : null;
+                            const revenueProtectedStr = formatCurrency(revenueProtected);
+                            const revenueProtectedPct = (isFinite(revenueProtected) && revenueMonthly > 0)
+                                ? `${((revenueProtected / revenueMonthly) * 100).toFixed(2)}%`
+                                : '--';
+
                             return `
                                 <tr>
                                     <td title="${(p.product_name || '').replace(/"/g, '&quot;')}">${(p.product_name || 'Unknown').slice(0, 55)}</td>
                                     <td style="font-family:monospace;font-size:0.75rem;">${p.asin || '--'}</td>
-                                    <td>${p.t_model || '--'}</td>
-                                    <td>${p.t2_manual_detect || '--'}</td>
-                                    <td>${p.t3_crisis_bottom || '--'}</td>
                                     <td>${leadStr}</td>
                                     <td>${statusHtml}</td>
+                                    <td>${revenueProtectedStr}</td>
+                                    <td>${revenueProtectedPct}</td>
                                 </tr>
                             `;
                         }).join('');
                     }
                 }
             } catch (e) {
-                if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" style="color:var(--text-secondary);">Error loading replay data.</td></tr>';
+                if (tableBody) tableBody.innerHTML = '<tr><td colspan="6" style="color:var(--text-secondary);">Error loading replay data.</td></tr>';
             }
         }
 
@@ -455,14 +1092,29 @@
             const chartPanel = document.getElementById('replayChartPanel');
             const leadPanel = document.getElementById('replayLeadPanel');
             const revenueBox = document.getElementById('revenueProtectionBox');
+            const manualEquationPanel = document.getElementById('manualEquationPanel');
+            const manualFitPanel = document.getElementById('manualFitPanel');
+            const revenueCalcPanel = document.getElementById('revenueProtectionCalcPanel');
             if (!sel || sel.value === '') {
                 if (metrics) metrics.style.display = 'none';
                 if (chartPanel) chartPanel.style.display = 'none';
                 if (leadPanel) leadPanel.style.display = 'none';
                 if (revenueBox) revenueBox.style.display = 'none';
+                if (manualEquationPanel) manualEquationPanel.style.display = 'none';
+                if (manualFitPanel) manualFitPanel.style.display = 'none';
+                if (revenueCalcPanel) revenueCalcPanel.style.display = 'none';
+                revenueProtectionModelState = null;
                 if (replayChart) {
                     replayChart.destroy();
                     replayChart = null;
+                }
+                if (revenueProtectionChart) {
+                    revenueProtectionChart.destroy();
+                    revenueProtectionChart = null;
+                }
+                if (manualFitChart) {
+                    manualFitChart.destroy();
+                    manualFitChart = null;
                 }
                 return;
             }
@@ -483,6 +1135,272 @@
             setText('pmLead', product.lead_time_months != null ? `${Number(product.lead_time_months).toFixed(2)} mo` : '--');
 
             renderReplayChart(product);
+            renderRevenueProtectionChart(product);
+            renderManualEquation(product);
+            renderManualFitChart(product);
+            revenueProtectionModelState = prepareRevenueProtectionModel(product);
+            updateRevenueProtectionPanel();
+        }
+
+        function renderManualEquation(product) {
+            const panel = document.getElementById('manualEquationPanel');
+            const modelFitType = document.getElementById('modelFitType');
+            const modelEq = document.getElementById('modelEq');
+            const modelRangeEl = document.getElementById('modelRange');
+            const manualFitType = document.getElementById('manualFitType');
+            const manualEq = document.getElementById('manualEq');
+            const manualR2 = document.getElementById('manualR2');
+            const manualRangeEl = document.getElementById('manualRange');
+
+            if (!panel || !modelFitType || !modelEq || !modelRangeEl || !manualFitType || !manualEq || !manualR2 || !manualRangeEl) return;
+
+            const rolling = product.rolling_ratings || [];
+            const labels = product.timeline_labels || [];
+            const t1 = product.t_model_plot_idx != null ? Number(product.t_model_plot_idx) : null;
+            const t2 = product.t2_plot_idx != null ? Number(product.t2_plot_idx) : null;
+            const t4 = product.t4_plot_idx != null ? Number(product.t4_plot_idx) : null;
+
+            const setUnavailable = () => {
+                modelFitType.textContent = 'Unavailable';
+                modelEq.textContent = '--';
+                modelRangeEl.textContent = '--';
+                manualFitType.textContent = 'Unavailable';
+                manualEq.textContent = '--';
+                manualR2.textContent = '--';
+                manualRangeEl.textContent = '--';
+            };
+
+            if (!rolling.length || !labels.length || t1 == null || t2 == null || t4 == null || t4 <= t2 || t4 <= t1) {
+                panel.style.display = '';
+                setUnavailable();
+                return;
+            }
+
+            const manualStart = Math.max(0, Math.floor(t2));
+            const manualEnd = Math.min(rolling.length - 1, Math.ceil(t4));
+            const modelStart = Math.max(0, Math.floor(t1));
+            const modelEnd = Math.min(rolling.length - 1, Math.ceil(t4));
+
+            const manualSeries = rolling.slice(manualStart, manualEnd + 1).map(v => Number(v));
+            const modelCurve = buildModelCurve(rolling, t1, t4);
+            const modelSeries = modelCurve.slice(modelStart, modelEnd + 1).filter(v => v != null).map(v => Number(v));
+
+            const manualX = manualSeries.map((_, i) => i);
+            const modelX = modelSeries.map((_, i) => i);
+            const manualQuad = quadraticRegression(manualX, manualSeries);
+            const modelQuad = quadraticRegression(modelX, modelSeries);
+            const manualPred = manualQuad ? manualX.map(v => evalQuadratic(manualQuad, v)) : null;
+            const manualR2Val = manualPred ? computeR2(manualSeries, manualPred) : null;
+
+            const manualRange = `${labels[manualStart] || '--'} to ${labels[manualEnd] || '--'}`;
+            const modelRange = `${labels[modelStart] || '--'} to ${labels[modelEnd] || '--'}`;
+
+            panel.style.display = '';
+
+            modelFitType.textContent = 'Quadratic Fit / R(t) Model';
+            modelEq.textContent = modelQuad
+                ? `y = ${modelQuad.a.toFixed(3)}x^2 ${formatSigned(modelQuad.b)}x ${formatSigned(modelQuad.c)}`
+                : '--';
+            modelRangeEl.textContent = modelRange;
+
+            manualFitType.textContent = 'Quadratic Fit / R(t) Manual';
+            manualEq.textContent = manualQuad
+                ? `y = ${manualQuad.a.toFixed(3)}x^2 ${formatSigned(manualQuad.b)}x ${formatSigned(manualQuad.c)}`
+                : '--';
+            manualR2.textContent = manualR2Val != null ? manualR2Val.toFixed(3) : '--';
+            manualRangeEl.textContent = manualRange;
+        }
+
+        function renderManualFitChart(product) {
+            const panel = document.getElementById('manualFitPanel');
+            const note = document.getElementById('manualFitNote');
+            const ctx = document.getElementById('manualFitChart')?.getContext('2d');
+
+            if (!panel || !ctx) return;
+            if (note) note.textContent = '';
+
+            if (manualFitChart) {
+                manualFitChart.destroy();
+                manualFitChart = null;
+            }
+
+            const labelsAll = product.timeline_labels || [];
+            const rollingAll = product.rolling_ratings || [];
+            const tModel = product.t_model_plot_idx != null ? Number(product.t_model_plot_idx) : null;
+            const t4 = product.t4_plot_idx != null ? Number(product.t4_plot_idx) : null;
+
+            if (tModel == null || t4 == null || !labelsAll.length || !rollingAll.length) {
+                panel.style.display = '';
+                return;
+            }
+
+            const tModelMonthIdx = Math.floor(tModel);
+            const startIdx = Math.max(0, tModelMonthIdx);
+            const endIdx = Math.min(labelsAll.length - 1, Math.ceil(t4));
+            if (endIdx - startIdx < 2) {
+                panel.style.display = '';
+                return;
+            }
+
+            const labels = labelsAll.slice(startIdx, endIdx + 1);
+            const y = rollingAll.slice(startIdx, endIdx + 1).map(v => Number(v));
+            const x = y.map((_, i) => i);
+            const t1Rel = product.t_model_plot_idx != null ? (Number(product.t_model_plot_idx) - startIdx) : null;
+            const t4Rel = product.t4_plot_idx != null ? (Number(product.t4_plot_idx) - startIdx) : null;
+            const modelCurve = buildModelCurve(y, t1Rel, t4Rel);
+
+            const lin = linearRegression(x, y);
+            const log = logarithmicRegression(x, y);
+            const quad = quadraticRegression(x, y);
+
+            const yLin = lin ? x.map(v => (lin.m * v) + lin.b) : [];
+            const yLog = log ? x.map(v => log.a + (log.b * Math.log(v + 1))) : [];
+            const yQuad = quad ? x.map(v => (quad.a * v * v) + (quad.b * v) + quad.c) : [];
+
+            const r2Lin = lin ? computeR2(y, yLin) : null;
+            const r2Log = log ? computeR2(y, yLog) : null;
+            const r2Quad = quad ? computeR2(y, yQuad) : null;
+
+            // Constrain chart span to quadratic-vs-observed intersection window.
+            const intersectionXs = [];
+            const eps = 1e-6;
+            if (yQuad && yQuad.length === y.length) {
+                for (let i = 0; i < y.length; i++) {
+                    const d = Number(yQuad[i]) - Number(y[i]);
+                    if (Math.abs(d) <= eps) intersectionXs.push(i);
+                    if (i === 0) continue;
+                    const dPrev = Number(yQuad[i - 1]) - Number(y[i - 1]);
+                    if ((dPrev < -eps && d > eps) || (dPrev > eps && d < -eps)) {
+                        const frac = dPrev / (dPrev - d);
+                        const xCross = (i - 1) + frac;
+                        intersectionXs.push(xCross);
+                    }
+                }
+            }
+
+            let cropStart = 0;
+            let cropEnd = y.length - 1;
+            if (intersectionXs.length >= 2) {
+                const leftX = Math.min(...intersectionXs);
+                const rightX = Math.max(...intersectionXs);
+                cropStart = Math.max(0, Math.floor(leftX));
+                cropEnd = Math.min(y.length - 1, Math.ceil(rightX));
+            }
+
+            const labelsPlot = labels.slice(cropStart, cropEnd + 1);
+            const yPlot = y.slice(cropStart, cropEnd + 1);
+            const modelCurvePlot = modelCurve.slice(cropStart, cropEnd + 1);
+            const yLinPlot = yLin.slice(cropStart, cropEnd + 1);
+            const yLogPlot = yLog.slice(cropStart, cropEnd + 1);
+            const yQuadPlot = yQuad.slice(cropStart, cropEnd + 1);
+
+            const candidates = [
+                {
+                    name: 'Linear',
+                    data: yLinPlot,
+                    r2: r2Lin,
+                    borderColor: '#f59e0b',
+                    borderDash: [6, 3],
+                },
+                {
+                    name: 'Logarithmic',
+                    data: yLogPlot,
+                    r2: r2Log,
+                    borderColor: '#a78bfa',
+                    borderDash: [3, 3],
+                },
+                {
+                    name: 'Quadratic',
+                    data: yQuadPlot,
+                    r2: r2Quad,
+                    borderColor: '#22c55e',
+                    borderDash: [],
+                },
+            ].filter(c => c.data && c.data.length === yPlot.length && c.r2 != null && isFinite(c.r2));
+
+            if (!candidates.length) {
+                panel.style.display = '';
+                return;
+            }
+
+            candidates.sort((a, b) => b.r2 - a.r2);
+            const best = candidates[0];
+
+            panel.style.display = '';
+
+            manualFitChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labelsPlot,
+                    datasets: [
+                        {
+                            label: 'Observed Rolling Avg',
+                            data: yPlot,
+                            borderColor: '#60a5fa',
+                            backgroundColor: 'rgba(96,165,250,0.2)',
+                            tension: 0.25,
+                            pointRadius: 2,
+                            borderWidth: 2,
+                        },
+                        {
+                            label: 'R(t) Model',
+                            data: modelCurvePlot,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'transparent',
+                            tension: 0.28,
+                            pointRadius: 0,
+                            borderWidth: 2.5,
+                        },
+                        {
+                            label: 'R(t) Model - R(t) Manual',
+                            data: modelCurvePlot,
+                            borderColor: 'rgba(250, 204, 21, 0)',
+                            backgroundColor: 'rgba(250, 204, 21, 0.32)',
+                            fill: {
+                                target: 0,
+                                above: 'rgba(250, 204, 21, 0.32)',
+                                below: 'rgba(250, 204, 21, 0.32)',
+                            },
+                            tension: 0.28,
+                            pointRadius: 0,
+                            borderWidth: 0,
+                            order: -1,
+                        },
+                        {
+                            label: `${best.name} Fit / R(t) Manual`,
+                            data: best.data,
+                            borderColor: best.borderColor,
+                            backgroundColor: 'transparent',
+                            borderDash: best.borderDash,
+                            tension: 0,
+                            pointRadius: 0,
+                            borderWidth: 2,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    animation: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { color: '#60a5fa' } },
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 5,
+                            title: { display: true, text: 'Rolling Avg Rating', color: '#ffffff' },
+                            ticks: { color: '#ffffff' },
+                            grid: { color: 'rgba(148,163,184,0.1)' },
+                        },
+                        x: {
+                            ticks: { maxTicksLimit: 12, maxRotation: 45, color: '#ffffff' },
+                            grid: { color: 'rgba(148,163,184,0.1)' },
+                        },
+                    },
+                },
+            });
         }
 
         function renderReplayChart(product) {
@@ -496,6 +1414,7 @@
             const labelsAll = product.timeline_labels || [];
             const rollingAll = product.rolling_ratings || [];
             const riskAll = product.risk_scores || [];
+            const negativeSentRiskAll = product.negative_sentiment_risk || [];
             const tModelIdx = (product.t_model_plot_idx != null && product.t_model_plot_idx >= 0)
                 ? Number(product.t_model_plot_idx)
                 : 0;
@@ -509,6 +1428,7 @@
             const labels = labelsAll.slice(windowStart, windowEnd + 1);
             const rolling = rollingAll.slice(windowStart, windowEnd + 1);
             const risk = riskAll.slice(windowStart, windowEnd + 1);
+            const negativeSentRisk = negativeSentRiskAll.slice(windowStart, windowEnd + 1);
             const threshold = replayPayload?.summary?.high_threshold || 50;
 
             const tModelLocal = product.t_model_plot_idx != null ? (Number(product.t_model_plot_idx) - windowStart) : null;
@@ -541,7 +1461,7 @@
                                 { data: risk, yAxisID: 'yRisk' }
                             ] },
                             options: { scales: {
-                                yRating: { min: 1, max: 5 },
+                                yRating: { min: 0, max: 5 },
                                 yRisk: { min: 0, max: 100 }
                             }, animation: false, plugins: {} }
                         });
@@ -574,6 +1494,7 @@
                     datasets: [
                         { label: 'Rolling Avg Rating (3-mo)', data: rolling, borderColor: '#60a5fa', backgroundColor: 'transparent', yAxisID: 'yRating', tension: 0.3, pointRadius: 0, borderWidth: 2.5 },
                         { label: 'Model Risk Score', data: risk, borderColor: '#f59e0b', backgroundColor: 'transparent', yAxisID: 'yRisk', tension: 0.25, pointRadius: 0, borderDash: [6, 3], borderWidth: 2 },
+                        { label: 'Negative Sentiment Risk', data: negativeSentRisk, borderColor: '#a855f7', backgroundColor: 'transparent', yAxisID: 'yRisk', tension: 0.25, pointRadius: 0, borderDash: [8, 4], borderWidth: 2 },
                         { label: 'Crisis Zone', data: [], backgroundColor: 'rgba(239,68,68,0.18)', borderColor: 'rgba(239,68,68,0.18)', borderWidth: 2, fill: true, pointRadius: 0, showLine: false, yAxisID: 'yRating' },
                     ],
                 },
@@ -682,7 +1603,7 @@
                         },
                     },
                     scales: {
-                        yRating: { type: 'linear', position: 'left', min: 1, max: 5, title: { display: true, text: 'Avg Rating', color: '#ffffff' }, ticks: { color: '#ffffff' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                        yRating: { type: 'linear', position: 'left', min: 0, max: 5, title: { display: true, text: 'Avg Rating', color: '#ffffff' }, ticks: { color: '#ffffff' }, grid: { color: 'rgba(148,163,184,0.1)' } },
                         yRisk: { type: 'linear', position: 'right', min: 0, max: 100, title: { display: true, text: 'Risk Score', color: '#ffffff' }, ticks: { color: '#ffffff' }, grid: { drawOnChartArea: false } },
                         x: { ticks: { maxTicksLimit: 16, maxRotation: 45, color: '#ffffff' }, grid: { color: 'rgba(148,163,184,0.1)' } },
                     },
@@ -690,7 +1611,188 @@
             });
         }
 
-        document.addEventListener('DOMContentLoaded', loadReplayAnalysis);
+        function renderRevenueProtectionChart(product) {
+            if (revenueProtectionChart) {
+                revenueProtectionChart.destroy();
+                revenueProtectionChart = null;
+            }
+
+            const ctx = document.getElementById('revenueProtectionChart')?.getContext('2d');
+            if (!ctx) return;
+
+            const labelsAll = product.timeline_labels || [];
+            const rollingAll = product.rolling_ratings || [];
+
+            const t1Idx = (product.t_model_plot_idx != null && product.t_model_plot_idx >= 0)
+                ? Number(product.t_model_plot_idx)
+                : null;
+            const t4Idx = (product.t4_plot_idx != null && product.t4_plot_idx >= 0)
+                ? Number(product.t4_plot_idx)
+                : (labelsAll.length - 1);
+
+            const windowStart = Math.max(0, Math.floor((t1Idx ?? 0) - 6));
+            const windowEnd = Math.min(labelsAll.length - 1, Math.ceil(t4Idx + 6));
+
+            const labels = labelsAll.slice(windowStart, windowEnd + 1);
+            const rolling = rollingAll.slice(windowStart, windowEnd + 1);
+            const rollingPoints = rolling.map((v, i) => ({ x: i, y: Number(v) }));
+
+            const t1Local = product.t_model_plot_idx != null ? (Number(product.t_model_plot_idx) - windowStart) : null;
+            const t2Local = product.t2_plot_idx != null ? (Number(product.t2_plot_idx) - windowStart) : null;
+            const t4Local = product.t4_plot_idx != null ? (Number(product.t4_plot_idx) - windowStart) : null;
+            const modelCurve = buildModelCurvePoints(rolling, t1Local, t4Local, 72);
+            const damageLabelY = Math.max(0.6, Math.min(4.8, Math.max(...rolling.filter(v => v != null).map(v => Number(v))) - 0.25));
+
+            revenueProtectionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Observed Rolling Avg',
+                            data: rollingPoints,
+                            borderColor: '#60a5fa',
+                            backgroundColor: 'transparent',
+                            tension: 0.3,
+                            pointRadius: 0,
+                            borderWidth: 2.5,
+                        },
+                        {
+                            label: 'R(t) Model',
+                            data: modelCurve,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'transparent',
+                            tension: 0.28,
+                            pointRadius: 0,
+                            borderWidth: 2.5,
+                        },
+                        {
+                            label: 'R(t) Model - R(t) Manual',
+                            data: modelCurve,
+                            borderColor: 'rgba(250, 204, 21, 0)',
+                            backgroundColor: 'rgba(250, 204, 21, 0.32)',
+                            fill: {
+                                target: 0,
+                                above: 'rgba(250, 204, 21, 0.32)',
+                                below: 'rgba(250, 204, 21, 0.32)',
+                            },
+                            tension: 0.28,
+                            pointRadius: 0,
+                            borderWidth: 0,
+                            order: -1,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    animation: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { color: '#60a5fa' } },
+                        annotation: {
+                            annotations: {
+                                t1Line: {
+                                    type: 'line',
+                                    xMin: t1Local,
+                                    xMax: t1Local,
+                                    borderColor: 'rgba(250,204,21,0.95)',
+                                    borderWidth: 3,
+                                    label: {
+                                        display: t1Local != null && t1Local >= 0 && t1Local < labels.length,
+                                        content: 'T1 Model',
+                                        position: 'end',
+                                        color: '#fef08a',
+                                        backgroundColor: 'rgba(15,23,42,0.88)',
+                                        font: { size: 11, weight: '700' },
+                                        padding: 6,
+                                    },
+                                },
+                                t2Line: {
+                                    type: 'line',
+                                    xMin: t2Local,
+                                    xMax: t2Local,
+                                    borderColor: 'rgba(168,85,247,0.95)',
+                                    borderWidth: 3,
+                                    label: {
+                                        display: t2Local != null && t2Local >= 0 && t2Local < labels.length,
+                                        content: 'T2 Manual',
+                                        position: 'end',
+                                        color: '#e9d5ff',
+                                        backgroundColor: 'rgba(15,23,42,0.88)',
+                                        font: { size: 11, weight: '700' },
+                                        padding: 6,
+                                    },
+                                },
+                                t4Line: {
+                                    type: 'line',
+                                    xMin: t4Local,
+                                    xMax: t4Local,
+                                    borderColor: 'rgba(34,197,94,0.95)',
+                                    borderWidth: 3,
+                                    label: {
+                                        display: t4Local != null && t4Local >= 0 && t4Local < labels.length,
+                                        content: 'T4 Recovery',
+                                        position: 'end',
+                                        color: '#bbf7d0',
+                                        backgroundColor: 'rgba(15,23,42,0.88)',
+                                        font: { size: 11, weight: '700' },
+                                        padding: 6,
+                                    },
+                                },
+                                damageLabel: {
+                                    type: 'label',
+                                    xValue: (t1Local != null && t4Local != null) ? ((t1Local + t4Local) / 2) : null,
+                                    yValue: damageLabelY,
+                                    display: t1Local != null && t4Local != null,
+                                    content: ['Reputation Damage Avoided'],
+                                    color: '#fef08a',
+                                    backgroundColor: 'rgba(120,53,15,0.55)',
+                                    borderColor: 'rgba(250, 204, 21, 0.5)',
+                                    borderWidth: 1,
+                                    borderRadius: 6,
+                                    font: { size: 10, weight: '700' },
+                                    padding: 6,
+                                },
+                            },
+                        },
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            min: 0,
+                            max: 5,
+                            title: { display: true, text: 'Rolling Avg Rating', color: '#ffffff' },
+                            ticks: { color: '#ffffff' },
+                            grid: { color: 'rgba(148,163,184,0.1)' },
+                        },
+                        x: {
+                            type: 'linear',
+                            min: 0,
+                            max: Math.max(0, labels.length - 1),
+                            ticks: {
+                                maxTicksLimit: 16,
+                                maxRotation: 45,
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    const idx = Math.round(Number(value));
+                                    return (idx >= 0 && idx < labels.length) ? labels[idx] : '';
+                                },
+                            },
+                            grid: { color: 'rgba(148,163,184,0.1)' },
+                        },
+                    },
+                },
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadReplayAnalysis();
+            const betaInput = document.getElementById('ratingElasticityInput');
+            if (betaInput) {
+                betaInput.addEventListener('input', updateRevenueProtectionPanel);
+                betaInput.addEventListener('change', updateRevenueProtectionPanel);
+            }
+        });
     </script>
 </body>
 </html>

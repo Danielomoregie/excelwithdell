@@ -94,14 +94,14 @@ DEV_INFRA_CONFIG = {
             "primary_type": "Compute / Servers",
             "compute_capacity": {
                 "max_cpus": 2,
-                "max_cores_per_cpu": 144,
-                "max_ram_tb": 8,
+                "max_cores_per_cpu": 86,
+                "max_ram_tb": 3,
                 "max_gpu": 8,
                 "compute_index": 1000,
             },
             "storage_capacity": {
-                "internal_nvme_tb": 245,
-                "cluster_capacity_bytes": 245 * 1024**4,
+                "internal_nvme_tb": 122.88,
+                "cluster_capacity_bytes": int(122.88 * 1024**4),
             },
             "throughput": {
                 "note": "Optimized for compute-heavy workloads",

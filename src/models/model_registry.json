@@ -473,5 +473,77 @@
     },
     "composite_score": 0.82303,
     "compared_against_score": 0.82303
+  },
+  {
+    "run_id": "run_17",
+    "run_number": 17,
+    "timestamp": "2026-03-15 11:45:10.543002",
+    "candidate_model_version": 6,
+    "deployed_model_version": 6,
+    "deployed": true,
+    "artifact_path": "C:\\Users\\mayan\\OneDrive\\Documents\\GitHub\\excelwithdell\\src\\models\\model_6.pkl",
+    "high_risk_threshold": 50,
+    "operating_high_risk_threshold": 50,
+    "metrics": {
+      "pearson_correlation": 0.9356,
+      "mae": 25.2274,
+      "high_risk_recall": 0.951,
+      "high_risk_precision": 0.918,
+      "directional_accuracy": 0.752,
+      "risk_level_accuracy": 0.1833,
+      "score_drift": -24.8512,
+      "time_to_detection_advantage_months": 0.0,
+      "roc_auc": 0.9816
+    },
+    "composite_score": 0.8796,
+    "compared_against_score": 0.82303
+  },
+  {
+    "run_id": "run_18",
+    "run_number": 18,
+    "timestamp": "2026-03-15 11:55:12.642025",
+    "candidate_model_version": 7,
+    "deployed_model_version": 6,
+    "deployed": false,
+    "artifact_path": null,
+    "high_risk_threshold": 50,
+    "operating_high_risk_threshold": 50,
+    "metrics": {
+      "pearson_correlation": 0.9356,
+      "mae": 25.2274,
+      "high_risk_recall": 0.951,
+      "high_risk_precision": 0.918,
+      "directional_accuracy": 0.752,
+      "risk_level_accuracy": 0.1833,
+      "score_drift": -24.8512,
+      "time_to_detection_advantage_months": 0.0,
+      "roc_auc": 0.9816
+    },
+    "composite_score": 0.8796,
+    "compared_against_score": 0.8796
+  },
+  {
+    "run_id": "run_19",
+    "run_number": 19,
+    "timestamp": "2026-03-15 12:02:50.105401",
+    "candidate_model_version": 8,
+    "deployed_model_version": 8,
+    "deployed": true,
+    "artifact_path": "C:\\Users\\mayan\\OneDrive\\Documents\\GitHub\\excelwithdell\\src\\models\\model_8.pkl",
+    "high_risk_threshold": 50,
+    "operating_high_risk_threshold": 50,
+    "metrics": {
+      "pearson_correlation": 0.9356,
+      "mae": 25.2274,
+      "high_risk_recall": 0.947,
+      "high_risk_precision": 0.927,
+      "directional_accuracy": 0.812,
+      "risk_level_accuracy": 0.1833,
+      "score_drift": -24.8512,
+      "time_to_detection_advantage_months": 0.0,
+      "roc_auc": 0.9816
+    },
+    "composite_score": 0.90318,
+    "compared_against_score": 0.8796
   }
 ]

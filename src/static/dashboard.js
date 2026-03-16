@@ -14,6 +14,7 @@ let storedTrendData  = null;
 let storedThemeData  = null;
 
 let sentimentChart, volumeChart, themesChart, revenueChart;
+let isSendingChat = false;
 
 // ============================================================
 //  DASHBOARD LOADING
@@ -199,7 +200,15 @@ function setupEventListeners() {
     
     if (aiInput && aiBtn) {
         aiInput.addEventListener('input', () => {
-            aiBtn.disabled = aiInput.value.trim() === '';
+            aiBtn.disabled = aiInput.value.trim() === '' || isSendingChat;
+        });
+
+        aiBtn.addEventListener('click', sendChatMessage);
+        aiInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendChatMessage();
+            }
         });
     }
 
@@ -1037,4 +1046,64 @@ function fmtCurrency(amount) {
     if (Math.abs(amount) >= 1e6) return `$${(amount / 1e6).toFixed(1)}M`;
     if (Math.abs(amount) >= 1e3) return `$${(amount / 1e3).toFixed(0)}K`;
     return `$${amount.toFixed(0)}`;
+}
+
+function appendChatMessage(role, text) {
+    const history = document.getElementById('chatbot-messages');
+    if (!history) return;
+
+    const message = document.createElement('div');
+    message.className = `chatbot-message ${role}`;
+    message.textContent = text;
+    history.appendChild(message);
+    history.scrollTop = history.scrollHeight;
+}
+
+function setChatStatus(text) {
+    const status = document.getElementById('chatbot-status');
+    if (status) status.textContent = text;
+}
+
+async function sendChatMessage() {
+    const aiInput = document.getElementById('chatbot-input');
+    const aiBtn = document.getElementById('chatbot-btn');
+    if (!aiInput || !aiBtn || isSendingChat) return;
+
+    const text = aiInput.value.trim();
+    if (!text) return;
+
+    appendChatMessage('user', text);
+    aiInput.value = '';
+    aiBtn.disabled = true;
+    isSendingChat = true;
+    setChatStatus('Thinking...');
+
+    try {
+        const res = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text }),
+        });
+
+        let data = {};
+        try {
+            data = await res.json();
+        } catch (_) {
+            data = {};
+        }
+
+        const reply = (data && typeof data.response === 'string' && data.response.trim())
+            ? data.response.trim()
+            : 'Sorry, I could not process that right now.';
+
+        appendChatMessage('assistant', reply);
+        setChatStatus(res.ok ? '' : 'The service returned an error. You can try again.');
+    } catch (error) {
+        appendChatMessage('assistant', 'Sorry, I could not reach the chatbot service right now.');
+        setChatStatus('Network error. Please check connection and retry.');
+    } finally {
+        isSendingChat = false;
+        aiBtn.disabled = aiInput.value.trim() === '';
+        aiInput.focus();
+    }
 }

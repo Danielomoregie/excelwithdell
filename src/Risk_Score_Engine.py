@@ -38,7 +38,6 @@ LOW_RATING_PRIOR_STRENGTH = 8
 CONFIDENCE_FULL_AT_REVIEWS = 25
 BASELINE_RISK_SCORE = 35.0
 
-
 # ==============================
 # SUB-SCORE CALCULATIONS
 # ==============================
