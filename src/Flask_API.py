@@ -1745,15 +1745,23 @@ def api_developer_replay_analysis():
         latest_deployed = next((r for r in reversed(registry) if r.get("deployed")), None)
     latest_record = registry[-1] if isinstance(registry, list) and registry else {}
 
+    # Priority 1: the loaded artifact's own calibrated threshold (most authoritative source)
     operating_threshold = None
-    for rec in [latest_deployed, latest_record]:
-        if not isinstance(rec, dict):
-            continue
-        operating_threshold = rec.get("operating_high_risk_threshold")
-        if operating_threshold is None and isinstance(rec.get("optimal_threshold_metrics"), dict):
-            operating_threshold = rec.get("optimal_threshold_metrics", {}).get("optimal_threshold")
-        if operating_threshold is not None:
-            break
+    if isinstance(artifacts, dict) and isinstance(artifacts.get("model_metadata"), dict):
+        operating_threshold = artifacts["model_metadata"].get("operating_high_risk_threshold")
+
+    # Priority 2: deployed model registry entry
+    if operating_threshold is None:
+        for rec in [latest_deployed, latest_record]:
+            if not isinstance(rec, dict):
+                continue
+            operating_threshold = rec.get("operating_high_risk_threshold")
+            if operating_threshold is None and isinstance(rec.get("optimal_threshold_metrics"), dict):
+                operating_threshold = rec.get("optimal_threshold_metrics", {}).get("optimal_threshold")
+            if operating_threshold is not None:
+                break
+
+    # Priority 3: validation report
     if operating_threshold is None and isinstance(validation, dict) and isinstance(validation.get("optimal_threshold_metrics"), dict):
         operating_threshold = validation.get("optimal_threshold_metrics", {}).get("optimal_threshold")
 
@@ -2022,7 +2030,7 @@ def api_developer_replay_analysis():
         t_model_label = _format_period_exact(t_model_idx_exact, months)
 
         # T4 recovery rule:
-        # first month after T3 where rolling avg has recovered 90% of the drop from T_model to T3
+        # first month after T3 where rolling avg has recovered 80% of the drop from T_model to T3
         model_anchor_idx = t_model_idx_exact if t_model_idx_exact is not None else float(t3_idx_exact)
         model_anchor_rating = _interp_value(rolling_ratings, model_anchor_idx)
         bottom_rating = _interp_value(rolling_ratings, t3_idx_exact)
@@ -2206,7 +2214,42 @@ def api_developer_evaluation_reviews_update():
 # START SERVER
 # ==============================
 
+def _free_port(port: int) -> None:
+    """Kill any process already bound to *port* so restarts never fail."""
+    import socket as _socket
+    import signal as _signal
+    with _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM) as s:
+        if s.connect_ex(("127.0.0.1", port)) != 0:
+            return  # port is already free
+    try:
+        import psutil
+        for conn in psutil.net_connections(kind="inet"):
+            if conn.laddr.port == port and conn.pid:
+                try:
+                    psutil.Process(conn.pid).terminate()
+                    print(f"  Freed port {port} (killed PID {conn.pid})")
+                except psutil.NoSuchProcess:
+                    pass
+    except ImportError:
+        # psutil not available — fall back to platform-specific commands
+        import subprocess, sys
+        if sys.platform == "win32":
+            result = subprocess.run(
+                ["netstat", "-ano"],
+                capture_output=True, text=True
+            )
+            for line in result.stdout.splitlines():
+                if f":{port}" in line and "LISTENING" in line:
+                    parts = line.split()
+                    pid = parts[-1]
+                    subprocess.run(["taskkill", "/PID", pid, "/F"],
+                                   capture_output=True)
+                    print(f"  Freed port {port} (killed PID {pid})")
+                    break
+
+
 def start(host="0.0.0.0", port=5000):
+    _free_port(port)
     load_artifacts()
     print(f"\n  Dashboard: http://localhost:{port}")
     print(f"  API Base:  http://localhost:{port}/api")
