@@ -1244,7 +1244,7 @@ def chat():
         "department": user.get("department") if user else "",
     }
 
-    response_body, status_code = handle_chat_request(payload, session, user_profile)
+    response_body, status_code = handle_chat_request(payload, session, user_profile, artifacts=artifacts)
     return jsonify(response_body), status_code
 
 

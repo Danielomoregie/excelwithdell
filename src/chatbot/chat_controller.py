@@ -19,7 +19,7 @@ def _map_openai_error(exc):
     return {"response": "Sorry, I could not reach the AI service right now. Please try again in a moment."}, 502
 
 
-def handle_chat_request(payload, session_store, user_profile=None):
+def handle_chat_request(payload, session_store, user_profile=None, artifacts=None):
     """Handle one chat turn with session memory and personalization hooks."""
     message_text = _extract_message(payload)
     if not message_text:
@@ -28,7 +28,7 @@ def handle_chat_request(payload, session_store, user_profile=None):
     conversation = get_conversation(session_store)
     conversation = append_message(conversation, "user", message_text)
 
-    model_input = build_model_input(conversation, user_profile)
+    model_input = build_model_input(conversation, user_profile, artifacts=artifacts)
 
     try:
         answer = create_chat_response(model_input)

@@ -40,7 +40,7 @@ ARTIFACTS_PATH = os.path.join(MODELS_DIR, "Risk_Model_Artifacts.pkl")
 VALIDATION_REPORT_PATH = os.path.join(MODELS_DIR, "Validation_Report.json")
 MODEL_REGISTRY_PATH = os.path.join(MODELS_DIR, "model_registry.json")
 BASELINE_METRICS_PATH = os.path.join(MODELS_DIR, "baseline_metrics.json")
-TRAINING_TABLE = "cleaned_train_80_percent"
+TRAINING_TABLE = "online_reviews"
 
 UI_DEFAULTS = {
     "dashboard_table_limit": 10,

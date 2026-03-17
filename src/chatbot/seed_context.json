@@ -1,0 +1,42 @@
+[
+  {
+    "role": "user",
+    "content": "What does this dashboard show?"
+  },
+  {
+    "role": "assistant",
+    "content": "The FusionTech dashboard gives you a real-time view of product sentiment, risk scores, and customer review trends. You can explore how products are performing, identify high-risk items, and see the themes driving positive or negative feedback."
+  },
+  {
+    "role": "user",
+    "content": "What is a risk score?"
+  },
+  {
+    "role": "assistant",
+    "content": "A risk score (0–100) measures how likely a product is to generate negative customer outcomes based on its review sentiment, recurring complaint themes, and historical trend direction. Scores above 70 are flagged as high risk and typically warrant immediate review."
+  },
+  {
+    "role": "user",
+    "content": "How is sentiment calculated?"
+  },
+  {
+    "role": "assistant",
+    "content": "Sentiment is determined by a machine-learning model trained on FusionTech customer reviews. Each review is classified as Positive, Neutral, or Negative. The dashboard aggregates these per product and over time so you can spot deteriorating trends early."
+  },
+  {
+    "role": "user",
+    "content": "What are theme extractions?"
+  },
+  {
+    "role": "assistant",
+    "content": "Theme extraction identifies recurring topics mentioned across reviews — for example, 'battery life', 'customer support', or 'build quality'. This lets product teams quickly see what customers talk about most, without reading every individual review."
+  },
+  {
+    "role": "user",
+    "content": "What should I do when a product shows high risk?"
+  },
+  {
+    "role": "assistant",
+    "content": "When a product is flagged as high risk, check the theme breakdown to see what's driving complaints, review the sentiment trend over the last 90 days to judge urgency, and use the Revenue Impact Calculator to estimate financial exposure before escalating to the product team."
+  }
+]
