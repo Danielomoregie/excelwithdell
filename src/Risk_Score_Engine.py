@@ -27,9 +27,9 @@ ALERT_THRESHOLDS = {
 MIN_REVIEWS = 3  # Minimum reviews to compute risk score
 
 # Temporal weighting: recent reviews more important than old ones
-# Full weight for reviews in last 2 years, exponential decay beyond
-TEMPORAL_DECAY_DAYS = 730  # 2 years in days
-TEMPORAL_DECAY_RATE = 0.5  # Half-life of 2 years; older reviews decay exponentially
+# Full weight for reviews in last 1 month, exponential decay beyond
+TEMPORAL_DECAY_DAYS = 30  # 1 month in days
+TEMPORAL_DECAY_RATE = 0.5  # Half-life of 1 month; older reviews decay exponentially
 
 # Use light Bayesian smoothing and confidence calibration so products
 # with sparse reviews do not swing to extreme scores too easily.
@@ -67,12 +67,14 @@ def _apply_temporal_decay(product_df):
     
     # Calculate age in days
     df['age_days'] = (max_date - df['date']).dt.days
-    
-    # Apply exponential decay: weight = 2^(-age_days / half_life)
-    # At half_life (730 days), weight = 0.5
-    # At 730 days, weight = 0.5; at 1460 days, weight = 0.25, etc.
-    df['temporal_weight'] = np.power(TEMPORAL_DECAY_RATE, df['age_days'] / TEMPORAL_DECAY_DAYS)
-    
+
+    # Full weight for last 1 month (30 days), then exponential decay
+    full_weight_days = TEMPORAL_DECAY_DAYS
+    decay_mask = df['age_days'] > full_weight_days
+    df['temporal_weight'] = 1.0
+    df.loc[decay_mask, 'temporal_weight'] = np.power(
+        TEMPORAL_DECAY_RATE, (df.loc[decay_mask, 'age_days'] - full_weight_days) / TEMPORAL_DECAY_DAYS
+    )
     return df
 
 
@@ -422,28 +424,47 @@ def compute_product_risk_scores(enriched_df):
 
 def compute_risk_trends(enriched_df, window_size='3M'):
     """
-    Compute risk-relevant metrics over sliding time windows for trend charts.
-    Returns list of dicts with monthly aggregations.
+    Compute risk-relevant metrics over sliding 3-month windows for trend charts.
+    Returns list of dicts with rolling 3-month aggregations.
     """
     if 'date' not in enriched_df.columns:
         return []
 
     df = enriched_df.copy()
-    df['year_month'] = df['date'].dt.to_period('M')
+    df['date'] = pd.to_datetime(df['date'], errors='coerce')
+    df = df.sort_values('date')
+    df = df[pd.notna(df['date'])]
 
+    # Set date as index for rolling
+    df = df.set_index('date')
+
+    # Resample monthly, then apply 3-month rolling window
+    monthly = df.resample('M').agg({
+        'combined_sentiment': 'mean',
+        'sentiment_label': lambda x: (x == 'negative').sum(),
+        'rating': 'mean',
+        'asin': 'count'
+    }).rename(columns={'asin': 'review_count'})
+
+    # Calculate unhappy review %
+    monthly['negative_ratio'] = monthly['sentiment_label'] / monthly['review_count']
+    monthly['avg_sentiment'] = monthly['combined_sentiment']
+
+    # 3-month rolling averages
+    monthly['avg_sentiment_3mo'] = monthly['avg_sentiment'].rolling(window=3, min_periods=1).mean()
+    monthly['negative_ratio_3mo'] = monthly['negative_ratio'].rolling(window=3, min_periods=1).mean()
+
+    # Build trend list for all months in range
     trends = []
-    for period, group in df.groupby('year_month'):
-        total = len(group)
-        neg_count = (group['sentiment_label'] == 'negative').sum()
+    for idx, row in monthly.iterrows():
         trends.append({
-            'month': str(period),
-            'avg_sentiment': round(group['combined_sentiment'].mean(), 4),
-            'negative_ratio': round(neg_count / total, 4) if total > 0 else 0,
-            'review_count': total,
-            'avg_rating': round(group['rating'].astype(float).mean(), 2),
+            'month': idx.strftime('%Y-%m'),
+            'avg_sentiment_3mo': round(row['avg_sentiment_3mo'], 4) if not pd.isna(row['avg_sentiment_3mo']) else None,
+            'negative_ratio_3mo': round(row['negative_ratio_3mo'], 4) if not pd.isna(row['negative_ratio_3mo']) else None,
+            'review_count': int(row['review_count']) if not pd.isna(row['review_count']) else 0,
         })
 
-    return sorted(trends, key=lambda x: x['month'])
+    return trends
 
 
 def generate_alerts(risk_results):

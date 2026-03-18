@@ -46,8 +46,11 @@ from Revenue_Impact_Calculator import (
 )
 
 # ── paths ──────────────────────────────────────────────────────────────────────
+
 MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
 DASHBOARD_PKL = os.path.join(MODELS_DIR, "dashboard.pkl")
+D2_PKL = os.path.join(MODELS_DIR, "d2.pkl")
+D3_PKL = os.path.join(MODELS_DIR, "d3.pkl")
 PRODUCTION_PKL = os.path.join(MODELS_DIR, "current_production_model.pkl")
 
 TRAINING_TABLE = "online_reviews"
@@ -74,16 +77,13 @@ def main():
     calibrated_threshold = _load_calibrated_threshold()
     print(f"\n  Using calibrated threshold: {calibrated_threshold}")
 
-    # ── Step 1: pull ALL data ──────────────────────────────────────────────────
-    print("\n[1/6] Pulling full dataset from Neon...")
-    conn = get_connection()
-    df = pd.read_sql(
-        f"SELECT * FROM {TRAINING_TABLE} ORDER BY timestamp ASC",
-        conn,
-    )
-    close_connection(conn)
-    print(f"       Loaded {len(df)} reviews from '{TRAINING_TABLE}'")
+    # ── Step 1: load ALL data from CSV ─────────────────────────────────────────
+    print("\n[1/6] Loading full dataset from CSV file...")
+    csv_path = os.path.join(os.path.dirname(__file__), "..", "Dataset_Scripts", "CSV_Files", "FusionTech_2014_06_to_2022_06_Initial.csv")
+    df = pd.read_csv(csv_path)
+    print(f"       Loaded {len(df)} reviews from FusionTech_2014_06_to_2022_06_Initial.csv")
 
+    # Ensure date column exists and is datetime
     if "timestamp" in df.columns and "date" not in df.columns:
         df = df.rename(columns={"timestamp": "date"})
     if "date" in df.columns:
@@ -131,7 +131,24 @@ def main():
     print(f"       Potential monthly savings: ${portfolio['total_potential_monthly_savings']:,.0f}")
 
     # ── Step 6: trends, themes, alerts ───────────────────────────────────────
-    print("\n[6/6] Computing trends and saving dashboard.pkl...")
+    # Determine output file: d2.pkl if --d2 or d2 argument is given, else dashboard.pkl
+    use_d2 = False
+    use_d3 = False
+    if len(sys.argv) > 1:
+        if sys.argv[1] in ('--d2', 'd2'):
+            use_d2 = True
+        elif sys.argv[1] in ('--d3', 'd3'):
+            use_d3 = True
+    if use_d3:
+        out_pkl = D3_PKL
+        out_label = 'd3.pkl'
+    elif use_d2:
+        out_pkl = D2_PKL
+        out_label = 'd2.pkl'
+    else:
+        out_pkl = DASHBOARD_PKL
+        out_label = 'dashboard.pkl'
+    print(f"\n[6/6] Computing trends and saving {out_label}...")
     risk_trends = compute_risk_trends(enriched_df)
     global_themes = get_global_theme_counts(enriched_df)
     alerts = generate_alerts(risk_results)
@@ -173,12 +190,12 @@ def main():
     }
 
     os.makedirs(MODELS_DIR, exist_ok=True)
-    with open(DASHBOARD_PKL, "wb") as f:
+    with open(out_pkl, "wb") as f:
         pickle.dump(artifacts, f)
 
-    size_mb = os.path.getsize(DASHBOARD_PKL) / (1024 * 1024)
-    print(f"\n  Saved: {DASHBOARD_PKL} ({size_mb:.1f} MB)")
-    print("  Done. dashboard.pkl is ready.")
+    size_mb = os.path.getsize(out_pkl) / (1024 * 1024)
+    print(f"\n  Saved: {out_pkl} ({size_mb:.1f} MB)")
+    print(f"  Done. {out_label} is ready.")
 
 
 if __name__ == "__main__":

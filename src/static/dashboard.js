@@ -1,3 +1,4 @@
+
 // ============================================================
 //  STATE
 // ============================================================
@@ -18,6 +19,10 @@ let isSendingChat = false;
 const CHAT_TYPING_ID = 'chatbot-typing-indicator';
 let chatConversationStarted = false;
 
+// ====== GLOBAL for alert modal ======
+let dashboardAlerts = [];
+let currentAlertIndex = 0;
+
 // ============================================================
 //  DASHBOARD LOADING
 // ============================================================
@@ -31,12 +36,184 @@ document.addEventListener('DOMContentLoaded', () => {
     const hasTrendCharts = !!(document.getElementById('sentiment-chart') && document.getElementById('volume-chart'));
 
     if (hasSummarySection) loadDashboard();
+    setupAlertModal();
     if (hasProductTable) loadProducts();
     if (hasTrendCharts) loadTrends();
 
     setupEventListeners();
     setupHeaderScroll();
 });
+
+// ================= ALERT MODAL FOR KPI CRITICAL CARD ===================
+function setupAlertModal() {
+    // Open modal on KPI card click
+    const kpiCritical = document.querySelector('.kpi-card.kpi-critical');
+    if (kpiCritical) {
+        kpiCritical.addEventListener('click', () => {
+            if (dashboardAlerts.length > 0) {
+                currentAlertIndex = 0;
+                showAlertModal(currentAlertIndex);
+            }
+        });
+    }
+    // Modal close
+    const alertModal = document.getElementById('alert-modal');
+    const alertModalClose = document.getElementById('alert-modal-close');
+    if (alertModalClose) {
+        alertModalClose.addEventListener('click', () => {
+            alertModal.style.display = 'none';
+        });
+    }
+    // Prev/Next
+    const prevBtn = document.getElementById('alert-modal-prev');
+    const nextBtn = document.getElementById('alert-modal-next');
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            if (dashboardAlerts.length > 0) {
+                currentAlertIndex = (currentAlertIndex - 1 + dashboardAlerts.length) % dashboardAlerts.length;
+                showAlertModal(currentAlertIndex);
+            }
+        });
+    }
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            if (dashboardAlerts.length > 0) {
+                currentAlertIndex = (currentAlertIndex + 1) % dashboardAlerts.length;
+                showAlertModal(currentAlertIndex);
+            }
+        });
+    }
+}
+
+
+// Shared modal rendering for both product and alert modals
+async function renderProductDetailModal(asin, modalId, titleId, bodyId) {
+    const modalTitle = document.getElementById(titleId);
+    const modalBody = document.getElementById(bodyId);
+    const modal = document.getElementById(modalId);
+    if (!modalTitle || !modalBody || !modal) return;
+
+    try {
+        const data = await fetchJSON(`/api/products/${asin}`);
+        if (!data || data.status !== 'success') return;
+
+        const p      = data.product;
+        const impact = p.revenue_impact || {};
+        const color  = scoreColor(p.risk_score);
+
+        modalTitle.textContent = p.product_name;
+
+        // Sub-score friendly names
+        const subNames = {
+            negative_sentiment_ratio: 'Negative Reviews',
+            sentiment_velocity:       'Mood Getting Worse',
+            rating_decline:           'Star Rating Dropping',
+            low_rating_spike:         '1-Star Review Spike',
+            complaint_concentration:  'Repeated Same Complaint',
+            community_validated:      'Many People Agree',
+        };
+
+        const subBars = Object.entries(p.sub_scores || {}).map(([k, v]) => {
+            const barColor = scoreColor(v);
+            return `
+                <div class="sub-score-bar">
+                    <span class="sub-score-label">${subNames[k] || k}</span>
+                    <div class="sub-score-track">
+                        <div class="sub-score-fill" style="width:${v}%;background:${barColor}"></div>
+                    </div>
+                    <span class="sub-score-value">${v}</span>
+                </div>`;
+        }).join('');
+
+        // Rating distribution
+        const dist    = p.rating_distribution || {};
+        const maxVal  = Math.max(...Object.values(dist).map(Number), 1);
+        const ratingBars = [5,4,3,2,1].map(r => {
+            const count    = dist[String(r)] || 0;
+            const barColor = r >= 4 ? '#43a047' : r === 3 ? '#f9a825' : '#ef5350';
+            return `
+                <div class="sub-score-bar">
+                    <span class="sub-score-label" style="width:55px">${r} star</span>
+                    <div class="sub-score-track">
+                        <div class="sub-score-fill" style="width:${(count/maxVal)*100}%;background:${barColor}"></div>
+                    </div>
+                    <span class="sub-score-value">${count}</span>
+                </div>`;
+        }).join('');
+
+        // Complaint themes
+        const themeTags = (p.top_themes || []).map(t =>
+            `<span class="theme-tag" style="font-size:0.83rem;padding:0.3rem 0.8rem">
+                ${titleCase(t.theme)} &mdash; ${(t.frequency * 100).toFixed(0)}% of reviews
+             </span>`
+        ).join(' ') || '<span style="color:var(--text-muted)">No complaint themes detected</span>';
+
+        // Recent negative reviews
+        const negHtml = (p.recent_negative_reviews || []).map(r => `
+            <div class="neg-review-item">
+                <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.2rem">
+                    <strong style="color:#ef5350">${esc(r.title || 'Untitled')}</strong>
+                    <span style="color:var(--text-muted);font-size:0.78rem">
+                        ${r.date} &nbsp;|&nbsp; ${r.rating} &#9733; &nbsp;|&nbsp; ${r.helpful_votes} found helpful
+                    </span>
+                </div>
+            </div>`
+        ).join('') || '<p style="color:var(--text-muted)">No recent negative reviews found.</p>';
+
+        modalBody.innerHTML = `
+            <!-- Header row: score + summary -->
+            <div style="display:flex;align-items:flex-start;gap:1.5rem;margin:1rem 0 0;flex-wrap:wrap">
+                <div style="text-align:center;min-width:90px">
+                    <div style="font-size:2.8rem;font-weight:900;color:${color};line-height:1">
+                        ${p.risk_score ?? '--'}
+                    </div>
+                    <div style="font-size:0.68rem;color:var(--text-muted);margin:0.15rem 0">out of 100</div>
+                    <span class="alert-badge badge-${p.alert_level}">${p.alert_level}</span>
+                </div>
+                <div style="flex:1;min-width:200px">
+                    <p style="font-size:0.88rem;margin-bottom:0.4rem">
+                        <strong>${p.review_count}</strong> reviews &nbsp;|&nbsp;
+                        Avg rating: <strong>${p.average_rating ?? '--'} &#9733;</strong> &nbsp;|&nbsp;
+                        Price: <strong>${p.price ? '$' + p.price : 'N/A'}</strong>
+                    </p>
+                    <p style="color:#fb8c00;font-size:0.88rem">
+                        &#128176; Monthly revenue at risk: <strong>${fmtCurrency(impact.monthly_revenue_at_risk || 0)}</strong>
+                        &nbsp;&nbsp; Annual: <strong>${fmtCurrency(impact.annualized_revenue_at_risk || 0)}</strong>
+                    </p>
+                </div>
+            </div>
+
+            <div class="detail-grid">
+                <div class="detail-card">
+                    <h4>&#128300; What is driving the risk score?</h4>
+                    ${subBars}
+                </div>
+                <div class="detail-card">
+                    <h4>&#11088; Star rating breakdown</h4>
+                    ${ratingBars}
+                </div>
+            </div>
+
+            <div class="detail-card" style="margin-top:1rem">
+                <h4>&#128172; Main complaint topics</h4>
+                <div style="margin-top:0.5rem;line-height:1.9">${themeTags}</div>
+            </div>
+
+            <div class="detail-card" style="margin-top:1rem">
+                <h4>&#128203; Recent negative reviews</h4>
+                ${negHtml}
+            </div>`;
+
+        modal.style.display = 'flex';
+    } catch (e) { console.error('renderProductDetailModal:', e); }
+}
+
+// Update: showAlertModal now uses the shared renderer for alert modal
+function showAlertModal(idx) {
+    const alert = dashboardAlerts[idx];
+    if (!alert) return;
+    renderProductDetailModal(alert.asin, 'alert-modal', 'alert-modal-title', 'alert-modal-body');
+}
 
 // ============================================================
 //  GREETING & DATE
@@ -538,25 +715,27 @@ async function loadDashboard() {
         };
 
         const s = data.summary;
+
         setText('kpi-products', s.products_scored);
-        setText('kpi-critical', s.critical_alerts + s.high_alerts);
+        const alertCount = s.critical_alerts + s.high_alerts;
+        setText('kpi-critical', alertCount);
         setText('kpi-revenue',  s.total_monthly_revenue_at_risk_formatted);
         setText('kpi-reviews',  s.total_reviews_analyzed.toLocaleString());
 
-        const alertsSection = document.getElementById('alerts-section');
-        const alertsContainer = document.getElementById('alerts-container');
-        if (alertsSection && alertsContainer && data.alerts && data.alerts.length > 0) {
-            alertsSection.style.display = 'block';
-            alertsContainer.innerHTML = data.alerts.slice(0, alertPreviewLimit).map(a => `
-                <div class="alert-item ${a.alert_level}">
-                    <span class="alert-badge badge-${a.alert_level}">${a.alert_level}</span>
-                    <span>
-                        <strong>${esc(a.product_name.substring(0, 65))}</strong> &mdash;
-                        Risk Score: <strong>${a.risk_score}</strong> &nbsp;|&nbsp;
-                        Issues: ${a.top_themes.join(', ') || 'N/A'}
-                    </span>
-                </div>
-            `).join('');
+        // Flash the critical card if alertCount > 0
+        const criticalCard = document.querySelector('.kpi-card.kpi-critical');
+        if (criticalCard) {
+            if (alertCount > 0) {
+                criticalCard.classList.add('flashing-red');
+            } else {
+                criticalCard.classList.remove('flashing-red');
+            }
+        }
+
+        if (data.alerts && data.alerts.length > 0) {
+            dashboardAlerts = data.alerts.slice(0, alertPreviewLimit);
+        } else {
+            dashboardAlerts = [];
         }
     } catch (e) { console.error('loadDashboard:', e); }
 }
@@ -800,26 +979,25 @@ function closeModal() {
 // ============================================================
 
 function baseOptions(yAxisLabel) {
-    const c = chartColors();
     return {
         responsive: true,
         maintainAspectRatio: true,
         plugins: {
-            legend: { labels: { color: c.legend, font: { size: 11 }, padding: 14 } },
+            legend: { labels: { color: '#fff', font: { size: 13, weight: 'bold' }, padding: 16 } },
         },
         scales: {
             x: {
-                ticks: { color: c.text, font: { size: 10 }, maxRotation: 40 },
-                grid:  { color: c.grid },
+                ticks: { color: '#fff', font: { size: 12, weight: 'bold' }, maxRotation: 40 },
+                grid:  { color: 'rgba(255,255,255,0.08)' },
             },
             y: {
-                ticks: { color: c.text, font: { size: 10 } },
-                grid:  { color: c.grid },
+                ticks: { color: '#fff', font: { size: 12, weight: 'bold' } },
+                grid:  { color: 'rgba(255,255,255,0.08)' },
                 title: {
                     display: !!yAxisLabel,
                     text: yAxisLabel || '',
-                    color: c.text,
-                    font: { size: 10 },
+                    color: '#fff',
+                    font: { size: 12, weight: 'bold' },
                 },
             },
         },
@@ -835,24 +1013,60 @@ function renderSentimentChart(data) {
     const c   = chartColors();
     const opt = baseOptions(null);
 
+    // Filter out data points with missing values
+    const filtered = data.filter(d => d.avg_sentiment_3mo != null && d.negative_ratio_3mo != null);
+    // Apply a moving average to smooth the lines
+    function movingAverage(arr, windowSize) {
+        if (arr.length < windowSize) return arr;
+        let result = [];
+        for (let i = 0; i < arr.length; i++) {
+            let start = Math.max(0, i - Math.floor(windowSize / 2));
+            let end = Math.min(arr.length, i + Math.ceil(windowSize / 2));
+            let window = arr.slice(start, end);
+            let avg = window.reduce((a, b) => a + b, 0) / window.length;
+            result.push(+avg.toFixed(2));
+        }
+        return result;
+    }
+
+    const happinessRaw = filtered.map(d => +(d.avg_sentiment_3mo * 100));
+    const unhappyRaw   = filtered.map(d => +(d.negative_ratio_3mo * 100));
+    // You can adjust the window size for more/less smoothing
+    const SMOOTH_WINDOW = 5;
+    const happinessSmooth = movingAverage(happinessRaw, SMOOTH_WINDOW);
+    const unhappySmooth   = movingAverage(unhappyRaw, SMOOTH_WINDOW);
+
+    console.log('Filtered and smoothed trend data for plotting:', happinessSmooth, unhappySmooth);
+
+    // Set last two x-axis labels to 'Present Day'
+    let labels = filtered.map(d => d.month);
+    if (labels.length > 1) {
+        labels[labels.length - 1] = 'Present Day';
+        labels[labels.length - 2] = 'Present Day';
+    } else if (labels.length === 1) {
+        labels[0] = 'Present Day';
+    }
+
+    // Find the first 'Present Day' index
+    const presentDayIndex = labels.findIndex(l => l === 'Present Day');
     sentimentChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.map(d => d.month),
+            labels: labels,
             datasets: [
                 {
                     label: 'Happiness Score',
-                    data:  data.map(d => +d.avg_sentiment.toFixed(3)),
+                    data:  happinessSmooth,
                     borderColor: '#42a5f5',
                     backgroundColor: 'rgba(66,165,245,0.1)',
-                    fill: true, tension: 0.35, pointRadius: 3,
+                    fill: true, tension: 0.5, pointRadius: 2,
                 },
                 {
                     label: 'Unhappy Reviews %',
-                    data:  data.map(d => +(d.negative_ratio * 100).toFixed(1)),
+                    data:  unhappySmooth,
                     borderColor: '#ef5350',
                     backgroundColor: 'rgba(239,83,80,0.08)',
-                    fill: true, tension: 0.35, pointRadius: 3,
+                    fill: true, tension: 0.5, pointRadius: 2,
                     yAxisID: 'y2',
                 },
             ],
@@ -860,28 +1074,54 @@ function renderSentimentChart(data) {
         options: {
             ...opt,
             plugins: {
-                legend: { labels: { color: c.legend, font: { size: 11 }, padding: 14 } },
+                legend: { labels: { color: '#fff', font: { size: 13, weight: 'bold' }, padding: 16 } },
                 tooltip: {
                     callbacks: {
                         label: ctx => {
                             if (ctx.dataset.label === 'Happiness Score') {
                                 const v = ctx.raw;
-                                const mood = v > 0.2 ? 'Mostly positive' : v > -0.2 ? 'Mixed' : 'Mostly negative';
-                                return ` Happiness: ${v} (${mood})`;
+                                const mood = v > 20 ? 'Mostly positive' : v > -20 ? 'Mixed' : 'Mostly negative';
+                                return ` Happiness: ${v}% (${mood})`;
                             }
                             return ` Unhappy Reviews: ${ctx.raw}%`;
                         },
                     },
                 },
+                annotation: presentDayIndex !== -1 ? {
+                    annotations: {
+                        presentDayLine: {
+                            type: 'line',
+                            xMin: presentDayIndex - 0.5,
+                            xMax: presentDayIndex + 0.5,
+                            borderColor: '#ef5350',
+                            borderWidth: 3,
+                            borderDash: [6, 4],
+                            label: {
+                                display: false
+                            }
+                        }
+                    }
+                } : undefined,
             },
             scales: {
                 ...opt.scales,
-                y:  { ...opt.scales.y, title: { display: true, text: 'Happiness Score', color: c.text, font: { size: 10 } } },
+                x: {
+                    ...opt.scales.x,
+                    ticks: {
+                        ...opt.scales.x?.ticks,
+                        color: function(context) {
+                            return context.tick.label === 'Present Day' ? '#ef5350' : '#fff';
+                        },
+                        font: { size: 12, weight: 'bold' },
+                        maxRotation: 40,
+                    },
+                },
+                y:  { ...opt.scales.y, title: { display: true, text: 'Happiness %', color: '#fff', font: { size: 12, weight: 'bold' } }, ticks: { color: '#fff', font: { size: 12, weight: 'bold' } }, grid: { color: 'rgba(255,255,255,0.08)' } },
                 y2: {
                     position: 'right',
-                    ticks: { color: c.text, font: { size: 10 }, callback: v => v + '%' },
-                    grid: { drawOnChartArea: false },
-                    title: { display: true, text: 'Unhappy Reviews %', color: c.text, font: { size: 10 } },
+                    ticks: { color: '#fff', font: { size: 12, weight: 'bold' }, callback: v => v + '%' },
+                    grid: { drawOnChartArea: false, color: 'rgba(255,255,255,0.08)' },
+                    title: { display: true, text: 'Unhappy Reviews %', color: '#fff', font: { size: 12, weight: 'bold' } },
                 },
             },
         },
@@ -896,24 +1136,89 @@ function renderVolumeChart(data) {
     if (volumeChart) volumeChart.destroy();
     const c = chartColors();
 
+    // Set last two x-axis labels to 'Present Day', squeeze if needed
+    let labels = data.map(d => d.month);
+    if (labels.length > 1) {
+        labels[labels.length - 1] = 'Present Day';
+        labels[labels.length - 2] = 'Present Day';
+    } else if (labels.length === 1) {
+        labels[0] = 'Present Day';
+    }
+    // Find the first 'Present Day' index
+    const presentDayIndex = labels.findIndex(l => l === 'Present Day');
     volumeChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: data.map(d => d.month),
+            labels: labels,
             datasets: [{
                 label: 'Reviews That Month',
                 data:  data.map(d => d.review_count),
-                backgroundColor: 'rgba(66,165,245,0.55)',
-                borderColor: '#42a5f5',
-                borderWidth: 1,
-                borderRadius: 4,
+                backgroundColor: function(context) {
+                    const ctx = context.chart.ctx;
+                    const gradient = ctx.createLinearGradient(0, 0, 0, context.chart.height);
+                    gradient.addColorStop(0, 'rgba(66,165,245,0.85)');
+                    gradient.addColorStop(1, 'rgba(66,165,245,0.35)');
+                    return gradient;
+                },
+                borderColor: '#1976d2',
+                borderWidth: 2,
+                borderRadius: 8,
+                barPercentage: 1.25, // 125% width
+                categoryPercentage: 1.25, // 125% width
+                hoverBackgroundColor: 'rgba(33,150,243,0.95)',
+                hoverBorderColor: '#0d47a1',
+                shadowOffsetX: 2,
+                shadowOffsetY: 4,
+                shadowBlur: 8,
+                shadowColor: 'rgba(33,150,243,0.18)',
             }],
         },
         options: {
             ...baseOptions('Number of Reviews'),
+            layout: { padding: { right: 40 } }, // Extra right padding for label
             plugins: {
                 legend: { labels: { color: c.legend, font: { size: 11 }, padding: 14 } },
                 tooltip: { callbacks: { label: ctx => ` ${ctx.raw} reviews received that month` } },
+                annotation: presentDayIndex !== -1 ? {
+                    annotations: {
+                        presentDayLine: {
+                            type: 'line',
+                            xMin: presentDayIndex - 0.5,
+                            xMax: presentDayIndex + 0.5,
+                            borderColor: '#ef5350',
+                            borderWidth: 3,
+                            borderDash: [6, 4],
+                            label: {
+                                display: false
+                            }
+                        }
+                    }
+                } : undefined,
+            },
+            scales: {
+                ...baseOptions('Number of Reviews').scales,
+                x: {
+                    ...baseOptions('Number of Reviews').scales.x,
+                    offset: false,
+                    ticks: {
+                        ...baseOptions('Number of Reviews').scales.x?.ticks,
+                        color: function(context) {
+                            return context.tick.label === 'Present Day' ? '#ef5350' : '#fff';
+                        },
+                        font: { size: 12, weight: 'bold' },
+                        maxRotation: 40,
+                    },
+                },
+            },
+            elements: {
+                bar: {
+                    borderRadius: 8,
+                },
+            },
+            hover: {
+                mode: 'nearest',
+                intersect: true,
+                animationDuration: 300,
             },
         },
     });
@@ -939,24 +1244,28 @@ function renderThemesChart(themes) {
                 data:  entries.map(e => e[1]),
                 backgroundColor: entries.map((_, i) => palette[i % palette.length]),
                 borderRadius: 4,
+                barThickness: 22,
+                maxBarThickness: 28,
+                minBarLength: 2,
             }],
         },
         options: {
             indexAxis: 'y',
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
                 tooltip: { callbacks: { label: ctx => ` ${ctx.raw} negative reviews mention this` } },
             },
+            layout: { padding: { top: 10, bottom: 10, left: 10, right: 10 } },
             scales: {
                 x: {
-                    ticks: { color: c.text, font: { size: 10 } },
+                    ticks: { color: '#fff', font: { size: 10 } },
                     grid:  { color: c.grid },
-                    title: { display: true, text: 'Number of Mentions', color: c.text, font: { size: 10 } },
+                    title: { display: true, text: 'Number of Mentions', color: '#fff', font: { size: 10 } },
                 },
                 y: {
-                    ticks: { color: c.text, font: { size: 10 } },
+                    ticks: { color: '#fff', font: { size: 10 } },
                     grid:  { color: c.grid },
                 },
             },

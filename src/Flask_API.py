@@ -51,7 +51,7 @@ ONLINE_REVIEWS_INITIAL_CSV_PATH = os.path.join(
 
 # Global artifacts (loaded on startup)
 artifacts = None          # current_production_model.pkl  — used by dev/eval routes
-dashboard_artifacts = None  # dashboard.pkl (100% data)    — used by dashboard routes
+dashboard_artifacts = None  # d2.pkl (dashboard-only data)    — used by dashboard routes
 
 
 def require_profile(f):
@@ -119,8 +119,8 @@ def load_artifacts():
             dashboard_artifacts = pickle.load(f)
         print(f"Loaded dashboard artifacts from {DASHBOARD_PKL_PATH} ({len(dashboard_artifacts['risk_results'])} products)")
     else:
-        dashboard_artifacts = artifacts
-        print("dashboard.pkl not found — dashboard will use production model artifacts")
+        dashboard_artifacts = None
+        print("d2.pkl not found — dashboard will be unavailable")
 
 
 def get_model_metadata():
@@ -134,7 +134,7 @@ def get_model_metadata():
 
 def _dash():
     """Return dashboard_artifacts (full-data pkl). Falls back to production artifacts."""
-    return dashboard_artifacts if dashboard_artifacts is not None else artifacts
+    return dashboard_artifacts
 
 
 def _load_json_file(path, default):

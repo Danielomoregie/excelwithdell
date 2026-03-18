@@ -88,12 +88,6 @@
 
     <!-- KPI Summary Cards -->
     <section class="kpi-section">
-        <div class="kpi-card">
-            <div class="kpi-icon">&#128230;</div>
-            <div class="kpi-value" id="kpi-products">--</div>
-            <div class="kpi-label">Products Monitored</div>
-            <div class="kpi-desc">Active products being tracked by AI</div>
-        </div>
         <div class="kpi-card kpi-critical">
             <div class="kpi-icon">&#128680;</div>
             <div class="kpi-value" id="kpi-critical">--</div>
@@ -107,6 +101,12 @@
             <div class="kpi-desc">Estimated revenue affected by poor reviews</div>
         </div>
         <div class="kpi-card">
+            <div class="kpi-icon">&#128230;</div>
+            <div class="kpi-value" id="kpi-products">--</div>
+            <div class="kpi-label">Products Monitored</div>
+            <div class="kpi-desc">Active products being tracked by AI</div>
+        </div>
+        <div class="kpi-card">
             <div class="kpi-icon">&#128172;</div>
             <div class="kpi-value" id="kpi-reviews">--</div>
             <div class="kpi-label">Reviews Analyzed</div>
@@ -114,11 +114,20 @@
         </div>
     </section>
 
-    <!-- Alerts Banner (shown only when there are critical/high alerts) -->
-    <section class="alerts-section" id="alerts-section" style="display:none;">
-        <h2>&#128680; Active Alerts</h2>
-        <div id="alerts-container"></div>
-    </section>
+
+
+    <!-- Active Alert Modal (one at a time, paged) -->
+    <div id="alert-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="modal-close" id="alert-modal-close">&times;</span>
+            <h2 id="alert-modal-title">Product Alert Detail</h2>
+            <div id="alert-modal-body" class="modal-scrollable-body"></div>
+            <div class="alert-modal-nav">
+                <button id="alert-modal-prev" class="btn-secondary">Previous</button>
+                <button id="alert-modal-next" class="btn-secondary">Next</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Department-Specific Main Dashboard -->
     <section class="section-block">
@@ -145,6 +154,17 @@
                     </p>
                 </div>
                 <canvas id="volume-chart"></canvas>
+            </div>
+
+            <!-- Chart 3: Complaint themes (moved above AI section and divider) -->
+            <div class="chart-container themes-chart-container" style="display:block; grid-column: 1 / -1; height: 420px;">
+                <div class="chart-header">
+                    <h3>What Are Customers Most Upset About?</h3>
+                    <p class="chart-description">
+                        These are the most common problems mentioned across <em>all</em> negative reviews. The longer the bar, the more customers are complaining about that specific issue.
+                    </p>
+                </div>
+                <canvas id="themes-chart" height="340"></canvas>
             </div>
 
             <!-- Page Divider -->
@@ -179,27 +199,6 @@
                 </div>
             </div>
 
-            <!-- Chart 3: Complaint themes -->
-            <div class="chart-container" style="display:none;">
-                <div class="chart-header">
-                    <h3>What Are Customers Most Upset About?</h3>
-                    <p class="chart-description">
-                        These are the most common problems mentioned across <em>all</em> negative reviews. The longer the bar, the more customers are complaining about that specific issue.
-                    </p>
-                </div>
-                <canvas id="themes-chart"></canvas>
-            </div>
-
-            <!-- Chart 4: Revenue at risk -->
-            <div class="chart-container" style="display:none;">
-                <div class="chart-header">
-                    <h3>Which Products Have the Most Money at Stake?</h3>
-                    <p class="chart-description">
-                        Products with higher risk scores are estimated to be losing more revenue each month. These are the ones that need the most urgent action.
-                    </p>
-                </div>
-                <canvas id="revenue-chart"></canvas>
-            </div>
 
         </div>
     </section>
