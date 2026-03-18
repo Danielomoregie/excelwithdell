@@ -1149,6 +1149,12 @@ async function sendChatMessage() {
             data = {};
         }
 
+        if (res.status === 401 || data.error === 'session_expired') {
+            hideTypingIndicator();
+            appendChatMessage('assistant', 'Your session has expired. Please <a href="/login" style="color:#6ec6ff">log back in</a> to continue.');
+            return;
+        }
+
         const reply = (data && typeof data.response === 'string' && data.response.trim())
             ? data.response.trim()
             : 'Sorry, I could not process that right now.';

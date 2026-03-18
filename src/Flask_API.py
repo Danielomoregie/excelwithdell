@@ -40,6 +40,7 @@ MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
 CURRENT_PRODUCTION_MODEL_PATH = os.path.join(MODELS_DIR, "current_production_model.pkl")
 LEGACY_ARTIFACTS_PATH = os.path.join(MODELS_DIR, "Risk_Model_Artifacts.pkl")
 ARTIFACTS_PATH = CURRENT_PRODUCTION_MODEL_PATH
+DASHBOARD_PKL_PATH = os.path.join(MODELS_DIR, "dashboard.pkl")
 MODEL_REGISTRY_PATH = os.path.join(MODELS_DIR, "model_registry.json")
 BASELINE_METRICS_PATH = os.path.join(MODELS_DIR, "baseline_metrics.json")
 VALIDATION_REPORT_PATH = os.path.join(MODELS_DIR, "Validation_Report.json")
@@ -49,7 +50,8 @@ ONLINE_REVIEWS_INITIAL_CSV_PATH = os.path.join(
 )
 
 # Global artifacts (loaded on startup)
-artifacts = None
+artifacts = None          # current_production_model.pkl  — used by dev/eval routes
+dashboard_artifacts = None  # dashboard.pkl (100% data)    — used by dashboard routes
 
 
 def require_profile(f):
@@ -57,6 +59,9 @@ def require_profile(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_email' not in session:
+            # Return JSON 401 for AJAX/JSON requests so the client can handle it gracefully
+            if request.is_json or request.headers.get('Accept', '').find('application/json') != -1:
+                return jsonify({"error": "session_expired", "redirect": "/login"}), 401
             return redirect(url_for('login_page'))
         return f(*args, **kwargs)
     return decorated_function
@@ -99,7 +104,7 @@ def filter_by_department(data, user):
 
 
 def load_artifacts():
-    global artifacts
+    global artifacts, dashboard_artifacts
     path_to_load = ARTIFACTS_PATH if os.path.exists(ARTIFACTS_PATH) else LEGACY_ARTIFACTS_PATH
     if not os.path.exists(path_to_load):
         raise FileNotFoundError(
@@ -109,6 +114,14 @@ def load_artifacts():
         artifacts = pickle.load(f)
     print(f"Loaded model artifacts from {path_to_load} ({len(artifacts['risk_results'])} products)")
 
+    if os.path.exists(DASHBOARD_PKL_PATH):
+        with open(DASHBOARD_PKL_PATH, "rb") as f:
+            dashboard_artifacts = pickle.load(f)
+        print(f"Loaded dashboard artifacts from {DASHBOARD_PKL_PATH} ({len(dashboard_artifacts['risk_results'])} products)")
+    else:
+        dashboard_artifacts = artifacts
+        print("dashboard.pkl not found — dashboard will use production model artifacts")
+
 
 def get_model_metadata():
     """Return model metadata from artifacts when available."""
@@ -117,6 +130,11 @@ def get_model_metadata():
         if isinstance(metadata, dict):
             return metadata
     return {}
+
+
+def _dash():
+    """Return dashboard_artifacts (full-data pkl). Falls back to production artifacts."""
+    return dashboard_artifacts if dashboard_artifacts is not None else artifacts
 
 
 def _load_json_file(path, default):
@@ -937,9 +955,9 @@ def api_dashboard():
     risk_thresholds = metadata.get("risk_thresholds", {}) if isinstance(metadata.get("risk_thresholds", {}), dict) else {}
     dashboard_alert_limit = int(ui_defaults.get("dashboard_alert_limit", 10))
     
-    risk = artifacts['risk_results']
-    portfolio = artifacts['portfolio_impact']
-    alerts = artifacts['alerts']
+    risk = _dash()['risk_results']
+    portfolio = _dash()['portfolio_impact']
+    alerts = _dash()['alerts']
 
     # TODO: Apply department-specific filtering here
     # risk = filter_by_department(risk, user)
@@ -948,7 +966,7 @@ def api_dashboard():
     critical = sum(1 for r in scored if r['alert_level'] == 'CRITICAL')
     high = sum(1 for r in scored if r['alert_level'] == 'HIGH')
 
-    enriched_df = artifacts['enriched_df']
+    enriched_df = _dash()['enriched_df']
     total_reviews = len(enriched_df)
 
     return jsonify({
@@ -983,7 +1001,7 @@ def api_dashboard():
 
 @app.route("/api/products")
 def api_products():
-    risk = artifacts['risk_results']
+    risk = _dash()['risk_results']
     products = []
     for asin, data in risk.items():
         products.append({
@@ -1011,8 +1029,8 @@ def api_products():
 
 @app.route("/api/products/<asin>")
 def api_product_detail(asin):
-    risk = artifacts['risk_results']
-    enriched_df = artifacts['enriched_df']
+    risk = _dash()['risk_results']
+    enriched_df = _dash()['enriched_df']
 
     if asin not in risk:
         return jsonify({"status": "error", "message": "Product not found"}), 404
@@ -1082,8 +1100,8 @@ def api_product_detail(asin):
 
 @app.route("/api/trends")
 def api_trends():
-    risk_trends = artifacts['risk_trends']
-    global_themes = artifacts['global_themes']
+    risk_trends = _dash()['risk_trends']
+    global_themes = _dash()['global_themes']
 
     return jsonify({
         "status": "success",
@@ -1120,7 +1138,7 @@ def api_analyze():
     themes = classify_review_themes(clean_review_text(text))
 
     # Look up current product risk
-    risk_data = artifacts['risk_results'].get(asin, {})
+    risk_data = _dash()['risk_results'].get(asin, {})
     current_score = risk_data.get('risk_score')
 
     return jsonify({
@@ -1143,7 +1161,7 @@ def api_chatbot():
         return jsonify({"status": "error", "message": "Query parameter 'q' required"}), 400
 
     # Find matching product by keyword search in product names
-    risk = artifacts['risk_results']
+    risk = _dash()['risk_results']
     query_lower = query.lower()
     matches = []
 
@@ -1244,7 +1262,7 @@ def chat():
         "department": user.get("department") if user else "",
     }
 
-    response_body, status_code = handle_chat_request(payload, session, user_profile, artifacts=artifacts)
+    response_body, status_code = handle_chat_request(payload, session, user_profile, artifacts=_dash())
     return jsonify(response_body), status_code
 
 
