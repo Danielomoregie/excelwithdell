@@ -170,14 +170,28 @@
             <!-- Page Divider -->
             <hr class="ai-section-divider" style="grid-column: 1 / -1;">
 
-            <section class="chat-heading-section" style="grid-column: 1 / -1;">
-                <div class="kpi-heading-chip">Chat with Agent</div>
-                <h2>Ask Our AI Assistant</h2>
-                <p class="kpi-heading-desc">Get Instant Insights and Answers About FusionTech's Product Performance</p>
-            </section>
 
             <!-- AI Assistant -->
-            <div class="chart-container" style="grid-column: 1 / -1;">
+            <!-- Floating Chatbot Button -->
+            <button id="chatbot-float-btn" class="chatbot-float-btn" title="Chat with AI">
+                <span class="chatbot-float-icon">💬</span>
+            </button>
+
+            <!-- Chatbot Popup -->
+            <div id="chatbot-popup" class="chatbot-popup chat-hidden">
+                <div class="chatbot-popup-header">
+                    <div class="chatbot-header-left">
+                        <span class="chatbot-avatar">🤖</span>
+                        <div class="chatbot-header-info">
+                            <span class="chatbot-header-title">FusionBot</span>
+                            <span class="chatbot-header-status"><span class="chatbot-status-dot"></span> Online Now</span>
+                        </div>
+                    </div>
+                    <div class="chatbot-header-actions">
+                        <button id="chatbot-popup-expand" class="chatbot-popup-expand" title="Expand chat">⤢</button>
+                        <button id="chatbot-popup-close" class="chatbot-popup-close" title="Close chat">&times;</button>
+                    </div>
+                </div>
                 <div class="ai-assistant-container">
                     <div id="chat-start-screen" class="chat-start-screen">
                         <div class="chat-start-header">
@@ -189,9 +203,7 @@
                             <button type="button" class="chat-starter-item">What should leadership prioritize fixing first</button>
                         </div>
                     </div>
-
                     <div id="chatbot-messages" class="chatbot-messages chat-hidden" aria-live="polite"></div>
-
                     <div class="chat-prompt-shell">
                         <input type="text" id="chatbot-input" placeholder="Ask anything" class="ai-input">
                         <button id="chatbot-btn" class="chat-send-chip" disabled>Send</button>

@@ -42,7 +42,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupEventListeners();
     setupHeaderScroll();
+    setupChatbotPopup();
 });
+// ================= CHATBOT POPUP LOGIC ===================
+function setupChatbotPopup() {
+    const floatBtn = document.getElementById('chatbot-float-btn');
+    const popup = document.getElementById('chatbot-popup');
+    const closeBtn = document.getElementById('chatbot-popup-close');
+    const expandBtn = document.getElementById('chatbot-popup-expand');
+    if (!floatBtn || !popup || !closeBtn || !expandBtn) return;
+
+    floatBtn.addEventListener('click', () => {
+        popup.classList.remove('chat-hidden');
+        floatBtn.style.display = 'none';
+    });
+
+    closeBtn.addEventListener('click', () => {
+        popup.classList.add('chat-hidden');
+        floatBtn.style.display = 'flex';
+        popup.classList.remove('expanded');
+        expandBtn.innerHTML = '⤢';
+    });
+
+    expandBtn.addEventListener('click', () => {
+        popup.classList.toggle('expanded');
+        if (popup.classList.contains('expanded')) {
+            expandBtn.innerHTML = '⤡'; // collapse icon
+        } else {
+            expandBtn.innerHTML = '⤢'; // expand icon
+        }
+    });
+
+    // Optional: close popup if user clicks outside
+    document.addEventListener('mousedown', (e) => {
+        if (!popup.classList.contains('chat-hidden') && !popup.contains(e.target) && e.target !== floatBtn) {
+            popup.classList.add('chat-hidden');
+            floatBtn.style.display = 'flex';
+            popup.classList.remove('expanded');
+            expandBtn.innerHTML = '⤢';
+        }
+    });
+}
 
 // ================= ALERT MODAL FOR KPI CRITICAL CARD ===================
 function setupAlertModal() {

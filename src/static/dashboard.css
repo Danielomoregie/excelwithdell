@@ -660,6 +660,189 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
 /* ======================================================
    AI ASSISTANT
    ====================================================== */
+.chatbot-float-btn {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 6px 24px rgba(59,130,246,0.18);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1200;
+    transition: background 0.22s, box-shadow 0.22s, transform 0.18s;
+}
+.chatbot-float-btn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    box-shadow: 0 12px 32px rgba(59,130,246,0.28);
+    transform: scale(1.07);
+}
+.chatbot-float-icon {
+    font-size: 2.1rem;
+    color: #fff;
+    filter: drop-shadow(0 2px 8px rgba(59,130,246,0.18));
+}
+
+.chatbot-popup {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    width: 972px;
+    max-width: 98vw;
+    height: 660px;
+    max-height: 85vh;
+    background: #1a2634;
+    border: 1.5px solid #60a5fa;
+    border-radius: 18px;
+    box-shadow: 0 16px 48px rgba(2, 6, 23, 0.38);
+    z-index: 1201;
+    display: flex;
+    flex-direction: column;
+    transition: opacity 0.22s, transform 0.22s;
+    opacity: 1;
+}
+.chatbot-popup.chat-hidden {
+    display: none;
+    opacity: 0;
+}
+.chatbot-popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 1.1rem 0.2rem 1.1rem;
+    border-bottom: 1px solid #60a5fa;
+    background: #7c3aed;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+}
+.chatbot-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+.chatbot-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #a78bfa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.18);
+}
+.chatbot-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+.chatbot-header-title {
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.02em;
+}
+.chatbot-header-status {
+    font-size: 0.92rem;
+    color: #e0e6ed;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.chatbot-status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+        background: #39ff14;
+        display: inline-block;
+        margin-right: 0.2rem;
+        box-shadow: 0 0 10px #39ff14, 0 0 18px #39ff14;
+        animation: statusFlash 1.2s infinite ease-in-out;
+}
+
+@keyframes statusFlash {
+    0%, 100% {
+           opacity: 1;
+           box-shadow: 0 0 10px #39ff14, 0 0 18px #39ff14;
+    }
+    50% {
+           opacity: 0.75;
+           box-shadow: 0 0 22px #39ff14, 0 0 32px #39ff14;
+    }
+}
+}
+.chatbot-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.chatbot-header-menu {
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    color: #e0e6ed;
+    cursor: pointer;
+    padding: 0 0.2rem;
+    transition: color 0.18s;
+}
+.chatbot-header-menu:hover {
+    color: #fff;
+}
+}
+.chatbot-popup-title {
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: #60a5fa;
+    letter-spacing: 0.02em;
+}
+.chatbot-popup-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #c2cede;
+    cursor: pointer;
+    padding: 0 0.3rem;
+    transition: color 0.18s;
+}
+.chatbot-popup-close:hover {
+    color: #f87171;
+}
+
+.chatbot-popup-expand {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: #fff;
+    cursor: pointer;
+    padding: 0 0.3rem;
+    transition: color 0.18s;
+}
+.chatbot-popup-expand:hover {
+    color: #34d399;
+}
+
+.chatbot-popup.expanded {
+    width: 90vw;
+    max-width: 90vw;
+    top: 80px;
+    height: calc(95vh - 80px);
+    max-height: calc(95vh - 80px);
+    /* 80px is estimated header height, adjust if needed */
+    right: 50%;
+    transform: translateX(50%);
+    bottom: auto;
+    display: flex;
+    flex-direction: column;
+    z-index: 1202;
+}
 
 .ai-assistant-section {
     max-width: 1400px;
@@ -674,6 +857,7 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); }
     padding: 1.25rem;
     box-shadow: 0 10px 28px rgba(2, 6, 23, 0.38);
     min-height: 496px;
+    height: 100%;
     display: flex;
     flex-direction: column;
 }
