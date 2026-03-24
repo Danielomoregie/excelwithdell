@@ -1,3 +1,4 @@
+
 import os
 import pickle
 import json
@@ -27,16 +28,19 @@ from chatbot import handle_chat_request
 # APP SETUP
 # ==============================
 
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(
     __name__,
-    template_folder=os.path.join(os.path.dirname(__file__), "templates"),
-    static_folder=os.path.join(os.path.dirname(__file__), "static"),
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static"),
 )
 
 # Secret key for session management
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
 
-MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
+
+MODELS_DIR = os.path.join(BASE_DIR, "models")
 CURRENT_PRODUCTION_MODEL_PATH = os.path.join(MODELS_DIR, "current_production_model.pkl")
 LEGACY_ARTIFACTS_PATH = os.path.join(MODELS_DIR, "Risk_Model_Artifacts.pkl")
 ARTIFACTS_PATH = CURRENT_PRODUCTION_MODEL_PATH
@@ -46,7 +50,7 @@ BASELINE_METRICS_PATH = os.path.join(MODELS_DIR, "baseline_metrics.json")
 VALIDATION_REPORT_PATH = os.path.join(MODELS_DIR, "Validation_Report.json")
 EVALUATION_DATASET_PATH = os.path.join(MODELS_DIR, "evaluation_reviews.csv")
 ONLINE_REVIEWS_INITIAL_CSV_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "Dataset_Scripts", "CSV_Files", "FusionTech Online Reviews_Initial.csv"
+    BASE_DIR, "..", "Dataset_Scripts", "CSV_Files", "FusionTech Online Reviews_Initial.csv"
 )
 
 # Global artifacts (loaded on startup)
@@ -106,6 +110,8 @@ def filter_by_department(data, user):
 def load_artifacts():
     global artifacts, dashboard_artifacts
     path_to_load = ARTIFACTS_PATH if os.path.exists(ARTIFACTS_PATH) else LEGACY_ARTIFACTS_PATH
+    print(f"[DEBUG] Model artifact path: {path_to_load}")
+    print(f"[DEBUG] Exists: {os.path.exists(path_to_load)}")
     if not os.path.exists(path_to_load):
         raise FileNotFoundError(
             f"Model artifacts not found at {path_to_load}. Run Train_Model.py first."
@@ -114,13 +120,15 @@ def load_artifacts():
         artifacts = pickle.load(f)
     print(f"Loaded model artifacts from {path_to_load} ({len(artifacts['risk_results'])} products)")
 
+    print(f"[DEBUG] Dashboard artifact path: {DASHBOARD_PKL_PATH}")
+    print(f"[DEBUG] Exists: {os.path.exists(DASHBOARD_PKL_PATH)}")
     if os.path.exists(DASHBOARD_PKL_PATH):
         with open(DASHBOARD_PKL_PATH, "rb") as f:
             dashboard_artifacts = pickle.load(f)
         print(f"Loaded dashboard artifacts from {DASHBOARD_PKL_PATH} ({len(dashboard_artifacts['risk_results'])} products)")
     else:
         dashboard_artifacts = None
-        print("d2.pkl not found — dashboard will be unavailable")
+        print("dashboard.pkl not found — dashboard will be unavailable")
 
 
 def get_model_metadata():
